@@ -3,15 +3,21 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Docuverse.Identicon;
+using IComparer = System.Collections.IComparer;
+using LegendsViewer.Controls;
 
 namespace LegendsViewer.Legends
 {
 
     public class World
     {
+        private static Dictionary<Type, object> _comparers = new Dictionary<Type, object>();
+
         public string Name;
+        public string AltName;
         public StringBuilder Log;
         public List<WorldRegion> Regions = new List<WorldRegion>();
         public List<UndergroundRegion> UndergroundRegions = new List<UndergroundRegion>();
@@ -32,6 +38,7 @@ namespace LegendsViewer.Legends
         public List<Population> SitePopulations = new List<Population>();
         public List<Population> OutdoorPopulations = new List<Population>();
         public List<Population> UndergroundPopulations = new List<Population>();
+        public List<WorldConstruction> Constructions = new List<WorldConstruction>();
 
         public ParsingErrors ParsingErrors;
 
@@ -57,7 +64,25 @@ namespace LegendsViewer.Legends
         private List<HistoricalFigure> CurrentIdentityHFs = new List<HistoricalFigure>();
         private List<int> CurrentIdentityIDs = new List<int>();
 
-        public World(string xmlFile, string historyFile, string sitesAndPopulationsFile, string mapFile)
+        static World()
+        {
+            var wo = typeof (WorldObject);
+            var wom = wo.GetMethods(BindingFlags.Static|BindingFlags.NonPublic).First(x=>x.Name == "GetDefaultComparer");
+            var ev = typeof(EventCollection);
+            var evm = ev.GetMethods(BindingFlags.Static | BindingFlags.NonPublic).First(x => x.Name == "GetDefaultComparer");
+            foreach (var t in System.Reflection.Assembly.GetExecutingAssembly().GetTypes())
+            {
+                if (wo.IsAssignableFrom(t))
+                {
+                    var m2 = wo.GetMethods(BindingFlags.Static | BindingFlags.NonPublic).FirstOrDefault(x => x.Name == "GetComparer");
+                    if (m2 != null) _comparers[t] = m2.Invoke(null, new object[0]);
+                    else _comparers[t] = wom.MakeGenericMethod(t).Invoke(null, new object[0]);
+                }
+                if (ev.IsAssignableFrom(t))
+                    _comparers[t] = evm.MakeGenericMethod(t).Invoke(null, new object[0]);
+            }
+        }
+        public World(string xmlFile, string historyFile, string sitesAndPopulationsFile, string mapFile, string xmlPlusFile)
         {
             ParsingErrors = new ParsingErrors();
             Log = new StringBuilder();
@@ -68,6 +93,13 @@ namespace LegendsViewer.Legends
 
             XMLParser xml = new XMLParser(this, xmlFile);
             xml.Parse();
+
+            if (!string.IsNullOrEmpty(xmlPlusFile))
+            {
+                var xmlPlus = new XMLPlusParser(this, xmlPlusFile);
+                xmlPlus.Parse();
+            }
+
             HistoryParser history = new HistoryParser(this, historyFile);
             Log.Append(history.Parse());
             SitesAndPopulationsParser sitesAndPopulations = new SitesAndPopulationsParser(this, sitesAndPopulationsFile);
@@ -218,7 +250,57 @@ namespace LegendsViewer.Legends
             HistoricalFigure.Unknown = new HistoricalFigure();
         }
 
+        public static T UpsertWorldObject<T>(List<T> ownerList, List<Property> properties, World world) where T : WorldObject, new()
+        {
+            var id = properties.Where(x => x.Name == "id").Select(x => new int?(System.Convert.ToInt32(x.Value))).FirstOrDefault();
+            if (id.HasValue && id.Value > -1)
+            {
+                
+                var item = new T() { ID = id.Value };
+                int index = ownerList.BinarySearch(0, ownerList.Count, item, _comparers[typeof(T)] as IComparer<T>);
+                if (index >= 0)
+                    item = ownerList[index];
+                else
+                    ownerList.Insert(~index, item);
+                item.Merge(properties, world);
+                return item;
+            }
+            return null;
+        }
 
+        public static T UpsertEvent<T>(List<WorldEvent> ownerList, List<Property> properties, World world) where T : WorldEvent, new()
+        {
+            var id = properties.Where(x => x.Name == "id").Select(x => new int?(System.Convert.ToInt32(x.Value))).FirstOrDefault();
+            if (id.HasValue && id.Value > -1)
+            {
+                var item = new T() { ID = id.Value };
+                int index = ownerList.BinarySearch(item);
+                if (index >= 0)
+                    item = ownerList[index] as T;
+                else
+                    ownerList.Insert(~index, item);
+                item?.Merge(properties, world);
+                return item;
+            }
+            return null;
+        }
+
+        public static T UpsertEventCol<T>(List<EventCollection> ownerList, List<Property> properties, World world) where T : EventCollection, new()
+        {
+            var id = properties.Where(x => x.Name == "id").Select(x => new int?(System.Convert.ToInt32(x.Value))).FirstOrDefault();
+            if (id.HasValue && id.Value > -1)
+            {
+                var item = new T() { ID = id.Value };
+                int index = ownerList.BinarySearch(0, ownerList.Count, item, _comparers[typeof(EventCollection)] as IComparer<EventCollection>);
+                if (index >= 0)
+                    item = ownerList[index] as T;
+                else
+                    ownerList.Insert(~index, item);
+                item?.Merge(properties, world);
+                return item;
+            }
+            return null;
+        }
 
         #region GetWorldItemsFunctions
 
@@ -321,7 +403,7 @@ namespace LegendsViewer.Legends
                 else if (String.Compare(HistoricalFiguresByName[mid - 1].Name, name, true) != 0 && String.Compare(HistoricalFiguresByName[mid + 1].Name, name, true) != 0) //checks duplicates
                     return HistoricalFiguresByName[mid];
                 else
-                    throw new Exception("Duplicate Historical Figure Name: " + name);
+                    throw new InvalidDataException("Duplicate Historical Figure Name: " + name);
             }
             throw new Exception("Couldn't Find Historical Figure: " + name);
         }
@@ -361,7 +443,7 @@ namespace LegendsViewer.Legends
                 else if (String.Compare(EntitiesByName[mid - 1].Name, name, true) != 0 && String.Compare(EntitiesByName[mid + 1].Name, name, true) != 0)
                     return EntitiesByName[mid];
                 else
-                    throw new Exception("Duplicate Entity Name: " + name);
+                    throw new InvalidDataException("Duplicate Entity Name: " + name);
             }
             throw new Exception("Couldn't Find Entity: " + name);
 
@@ -446,6 +528,13 @@ namespace LegendsViewer.Legends
                 }
                 return null;
             }
+        }
+
+        public WorldConstruction GetConstruction(int id)
+        {
+            var key = new WorldConstruction() {ID = id};
+            int idx = Constructions.BinarySearch(key, _comparers[typeof (WorldConstruction)] as IComparer<WorldConstruction>);
+            return (idx < 0) ? null : Constructions[idx];
         }
         #endregion
 

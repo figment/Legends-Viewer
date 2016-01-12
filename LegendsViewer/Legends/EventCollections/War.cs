@@ -77,13 +77,7 @@ namespace LegendsViewer.Legends
             : base(properties, world)
         {
             Initialize();
-            foreach (Property property in properties)
-                switch (property.Name)
-                {
-                    case "name": Name = Formatting.InitCaps(property.Value); break;
-                    case "aggressor_ent_id": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defender_ent_id": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                }
+            InternalMerge(properties, world);
             Defender.Wars.Add(this);
             if (Defender.Parent != null)
                 Defender.Parent.Wars.Add(this);
@@ -94,6 +88,24 @@ namespace LegendsViewer.Legends
                 Length = EndYear - StartYear;
             else if (world.Events.Count > 0)
                 Length = world.Events.Last().Year - StartYear;
+        }
+
+
+        private void InternalMerge(List<Property> properties, World world)
+        {
+            foreach (Property property in properties)
+                switch (property.Name)
+                {
+                    case "name": Name = Formatting.InitCaps(property.Value); break;
+                    case "aggressor_ent_id": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "defender_ent_id": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                }
+        }
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
         private void Initialize()

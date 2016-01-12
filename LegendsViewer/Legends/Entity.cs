@@ -12,9 +12,13 @@ namespace LegendsViewer.Legends
     public class Entity : WorldObject
     {
         public string Name { get; set; }
+        public bool NameSet { get; set; }
         public Entity Parent { get; set; }
         public bool IsCiv { get; set; }
         public string Race { get; set; }
+        public bool RaceSet { get; set; }
+        public string Type { get; set; }
+        public List<EntityLink> EntityLinks { get; set; }
         public List<HistoricalFigure> Worshipped { get; set; }
         public List<string> LeaderTypes { get; set; }
         public List<List<HistoricalFigure>> Leaders { get; set; }
@@ -77,20 +81,21 @@ namespace LegendsViewer.Legends
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
-        public Entity(World world)
+        public Entity()
         {
+            Initialize();
             ID = -1; Name = "INVALID ENTITY"; Race = "Unknown";
-            Parent = null;
-            Worshipped = new List<HistoricalFigure>();
-            LeaderTypes = new List<string>();
-            Leaders = new List<List<HistoricalFigure>>();
-            Groups = new List<Entity>();
-            SiteHistory = new List<OwnerPeriod>();
-            Wars = new List<War>();
-            Populations = new List<Population>();
         }
+
+        public Entity(World world) : base() { Initialize(); }
+
         public Entity(List<Property> properties, World world)
             : base(properties, world)
+        {
+            Initialize();
+            InternalMerge(properties, world);
+        }
+        public void Initialize()
         {
             Name = "";
             Race = "Unknown";
@@ -102,12 +107,30 @@ namespace LegendsViewer.Legends
             SiteHistory = new List<OwnerPeriod>();
             Wars = new List<War>();
             Populations = new List<Population>();
+            EntityLinks = new List<EntityLink>();
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "name": Name = Formatting.InitCaps(property.Value); break;
+                    case "name": Name = Formatting.InitCaps(property.Value); property.Known= true; NameSet = true; break;
+                    case "race": Race = string.Intern(Formatting.InitCaps(property.Value)); property.Known = true; RaceSet = true; break;
+                    case "type": Type = string.Intern(Formatting.InitCaps(property.Value)); property.Known = true; break;
+                    case "child": property.Known = true; break;
+                    case "entity_link": EntityLinks.Add(new EntityLink(property.SubProperties, world)); property.Known = true; break;
                 }
+
+            if (!NameSet)
+                Name = string.Format("{0} of {1}", string.IsNullOrEmpty(Type) ? "Group" : Type, Race);
+            //IsCiv = String.Compare(Type,"Civilization", StringComparison.OrdinalIgnoreCase) == 0;
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+
         public override string ToString() { return this.Name; }
 
 
@@ -139,7 +162,7 @@ namespace LegendsViewer.Legends
             if (this.Parent != null && this.Parent != null)
             {
                 Parent.AddOwnedSite(newSite);
-                this.Race = Parent.Race;
+                if (!RaceSet || string.IsNullOrEmpty(Race)) this.Race = Parent.Race;
             }
         }
 

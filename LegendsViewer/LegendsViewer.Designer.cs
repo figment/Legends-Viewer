@@ -31,6 +31,8 @@
             this.components = new System.ComponentModel.Container();
             this.tcWorld = new System.Windows.Forms.TabControl();
             this.tpSummary = new System.Windows.Forms.TabPage();
+            this.btnXMLPlus = new System.Windows.Forms.Button();
+            this.txtXMLPlus = new System.Windows.Forms.TextBox();
             this.btnAdvancedSearch = new System.Windows.Forms.Button();
             this.btnChart = new System.Windows.Forms.Button();
             this.btnStats = new System.Windows.Forms.Button();
@@ -55,6 +57,8 @@
             this.chkVampire = new System.Windows.Forms.CheckBox();
             this.chkHFLeader = new System.Windows.Forms.CheckBox();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.radSortMiscKills = new System.Windows.Forms.RadioButton();
+            this.radSortHFKills = new System.Windows.Forms.RadioButton();
             this.radHFSortBattles = new System.Windows.Forms.RadioButton();
             this.radHFSortFiltered = new System.Windows.Forms.RadioButton();
             this.radHFNone = new System.Windows.Forms.RadioButton();
@@ -233,6 +237,10 @@
             this.lblArtifactList = new System.Windows.Forms.Label();
             this.btnArtifactSearch = new System.Windows.Forms.Button();
             this.groupBox19 = new System.Windows.Forms.GroupBox();
+            this.lblArtMatFilter = new System.Windows.Forms.Label();
+            this.cbmArtMatFilter = new System.Windows.Forms.ComboBox();
+            this.lblArtTypeFilter = new System.Windows.Forms.Label();
+            this.cbmArtTypeFilter = new System.Windows.Forms.ComboBox();
             this.groupBox20 = new System.Windows.Forms.GroupBox();
             this.radArtifactSortFiltered = new System.Windows.Forms.RadioButton();
             this.radArtifactSortNone = new System.Windows.Forms.RadioButton();
@@ -333,6 +341,8 @@
             // 
             // tpSummary
             // 
+            this.tpSummary.Controls.Add(this.btnXMLPlus);
+            this.tpSummary.Controls.Add(this.txtXMLPlus);
             this.tpSummary.Controls.Add(this.btnAdvancedSearch);
             this.tpSummary.Controls.Add(this.btnChart);
             this.tpSummary.Controls.Add(this.btnStats);
@@ -353,6 +363,26 @@
             this.tpSummary.TabIndex = 0;
             this.tpSummary.Text = "Summary";
             this.tpSummary.UseVisualStyleBackColor = true;
+            // 
+            // btnXMLPlus
+            // 
+            this.btnXMLPlus.Location = new System.Drawing.Point(233, 107);
+            this.btnXMLPlus.Name = "btnXMLPlus";
+            this.btnXMLPlus.Size = new System.Drawing.Size(30, 23);
+            this.btnXMLPlus.TabIndex = 21;
+            this.btnXMLPlus.Text = "...";
+            this.btnXMLPlus.UseVisualStyleBackColor = true;
+            // 
+            // txtXMLPlus
+            // 
+            this.txtXMLPlus.BackColor = System.Drawing.SystemColors.MenuBar;
+            this.txtXMLPlus.ForeColor = System.Drawing.SystemColors.InactiveCaptionText;
+            this.txtXMLPlus.Location = new System.Drawing.Point(9, 108);
+            this.txtXMLPlus.Name = "txtXMLPlus";
+            this.txtXMLPlus.ReadOnly = true;
+            this.txtXMLPlus.Size = new System.Drawing.Size(218, 22);
+            this.txtXMLPlus.TabIndex = 20;
+            this.txtXMLPlus.Text = "Legends Plus XML";
             // 
             // btnAdvancedSearch
             // 
@@ -400,7 +430,7 @@
             // 
             // btnMap
             // 
-            this.btnMap.Location = new System.Drawing.Point(233, 84);
+            this.btnMap.Location = new System.Drawing.Point(233, 82);
             this.btnMap.Name = "btnMap";
             this.btnMap.Size = new System.Drawing.Size(30, 23);
             this.btnMap.TabIndex = 15;
@@ -411,7 +441,7 @@
             // 
             this.txtMap.BackColor = System.Drawing.SystemColors.MenuBar;
             this.txtMap.ForeColor = System.Drawing.SystemColors.InactiveCaptionText;
-            this.txtMap.Location = new System.Drawing.Point(9, 84);
+            this.txtMap.Location = new System.Drawing.Point(9, 83);
             this.txtMap.Name = "txtMap";
             this.txtMap.ReadOnly = true;
             this.txtMap.Size = new System.Drawing.Size(218, 22);
@@ -423,7 +453,7 @@
             this.lblStatus.BackColor = System.Drawing.Color.Transparent;
             this.lblStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblStatus.ForeColor = System.Drawing.Color.Green;
-            this.lblStatus.Location = new System.Drawing.Point(8, 112);
+            this.lblStatus.Location = new System.Drawing.Point(8, 144);
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(253, 20);
             this.lblStatus.TabIndex = 12;
@@ -433,7 +463,7 @@
             // 
             this.txtSitePops.BackColor = System.Drawing.SystemColors.MenuBar;
             this.txtSitePops.ForeColor = System.Drawing.SystemColors.InactiveCaptionText;
-            this.txtSitePops.Location = new System.Drawing.Point(9, 60);
+            this.txtSitePops.Location = new System.Drawing.Point(9, 58);
             this.txtSitePops.Name = "txtSitePops";
             this.txtSitePops.ReadOnly = true;
             this.txtSitePops.Size = new System.Drawing.Size(218, 22);
@@ -444,7 +474,7 @@
             // 
             this.txtHistory.BackColor = System.Drawing.SystemColors.MenuBar;
             this.txtHistory.ForeColor = System.Drawing.SystemColors.InactiveCaptionText;
-            this.txtHistory.Location = new System.Drawing.Point(9, 34);
+            this.txtHistory.Location = new System.Drawing.Point(9, 33);
             this.txtHistory.Name = "txtHistory";
             this.txtHistory.ReadOnly = true;
             this.txtHistory.Size = new System.Drawing.Size(218, 22);
@@ -462,7 +492,7 @@
             // 
             // btnHistory
             // 
-            this.btnHistory.Location = new System.Drawing.Point(233, 31);
+            this.btnHistory.Location = new System.Drawing.Point(233, 32);
             this.btnHistory.Name = "btnHistory";
             this.btnHistory.Size = new System.Drawing.Size(30, 23);
             this.btnHistory.TabIndex = 8;
@@ -471,7 +501,7 @@
             // 
             // btnXML
             // 
-            this.btnXML.Location = new System.Drawing.Point(233, 6);
+            this.btnXML.Location = new System.Drawing.Point(233, 7);
             this.btnXML.Name = "btnXML";
             this.btnXML.Size = new System.Drawing.Size(30, 23);
             this.btnXML.TabIndex = 7;
@@ -493,11 +523,11 @@
             // 
             this.txtLog.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtLog.Location = new System.Drawing.Point(9, 138);
+            this.txtLog.Location = new System.Drawing.Point(9, 167);
             this.txtLog.Name = "txtLog";
             this.txtLog.ReadOnly = true;
             this.txtLog.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtLog.Size = new System.Drawing.Size(254, 313);
+            this.txtLog.Size = new System.Drawing.Size(254, 284);
             this.txtLog.TabIndex = 3;
             this.txtLog.Text = "";
             this.txtLog.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtLog_KeyDown);
@@ -590,7 +620,7 @@
             // chkWerebeast
             // 
             this.chkWerebeast.AutoSize = true;
-            this.chkWerebeast.Location = new System.Drawing.Point(133, 162);
+            this.chkWerebeast.Location = new System.Drawing.Point(133, 185);
             this.chkWerebeast.Name = "chkWerebeast";
             this.chkWerebeast.Size = new System.Drawing.Size(81, 17);
             this.chkWerebeast.TabIndex = 19;
@@ -624,22 +654,44 @@
             // 
             this.groupBox5.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox5.Controls.Add(this.radSortMiscKills);
+            this.groupBox5.Controls.Add(this.radSortHFKills);
             this.groupBox5.Controls.Add(this.radHFSortBattles);
             this.groupBox5.Controls.Add(this.radHFSortFiltered);
             this.groupBox5.Controls.Add(this.radHFNone);
             this.groupBox5.Controls.Add(this.radHFSortEvents);
             this.groupBox5.Controls.Add(this.radSortKills);
-            this.groupBox5.Location = new System.Drawing.Point(133, 19);
+            this.groupBox5.Location = new System.Drawing.Point(133, 9);
             this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(115, 137);
+            this.groupBox5.Size = new System.Drawing.Size(115, 168);
             this.groupBox5.TabIndex = 16;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "Sort By";
             // 
+            // radSortMiscKills
+            // 
+            this.radSortMiscKills.Location = new System.Drawing.Point(6, 143);
+            this.radSortMiscKills.Name = "radSortMiscKills";
+            this.radSortMiscKills.Size = new System.Drawing.Size(103, 15);
+            this.radSortMiscKills.TabIndex = 23;
+            this.radSortMiscKills.Text = "Misc Kills";
+            this.radSortMiscKills.UseVisualStyleBackColor = true;
+            this.radSortMiscKills.CheckedChanged += new System.EventHandler(this.searchHFList);
+            // 
+            // radSortHFKills
+            // 
+            this.radSortHFKills.Location = new System.Drawing.Point(6, 124);
+            this.radSortHFKills.Name = "radSortHFKills";
+            this.radSortHFKills.Size = new System.Drawing.Size(103, 15);
+            this.radSortHFKills.TabIndex = 22;
+            this.radSortHFKills.Text = "HF Kills";
+            this.radSortHFKills.UseVisualStyleBackColor = true;
+            this.radSortHFKills.CheckedChanged += new System.EventHandler(this.searchHFList);
+            // 
             // radHFSortBattles
             // 
             this.radHFSortBattles.AutoSize = true;
-            this.radHFSortBattles.Location = new System.Drawing.Point(6, 88);
+            this.radHFSortBattles.Location = new System.Drawing.Point(6, 82);
             this.radHFSortBattles.Name = "radHFSortBattles";
             this.radHFSortBattles.Size = new System.Drawing.Size(60, 17);
             this.radHFSortBattles.TabIndex = 21;
@@ -651,7 +703,7 @@
             // radHFSortFiltered
             // 
             this.radHFSortFiltered.AutoSize = true;
-            this.radHFSortFiltered.Location = new System.Drawing.Point(6, 42);
+            this.radHFSortFiltered.Location = new System.Drawing.Point(6, 40);
             this.radHFSortFiltered.Name = "radHFSortFiltered";
             this.radHFSortFiltered.Size = new System.Drawing.Size(100, 17);
             this.radHFSortFiltered.TabIndex = 20;
@@ -664,7 +716,7 @@
             // 
             this.radHFNone.AutoSize = true;
             this.radHFNone.Checked = true;
-            this.radHFNone.Location = new System.Drawing.Point(6, 111);
+            this.radHFNone.Location = new System.Drawing.Point(6, 103);
             this.radHFNone.Name = "radHFNone";
             this.radHFNone.Size = new System.Drawing.Size(53, 17);
             this.radHFNone.TabIndex = 19;
@@ -687,7 +739,7 @@
             // radSortKills
             // 
             this.radSortKills.AutoSize = true;
-            this.radSortKills.Location = new System.Drawing.Point(6, 65);
+            this.radSortKills.Location = new System.Drawing.Point(6, 61);
             this.radSortKills.Name = "radSortKills";
             this.radSortKills.Size = new System.Drawing.Size(89, 17);
             this.radSortKills.TabIndex = 17;
@@ -833,7 +885,7 @@
             this.tpHFEvents.Location = new System.Drawing.Point(4, 22);
             this.tpHFEvents.Name = "tpHFEvents";
             this.tpHFEvents.Padding = new System.Windows.Forms.Padding(3);
-            this.tpHFEvents.Size = new System.Drawing.Size(261, 510);
+            this.tpHFEvents.Size = new System.Drawing.Size(261, 492);
             this.tpHFEvents.TabIndex = 1;
             this.tpHFEvents.Text = "Events";
             this.tpHFEvents.UseVisualStyleBackColor = true;
@@ -1054,7 +1106,7 @@
             this.tpCivEvents.Location = new System.Drawing.Point(4, 22);
             this.tpCivEvents.Name = "tpCivEvents";
             this.tpCivEvents.Padding = new System.Windows.Forms.Padding(3);
-            this.tpCivEvents.Size = new System.Drawing.Size(261, 510);
+            this.tpCivEvents.Size = new System.Drawing.Size(261, 492);
             this.tpCivEvents.TabIndex = 1;
             this.tpCivEvents.Text = "Events";
             this.tpCivEvents.UseVisualStyleBackColor = true;
@@ -2642,7 +2694,7 @@
             // btnArtifactListReset
             // 
             this.btnArtifactListReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnArtifactListReset.Location = new System.Drawing.Point(5, 246);
+            this.btnArtifactListReset.Location = new System.Drawing.Point(3, 314);
             this.btnArtifactListReset.Name = "btnArtifactListReset";
             this.btnArtifactListReset.Size = new System.Drawing.Size(50, 20);
             this.btnArtifactListReset.TabIndex = 48;
@@ -2653,9 +2705,9 @@
             // lblArtifactList
             // 
             this.lblArtifactList.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblArtifactList.Location = new System.Drawing.Point(61, 251);
+            this.lblArtifactList.Location = new System.Drawing.Point(58, 318);
             this.lblArtifactList.Name = "lblArtifactList";
-            this.lblArtifactList.Size = new System.Drawing.Size(189, 36);
+            this.lblArtifactList.Size = new System.Drawing.Size(189, 18);
             this.lblArtifactList.TabIndex = 47;
             this.lblArtifactList.Text = "All";
             // 
@@ -2673,13 +2725,55 @@
             // 
             this.groupBox19.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox19.Controls.Add(this.lblArtMatFilter);
+            this.groupBox19.Controls.Add(this.cbmArtMatFilter);
+            this.groupBox19.Controls.Add(this.lblArtTypeFilter);
+            this.groupBox19.Controls.Add(this.cbmArtTypeFilter);
             this.groupBox19.Controls.Add(this.groupBox20);
-            this.groupBox19.Location = new System.Drawing.Point(3, 290);
+            this.groupBox19.Location = new System.Drawing.Point(3, 342);
             this.groupBox19.Name = "groupBox19";
-            this.groupBox19.Size = new System.Drawing.Size(241, 164);
+            this.groupBox19.Size = new System.Drawing.Size(241, 112);
             this.groupBox19.TabIndex = 45;
             this.groupBox19.TabStop = false;
             this.groupBox19.Text = "Filter / Sort";
+            // 
+            // lblArtMatFilter
+            // 
+            this.lblArtMatFilter.AutoSize = true;
+            this.lblArtMatFilter.Location = new System.Drawing.Point(3, 63);
+            this.lblArtMatFilter.Name = "lblArtMatFilter";
+            this.lblArtMatFilter.Size = new System.Drawing.Size(49, 13);
+            this.lblArtMatFilter.TabIndex = 21;
+            this.lblArtMatFilter.Text = "Material";
+            // 
+            // cbmArtMatFilter
+            // 
+            this.cbmArtMatFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbmArtMatFilter.FormattingEnabled = true;
+            this.cbmArtMatFilter.Location = new System.Drawing.Point(3, 79);
+            this.cbmArtMatFilter.Name = "cbmArtMatFilter";
+            this.cbmArtMatFilter.Size = new System.Drawing.Size(116, 21);
+            this.cbmArtMatFilter.TabIndex = 20;
+            this.cbmArtMatFilter.SelectedIndexChanged += new System.EventHandler(this.searchArtifactList);
+            // 
+            // lblArtTypeFilter
+            // 
+            this.lblArtTypeFilter.AutoSize = true;
+            this.lblArtTypeFilter.Location = new System.Drawing.Point(3, 17);
+            this.lblArtTypeFilter.Name = "lblArtTypeFilter";
+            this.lblArtTypeFilter.Size = new System.Drawing.Size(30, 13);
+            this.lblArtTypeFilter.TabIndex = 19;
+            this.lblArtTypeFilter.Text = "Type";
+            // 
+            // cbmArtTypeFilter
+            // 
+            this.cbmArtTypeFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbmArtTypeFilter.FormattingEnabled = true;
+            this.cbmArtTypeFilter.Location = new System.Drawing.Point(3, 33);
+            this.cbmArtTypeFilter.Name = "cbmArtTypeFilter";
+            this.cbmArtTypeFilter.Size = new System.Drawing.Size(116, 21);
+            this.cbmArtTypeFilter.TabIndex = 18;
+            this.cbmArtTypeFilter.SelectedIndexChanged += new System.EventHandler(this.searchArtifactList);
             // 
             // groupBox20
             // 
@@ -2688,9 +2782,9 @@
             this.groupBox20.Controls.Add(this.radArtifactSortFiltered);
             this.groupBox20.Controls.Add(this.radArtifactSortNone);
             this.groupBox20.Controls.Add(this.radArtifactSortEvents);
-            this.groupBox20.Location = new System.Drawing.Point(133, 19);
+            this.groupBox20.Location = new System.Drawing.Point(125, 14);
             this.groupBox20.Name = "groupBox20";
-            this.groupBox20.Size = new System.Drawing.Size(102, 126);
+            this.groupBox20.Size = new System.Drawing.Size(110, 86);
             this.groupBox20.TabIndex = 15;
             this.groupBox20.TabStop = false;
             this.groupBox20.Text = "Sort By";
@@ -2749,7 +2843,7 @@
             this.listArtifactSearch.FormattingEnabled = true;
             this.listArtifactSearch.Location = new System.Drawing.Point(3, 31);
             this.listArtifactSearch.Name = "listArtifactSearch";
-            this.listArtifactSearch.Size = new System.Drawing.Size(241, 147);
+            this.listArtifactSearch.Size = new System.Drawing.Size(241, 277);
             this.listArtifactSearch.TabIndex = 43;
             this.listArtifactSearch.SelectedIndexChanged += new System.EventHandler(this.listSearch_SelectedIndexChanged);
             // 
@@ -2903,6 +2997,7 @@
             this.tpArtifactsSearch.ResumeLayout(false);
             this.tpArtifactsSearch.PerformLayout();
             this.groupBox19.ResumeLayout(false);
+            this.groupBox19.PerformLayout();
             this.groupBox20.ResumeLayout(false);
             this.groupBox20.PerformLayout();
             this.ResumeLayout(false);
@@ -3127,6 +3222,14 @@
         private System.Windows.Forms.GroupBox groupBox16;
         private System.Windows.Forms.TabPage tpEraSearch;
         private System.Windows.Forms.TabControl tcEras;
+        private System.Windows.Forms.RadioButton radSortHFKills;
+        private System.Windows.Forms.RadioButton radSortMiscKills;
+        private System.Windows.Forms.Button btnXMLPlus;
+        private System.Windows.Forms.TextBox txtXMLPlus;
+        private System.Windows.Forms.Label lblArtMatFilter;
+        private System.Windows.Forms.ComboBox cbmArtMatFilter;
+        private System.Windows.Forms.Label lblArtTypeFilter;
+        private System.Windows.Forms.ComboBox cbmArtTypeFilter;
     }
 }
 

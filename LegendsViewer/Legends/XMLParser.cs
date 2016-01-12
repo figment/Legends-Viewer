@@ -12,11 +12,11 @@ namespace LegendsViewer.Legends
 {
     class XMLParser
     {
-        World World;
-        XmlTextReader XML;
-        string CurrentSectionName = "";
-        Section CurrentSection = Section.Unknown;
-        string CurrentItemName = "";
+        protected World World;
+        protected XmlTextReader XML;
+        protected string CurrentSectionName = "";
+        protected Section CurrentSection = Section.Unknown;
+        protected string CurrentItemName = "";
 
         public XMLParser(World world, string xmlFile)
         {
@@ -76,7 +76,7 @@ namespace LegendsViewer.Legends
             XML.Close();
         }
 
-        private void GetSectionStart()
+        protected virtual void GetSectionStart()
         {
             CurrentSectionName = "";
             if (XML.NodeType == XmlNodeType.Element)
@@ -84,7 +84,7 @@ namespace LegendsViewer.Legends
             CurrentSection = GetSectionType(CurrentSectionName);
         }
 
-        private Section GetSectionType(string sectionName)
+        protected virtual Section GetSectionType(string sectionName)
         {
             switch (sectionName)
             {
@@ -102,11 +102,13 @@ namespace LegendsViewer.Legends
                 case "xml":
                 case "":
                 case "df_world": return Section.Junk;
+                case "name": return Section.Name;
+                case "altname": return Section.AltName;
                 default: World.ParsingErrors.Report("Unknown XML Section: " + sectionName); return Section.Unknown;
             }
         }
 
-        private void ParseSection()
+        protected virtual void ParseSection()
         {
             XML.ReadStartElement();
             while (XML.NodeType != XmlNodeType.EndElement)
@@ -117,7 +119,7 @@ namespace LegendsViewer.Legends
             XML.ReadEndElement();
         }
 
-        private void SkipSection()
+        protected virtual void SkipSection()
         {
             string currentSectionName = XML.Name;
             XML.ReadStartElement();
@@ -128,7 +130,7 @@ namespace LegendsViewer.Legends
             XML.ReadEndElement();
         }
 
-        public List<Property> ParseItem()
+        public virtual List<Property> ParseItem()
         {
             CurrentItemName = XML.Name;
             XML.ReadStartElement();
@@ -141,7 +143,7 @@ namespace LegendsViewer.Legends
             return properties;
         }
 
-        private Property ParseProperty()
+        protected virtual Property ParseProperty()
         {
             Property property = new Property();
 
@@ -173,23 +175,23 @@ namespace LegendsViewer.Legends
 
         }
 
-        private void AddItemToWorld(List<Property> properties)
+        protected virtual void AddItemToWorld(List<Property> properties)
         {
             string eventType = "";
             if (CurrentSection == Section.Events || CurrentSection == Section.EventCollections)
-                eventType = properties.First(property => property.Name == "type").Value;
+                eventType = properties.First(property => property.Name == "type").Value.Replace('_', ' ');
 
-            if (CurrentSection != Section.Events && CurrentSection != Section.EventCollections)
-            {
-                AddFromXMLSection(CurrentSection, properties);
-            }
-            else if (CurrentSection == Section.EventCollections)
+            if (CurrentSection == Section.EventCollections)
             {
                 AddEventCollection(eventType, properties);
             }
             else if (CurrentSection == Section.Events)
             {
                 AddEvent(eventType, properties);
+            }
+            else
+            {
+                AddFromXMLSection(CurrentSection, properties);
             }
 
             foreach (Property property in properties)
@@ -213,138 +215,149 @@ namespace LegendsViewer.Legends
         }
 
 
-        public void AddFromXMLSection(Section section, List<Property> properties)
+        protected virtual void AddFromXMLSection(Section section, List<Property> properties)
         {
             switch (section)
             {
-                case Section.Regions: World.Regions.Add(new WorldRegion(properties, World)); break;
-                case Section.UndergroundRegions: World.UndergroundRegions.Add(new UndergroundRegion(properties, World)); break;
-                case Section.Sites: World.Sites.Add(new Site(properties, World)); break;
-                case Section.HistoricalFigures: World.HistoricalFigures.Add(new HistoricalFigure(properties, World)); break;
-                case Section.EntityPopulations: World.EntityPopulations.Add(new EntityPopulation(properties, World)); break;
-                case Section.Entities: World.Entities.Add(new Entity(properties, World)); break;
+                case Section.Regions: World.UpsertWorldObject(World.Regions, properties, World); break;
+                case Section.UndergroundRegions: World.UpsertWorldObject(World.UndergroundRegions, properties, World); break;
+                case Section.Sites: World.UpsertWorldObject(World.Sites, properties, World); break;
+                case Section.HistoricalFigures: World.UpsertWorldObject(World.HistoricalFigures, properties, World); break;
+                case Section.EntityPopulations: World.UpsertWorldObject(World.EntityPopulations, properties, World); break;
+                case Section.Entities: World.UpsertWorldObject(World.Entities, properties, World); break;
                 case Section.Eras: World.Eras.Add(new Era(properties, World)); break;
-                case Section.Artifacts: World.Artifacts.Add(new Artifact(properties, World)); break;
-                case Section.WorldConstructions: break;
+                case Section.Artifacts: World.UpsertWorldObject(World.Artifacts, properties, World); break;
+                case Section.WorldConstructions: World.UpsertWorldObject(World.Constructions, properties, World); break;
                 default: World.ParsingErrors.Report("Unknown XML Section: " + section.ToString()); break;
             }
         }
 
-        private void AddEvent(string type, List<Property> properties)
+        protected virtual void AddEvent(string type, List<Property> properties)
         {
             switch (type)
             {
-                case "add hf entity link": World.Events.Add(new AddHFEntityLink(properties, World)); break;
-                case "add hf hf link": World.Events.Add(new AddHFHFLink(properties, World)); break;
-                case "attacked site": World.Events.Add(new AttackedSite(properties, World)); break;
-                case "body abused": World.Events.Add(new BodyAbused(properties, World)); break;
-                case "change hf job": World.Events.Add(new ChangeHFJob(properties, World)); break;
-                case "change hf state": World.Events.Add(new ChangeHFState(properties, World)); break;
-                case "changed creature type": World.Events.Add(new ChangedCreatureType(properties, World)); break;
-                case "create entity position": World.Events.Add(new CreateEntityPosition(properties, World)); break;
-                case "created site": World.Events.Add(new CreatedSite(properties, World)); break;
-                case "created world construction": World.Events.Add(new CreatedWorldConstruction(properties, World)); break;
-                case "creature devoured": World.Events.Add(new CreatureDevoured(properties, World)); break;
-                case "destroyed site": World.Events.Add(new DestroyedSite(properties, World)); break;
-                case "field battle": World.Events.Add(new FieldBattle(properties, World)); break;
-                case "hf abducted": World.Events.Add(new HFAbducted(properties, World)); break;
-                case "hf died": World.Events.Add(new HFDied(properties, World)); break;
-                case "hf new pet": World.Events.Add(new HFNewPet(properties, World)); break;
-                case "hf reunion": World.Events.Add(new HFReunion(properties, World)); break;
-                case "hf simple battle event": World.Events.Add(new HFSimpleBattleEvent(properties, World)); break;
-                case "hf travel": World.Events.Add(new HFTravel(properties, World)); break;
-                case "hf wounded": World.Events.Add(new HFWounded(properties, World)); break;
-                case "impersonate hf": World.Events.Add(new ImpersonateHF(properties, World)); break;
-                case "item stolen": World.Events.Add(new ItemStolen(properties, World)); break;
-                case "new site leader": World.Events.Add(new NewSiteLeader(properties, World)); break;
-                case "peace accepted": World.Events.Add(new PeaceAccepted(properties, World)); break;
-                case "peace rejected": World.Events.Add(new PeaceRejected(properties, World)); break;
-                case "plundered site": World.Events.Add(new PlunderedSite(properties, World)); break;
-                case "reclaim site": World.Events.Add(new ReclaimSite(properties, World)); break;
-                case "remove hf entity link": World.Events.Add(new RemoveHFEntityLink(properties, World)); break;
-                case "artifact created": World.Events.Add(new ArtifactCreated(properties, World)); break;
-                case "diplomat lost": World.Events.Add(new DiplomatLost(properties, World)); break;
-                case "entity created": World.Events.Add(new EntityCreated(properties, World)); break;
-                case "hf revived": World.Events.Add(new HFRevived(properties, World)); break;
-                case "masterpiece arch design": World.Events.Add(new MasterpieceArchDesign(properties, World)); break;
-                case "masterpiece arch constructed": World.Events.Add(new MasterpieceArchConstructed(properties, World)); break;
-                case "masterpiece engraving": World.Events.Add(new MasterpieceEngraving(properties, World)); break;
-                case "masterpiece food": World.Events.Add(new MasterpieceFood(properties, World)); break;
-                case "masterpiece lost": World.Events.Add(new MasterpieceLost(properties, World)); break;
-                case "masterpiece item": World.Events.Add(new MasterpieceItem(properties, World)); break;
-                case "masterpiece item improvement": World.Events.Add(new MasterpieceItemImprovement(properties, World)); break;
-                case "merchant": World.Events.Add(new Merchant(properties, World)); break;
-                case "site abandoned": World.Events.Add(new SiteAbandoned(properties, World)); break;
-                case "site died": World.Events.Add(new SiteDied(properties, World)); break;
-                case "add hf site link": World.Events.Add(new AddHFSiteLink(properties, World)); break;
-                case "created structure": World.Events.Add(new CreatedStructure(properties, World)); break;
-                case "hf razed structure": World.Events.Add(new HFRazedStructure(properties, World)); break;
-                case "remove hf site link": World.Events.Add(new RemoveHFSiteLink(properties, World)); break;
-                case "replaced structure": World.Events.Add(new ReplacedStructure(properties, World)); break;
-                case "site taken over": World.Events.Add(new SiteTakenOver(properties, World)); break;
-                case "entity relocate": World.Events.Add(new EntityRelocate(properties, World)); break;
-	            case "hf gains secret goal": World.Events.Add(new HFGainsSecretGoal(properties, World)); break;
-	            case "hf profaned structure": World.Events.Add(new HFProfanedStructure(properties, World)); break;
-	            case "hf does interaction": World.Events.Add(new HFDoesInteraction(properties, World)); break;
-	            case "entity primary criminals": World.Events.Add(new EntityPrimaryCriminals(properties, World)); break;
-                case "hf confronted": World.Events.Add(new HFConfronted(properties, World)); break;
-                case "assume identity": World.Events.Add(new AssumeIdentity(properties, World)); break;
-	            case "entity law": World.Events.Add(new EntityLaw(properties, World)); break;
-	            case "change hf body state": World.Events.Add(new ChangeHFBodyState(properties, World)); break;
-                case "razed structure": World.Events.Add(new RazedStructure(properties, World)); break;
-                case "hf learns secret": World.Events.Add(new HFLearnsSecret(properties, World)); break;
-                case "artifact stored": World.Events.Add(new ArtifactStored(properties, World)); break;
-                case "artifact possessed": World.Events.Add(new ArtifactPossessed(properties, World)); break;
-                case "agreement made": World.Events.Add(new AgreementMade(properties, World)); break;
-                case "artifact lost": World.Events.Add(new ArtifactLost(properties, World)); break;
-                case "site dispute": World.Events.Add(new SiteDispute(properties, World)); break;
-                case "hf attacked site": World.Events.Add(new HfAttackedSite(properties, World)); break;
-                case "hf destroyed site": World.Events.Add(new HfDestroyedSite(properties, World)); break;
-                case "agreement formed": World.Events.Add(new AgreementFormed(properties, World)); break;
-                case "site tribute forced": World.Events.Add(new SiteTributeForced(properties, World)); break;
-                case "insurrection started": World.Events.Add(new InsurrectionStarted(properties, World)); break;
-                case "procession": World.Events.Add(new Procession(properties, World)); break;
-                case "ceremony": World.Events.Add(new Ceremony(properties, World)); break;
-                case "performance": World.Events.Add(new Performance(properties, World)); break;
-                case "competition": World.Events.Add(new Competition(properties, World)); break;
-                case "written content composed": World.Events.Add(new WrittenContentComposed(properties, World)); break;
-                case "poetic form created": World.Events.Add(new PoeticFormCreated(properties, World)); break;
-                case "musical form created": World.Events.Add(new MusicalFormCreated(properties, World)); break;
-                case "dance form created": World.Events.Add(new DanceFormCreated(properties, World)); break;
-                case "knowledge discovered": World.Events.Add(new KnowledgeDiscovered(properties, World)); break;
-                case "hf relationship denied": World.Events.Add(new HFRelationShipDenied(properties, World)); break;
-                case "regionpop incorporated into entity": World.Events.Add(new RegionpopIncorporatedIntoEntity(properties, World)); break;
-                case "artifact destroyed": World.Events.Add(new ArtifactDestroyed(properties, World)); break;
-                case "hf disturbed structure":
-                    break;
+                case "add hf entity link": World.UpsertEvent<AddHFEntityLink>(World.Events, properties, World); break;
+                case "add hf hf link": World.UpsertEvent<AddHFHFLink>(World.Events, properties, World); break;
+                case "attacked site": World.UpsertEvent<AttackedSite>(World.Events, properties, World); break;
+                case "body abused": World.UpsertEvent<BodyAbused>(World.Events, properties, World); break;
+                case "change hf job": World.UpsertEvent<ChangeHFJob>(World.Events, properties, World); break;
+                case "change hf state": World.UpsertEvent<ChangeHFState>(World.Events, properties, World); break;
+                case "changed creature type": World.UpsertEvent<ChangedCreatureType>(World.Events, properties, World); break;
+                case "create entity position": World.UpsertEvent<CreateEntityPosition>(World.Events, properties, World); break;
+                case "created site": World.UpsertEvent<CreatedSite>(World.Events, properties, World); break;
+                case "created world construction": World.UpsertEvent<CreatedWorldConstruction>(World.Events, properties, World); break;
+                case "creature devoured": World.UpsertEvent<CreatureDevoured>(World.Events, properties, World); break;
+                case "destroyed site": World.UpsertEvent<DestroyedSite>(World.Events, properties, World); break;
+                case "field battle": World.UpsertEvent<FieldBattle>(World.Events, properties, World); break;
+                case "hf abducted": World.UpsertEvent<HFAbducted>(World.Events, properties, World); break;
+                case "hist figure died": 
+                case "hf died": World.UpsertEvent<HFDied>(World.Events, properties, World); break;
+                case "hist figure new pet":
+                case "hf new pet": World.UpsertEvent<HFNewPet>(World.Events, properties, World); break;
+                case "hist figure reunion":
+                case "hf reunion": World.UpsertEvent<HFReunion>(World.Events, properties, World); break;
+                case "hf simple battle event": World.UpsertEvent<HFSimpleBattleEvent>(World.Events, properties, World); break;
+                case "hist figure travel":
+                case "hf travel": World.UpsertEvent<HFTravel>(World.Events, properties, World); break;
+                case "hist figure wounded":
+                case "hf wounded": World.UpsertEvent<HFWounded>(World.Events, properties, World); break;
+                case "impersonate hf": World.UpsertEvent<ImpersonateHF>(World.Events, properties, World); break;
+                case "item stolen": World.UpsertEvent<ItemStolen>(World.Events, properties, World); break;
+                case "new site leader": World.UpsertEvent<NewSiteLeader>(World.Events, properties, World); break;
+                case "war peace accepted":
+                case "peace accepted": World.UpsertEvent<PeaceAccepted>(World.Events, properties, World); break;
+                case "war peace rejected":
+                case "peace rejected": World.UpsertEvent<PeaceRejected>(World.Events, properties, World); break;
+                case "plundered site": World.UpsertEvent<PlunderedSite>(World.Events, properties, World); break;
+                case "reclaim site": World.UpsertEvent<ReclaimSite>(World.Events, properties, World); break;
+                case "remove hf entity link": World.UpsertEvent<RemoveHFEntityLink>(World.Events, properties, World); break;
+                case "artifact created": World.UpsertEvent<ArtifactCreated>(World.Events, properties, World); break;
+                case "diplomat lost": World.UpsertEvent<DiplomatLost>(World.Events, properties, World); break;
+                case "entity created": World.UpsertEvent<EntityCreated>(World.Events, properties, World); break;
+                case "hf revived": World.UpsertEvent<HFRevived>(World.Events, properties, World); break;
+                case "masterpiece arch design": World.UpsertEvent<MasterpieceArchDesign>(World.Events, properties, World); break;
+                case "masterpiece arch constructed": World.UpsertEvent<MasterpieceArchConstructed>(World.Events, properties, World); break;
+                case "masterpiece engraving": World.UpsertEvent<MasterpieceEngraving>(World.Events, properties, World); break;
+                case "masterpiece food": World.UpsertEvent<MasterpieceFood>(World.Events, properties, World); break;
+                case "masterpiece lost": World.UpsertEvent<MasterpieceLost>(World.Events, properties, World); break;
+                case "masterpiece item": World.UpsertEvent<MasterpieceItem>(World.Events, properties, World); break;
+                case "masterpiece item improvement": World.UpsertEvent<MasterpieceItemImprovement>(World.Events, properties, World); break;
+                case "merchant": World.UpsertEvent<Merchant>(World.Events, properties, World); break;
+                case "site abandoned": World.UpsertEvent<SiteAbandoned>(World.Events, properties, World); break;
+                case "site died": World.UpsertEvent<SiteDied>(World.Events, properties, World); break;
+                case "add hf site link": World.UpsertEvent<AddHFSiteLink>(World.Events, properties, World); break;
+                case "created building":
+                case "created structure": World.UpsertEvent<CreatedStructure>(World.Events, properties, World); break;
+                case "hf razed structure": World.UpsertEvent<HFRazedStructure>(World.Events, properties, World); break;
+                case "remove hf site link": World.UpsertEvent<RemoveHFSiteLink>(World.Events, properties, World); break;
+                case "replaced building":
+                case "replaced structure": World.UpsertEvent<ReplacedStructure>(World.Events, properties, World); break;
+                case "site taken over": World.UpsertEvent<SiteTakenOver>(World.Events, properties, World); break;
+                case "entity relocate": World.UpsertEvent<EntityRelocate>(World.Events, properties, World); break;
+	            case "hf gains secret goal": World.UpsertEvent<HFGainsSecretGoal>(World.Events, properties, World); break;
+	            case "hf profaned structure": World.UpsertEvent<HFProfanedStructure>(World.Events, properties, World); break;
+	            case "hf does interaction": World.UpsertEvent<HFDoesInteraction>(World.Events, properties, World); break;
+	            case "entity primary criminals": World.UpsertEvent<EntityPrimaryCriminals>(World.Events, properties, World); break;
+                case "hf confronted": World.UpsertEvent<HFConfronted>(World.Events, properties, World); break;
+                case "assume identity": World.UpsertEvent<AssumeIdentity>(World.Events, properties, World); break;
+	            case "entity law": World.UpsertEvent<EntityLaw>(World.Events, properties, World); break;
+	            case "change hf body state": World.UpsertEvent<ChangeHFBodyState>(World.Events, properties, World); break;
+                case "razed structure": World.UpsertEvent<RazedStructure>(World.Events, properties, World); break;
+                case "hf learns secret": World.UpsertEvent<HFLearnsSecret>(World.Events, properties, World); break;
+                case "artifact stored": World.UpsertEvent<ArtifactStored>(World.Events, properties, World); break;
+                case "artifact possessed": World.UpsertEvent<ArtifactPossessed>(World.Events, properties, World); break;
+                case "agreement made": World.UpsertEvent<AgreementMade>(World.Events, properties, World); break;
+                case "artifact lost": World.UpsertEvent<ArtifactLost>(World.Events, properties, World); break;
+                case "site dispute": World.UpsertEvent<SiteDispute>(World.Events, properties, World); break;
+                case "hf attacked site": World.UpsertEvent<HfAttackedSite>(World.Events, properties, World); break;
+                case "hf destroyed site": World.UpsertEvent<HfDestroyedSite>(World.Events, properties, World); break;
+                case "agreement formed": World.UpsertEvent<AgreementFormed>(World.Events, properties, World); break;
+                case "site tribute forced": World.UpsertEvent<SiteTributeForced>(World.Events, properties, World); break;
+                case "insurrection started": World.UpsertEvent<InsurrectionStarted>(World.Events, properties, World); break;
+                case "procession": World.UpsertEvent<Procession>(World.Events, properties, World); break;
+                case "ceremony": World.UpsertEvent<Ceremony>(World.Events, properties, World); break;
+                case "performance": World.UpsertEvent<Performance>(World.Events, properties, World); break;
+                case "competition": World.UpsertEvent<Competition>(World.Events, properties, World); break;
+                case "written content composed": World.UpsertEvent<WrittenContentComposed>(World.Events, properties, World); break;
+                case "poetic form created": World.UpsertEvent<PoeticFormCreated>(World.Events, properties, World); break;
+                case "musical form created": World.UpsertEvent<MusicalFormCreated>(World.Events, properties, World); break;
+                case "dance form created": World.UpsertEvent<DanceFormCreated>(World.Events, properties, World); break;
+                case "knowledge discovered": World.UpsertEvent<KnowledgeDiscovered>(World.Events, properties, World); break;
+                case "hf relationship denied": World.UpsertEvent<HFRelationShipDenied>(World.Events, properties, World); break;
+                case "regionpop incorporated into entity": World.UpsertEvent<RegionpopIncorporatedIntoEntity>(World.Events, properties, World); break;
+                case "artifact destroyed": World.UpsertEvent<ArtifactDestroyed>(World.Events, properties, World); break;
+                case "entity action": EntityAction.DelegateUpsertEvent(World.Events, properties, World); break;
+                case "hf act on building": HFActOnBuilding.DelegateUpsertEvent(World.Events, properties, World); break;
+                case "hf disturbed structure": break;
                 default: World.ParsingErrors.Report("Unknown Event: " + type);
                     break;
             }
         }
 
-        private void AddEventCollection(string type, List<Property> properties)
+        protected virtual void AddEventCollection(string type, List<Property> properties)
         {
             switch (type)
             {
-                case "abduction": World.EventCollections.Add(new Abduction(properties, World)); break;
-                case "battle": World.EventCollections.Add(new Battle(properties, World)); break;
-                case "beast attack": World.EventCollections.Add(new BeastAttack(properties, World)); break;
-                case "duel": World.EventCollections.Add(new Duel(properties, World)); break;
-                case "journey": World.EventCollections.Add(new Journey(properties, World)); break;
-                case "site conquered": World.EventCollections.Add(new SiteConquered(properties, World)); break;
-                case "theft": World.EventCollections.Add(new Theft(properties, World)); break;
-                case "war": World.EventCollections.Add(new War(properties, World)); break;
-                case "insurrection": World.EventCollections.Add(new Insurrection(properties, World)); break;
-                case "occasion": World.EventCollections.Add(new Occasion(properties, World)); break;
-                case "procession": World.EventCollections.Add(new ProcessionCollection(properties, World)); break;
-                case "ceremony": World.EventCollections.Add(new CeremonyCollection(properties, World)); break;
-                case "performance": World.EventCollections.Add(new PerformanceCollection(properties, World)); break;
-                case "competition": World.EventCollections.Add(new CompetitionCollection(properties, World)); break;
+                case "abduction": World.UpsertEventCol<Abduction>(World.EventCollections, properties, World); break;
+                case "battle": World.UpsertEventCol<Battle>(World.EventCollections, properties, World); break;
+                case "beast attack": World.UpsertEventCol<BeastAttack>(World.EventCollections, properties, World); break;
+                case "duel": World.UpsertEventCol<Duel>(World.EventCollections, properties, World); break;
+                case "journey": World.UpsertEventCol<Journey>(World.EventCollections, properties, World); break;
+                case "site conquered": World.UpsertEventCol<SiteConquered>(World.EventCollections, properties, World); break;
+                case "theft": World.UpsertEventCol<Theft>(World.EventCollections, properties, World); break;
+                case "war": World.UpsertEventCol<War>(World.EventCollections, properties, World); break;
+                case "insurrection": World.UpsertEventCol<Insurrection>(World.EventCollections, properties, World); break;
+                case "occasion": World.UpsertEventCol<Occasion>(World.EventCollections, properties, World); break;
+                case "procession": World.UpsertEventCol<ProcessionCollection>(World.EventCollections, properties, World); break;
+                case "ceremony": World.UpsertEventCol<CeremonyCollection>(World.EventCollections, properties, World); break;
+                case "performance": World.UpsertEventCol<PerformanceCollection>(World.EventCollections, properties, World); break;
+                case "competition": World.UpsertEventCol<CompetitionCollection>(World.EventCollections, properties, World); break;
+                case "purge": World.UpsertEventCol<PurgeCollection>(World.EventCollections, properties, World); break;
                 default: World.ParsingErrors.Report("Unknown Event Collection: " + type); break;
             }
         }
 
-        private void ProcessXMLSection(Section section)
+        protected virtual void ProcessXMLSection(Section section)
         {
             if (section == Section.Events)
             {
@@ -402,7 +415,7 @@ namespace LegendsViewer.Legends
             }
         }
 
-        private void ProcessCollections()
+        protected virtual void ProcessCollections()
         {
             World.Wars = World.EventCollections.OfType<War>().ToList();
             World.Battles = World.EventCollections.OfType<Battle>().ToList();
@@ -448,11 +461,17 @@ namespace LegendsViewer.Legends
                     theft.Thief = beastAttack.Beast;
 
                     insertIndex = beastAttack.Site.Events.BinarySearch(theft);
-                    beastAttack.Site.Events.Insert(~insertIndex, theft);
+                    if (insertIndex < 0)
+                        beastAttack.Site.Events.Insert(~insertIndex, theft);
+                    else
+                    {
+                        // merge
+                    }
                     if (beastAttack.Beast != null)
                     {
                         insertIndex = beastAttack.Beast.Events.BinarySearch(theft);
-                        beastAttack.Beast.Events.Insert(~insertIndex, theft);
+                        if (insertIndex < 0)
+                            beastAttack.Beast.Events.Insert(~insertIndex, theft);
                     }
                 }
                 insertIndex = 0;
@@ -462,7 +481,12 @@ namespace LegendsViewer.Legends
                     {
                         devoured.Eater = beastAttack.Beast;
                         insertIndex = beastAttack.Beast.Events.BinarySearch(devoured);
-                        beastAttack.Beast.Events.Insert(~insertIndex, devoured);
+                        if (insertIndex < 0)
+                            beastAttack.Beast.Events.Insert(~insertIndex, devoured);
+                        else
+                        {
+                            // merge
+                        }
                     }
                 }
 
@@ -513,6 +537,8 @@ namespace LegendsViewer.Legends
         UndergroundRegions,
         WorldConstructions,
         Unknown,
-        Junk
+        Junk,
+        Name,
+        AltName,
     }
 }

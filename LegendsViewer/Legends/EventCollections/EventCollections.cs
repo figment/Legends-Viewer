@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using LegendsViewer.Controls;
 
 namespace LegendsViewer.Legends
 {
@@ -26,8 +27,13 @@ namespace LegendsViewer.Legends
         {
             Initialize();
             World = world;
-            foreach(Property property in properties)
-                switch(property.Name)
+            
+        }
+
+        private void InternalMerge(List<Property> properties, World world)
+        {
+            foreach (Property property in properties)
+                switch (property.Name)
                 {
                     case "id": this.ID = Convert.ToInt32(property.Value); property.Known = true; break;
                     case "start_year": this.StartYear = Convert.ToInt32(property.Value); property.Known = true; break;
@@ -49,6 +55,8 @@ namespace LegendsViewer.Legends
                     default: break;
                 }
         }
+
+
         public EventCollection()
         {
             Initialize();
@@ -62,6 +70,16 @@ namespace LegendsViewer.Legends
             Collections = new List<EventCollection>();
             CollectionIDs = new List<int>();
             Notable = true;
+        }
+
+        internal static IComparer<T> GetDefaultComparer<T>() where T : EventCollection
+        {
+            return new LambaComparer<T>((x, y) => Comparer<int>.Default.Compare(x.ID, y.ID));
+        }
+
+        public virtual void Merge(List<Property> properties, World world)
+        {
+            InternalMerge(properties, world);
         }
 
         public string GetYearTime(bool start = true)

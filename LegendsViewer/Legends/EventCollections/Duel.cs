@@ -7,7 +7,7 @@ namespace LegendsViewer.Legends
 {
     public class Duel : EventCollection
     {
-        public string Ordinal;
+        public int Ordinal;
         public Location Coordinates;
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
@@ -18,13 +18,19 @@ namespace LegendsViewer.Legends
         {
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
+        public Duel() { Ordinal = -1; }
         public Duel(List<Property> properties, World world)
             : base(properties, world)
+        {
+            InternalMerge(properties,world); 
+        }
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "ordinal": Ordinal = String.Intern(property.Value); break;
+                    case "ordinal": Ordinal = Convert.ToInt32(property.Value); break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
                     case "parent_eventcol": ParentCollection = world.GetEventCollection(Convert.ToInt32(property.Value)); break;
                     case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
@@ -43,7 +49,7 @@ namespace LegendsViewer.Legends
                     {
                         battle.AttackerDeathCount++;
                         battle.Attackers.Single(squad => squad.Race == death.HistoricalFigure.Race).Deaths++;
-                        
+
                         if (parentWar != null)
                         {
                             parentWar.AttackerDeathCount++;
@@ -64,8 +70,14 @@ namespace LegendsViewer.Legends
                         (ParentCollection.ParentCollection as War).DeathCount++;
                     }
                 }
-
         }
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
             return "a duel";

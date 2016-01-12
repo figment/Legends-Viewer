@@ -83,6 +83,7 @@ namespace LegendsViewer.Legends
         public int PositionID { get; set; }
         public int StartYear { get; set; }
         public int EndYear { get; set; }
+        public EntityLinkDirection LinkDirection { get; set; }
 
         public EntityLink(List<Property> properties, World world)
         {
@@ -93,29 +94,45 @@ namespace LegendsViewer.Legends
             {
                 switch (property.Name)
                 {
+                    case "target":
                     case "entity_id":
                         int id = Convert.ToInt32(property.Value);
                         Entity = world.GetEntity(id);
+                        property.Known = true;
                         break;
-                    case "position_profile_id": PositionID = Convert.ToInt32(property.Value); break;
-                    case "start_year": 
+                    case "position_profile_id":
+                        PositionID = Convert.ToInt32(property.Value);
+                        break;
+                    case "start_year":
                         StartYear = Convert.ToInt32(property.Value);
                         Type = EntityLinkType.Position;
+                        property.Known = true;
                         break;
-                    case "end_year": 
+                    case "end_year":
                         EndYear = Convert.ToInt32(property.Value);
                         Type = EntityLinkType.FormerPosition;
+                        property.Known = true;
                         break;
-                    case "link_strength": Strength = Convert.ToInt32(property.Value); break;
+                    case "strength":
+                    case "link_strength":
+                        Strength = Convert.ToInt32(property.Value);
+                        property.Known = true;
+                        break;
                     case "link_type":
                         EntityLinkType linkType = EntityLinkType.Unknown;
                         if (!Enum.TryParse(Formatting.InitCaps(property.Value), out linkType))
                         {
                             switch (property.Value)
                             {
-                                case "former member": Type = EntityLinkType.FormerMember; break;
-                                case "former prisoner": Type = EntityLinkType.FormerPrisoner; break;
-                                case "former slave": Type = EntityLinkType.FormerSlave; break;
+                                case "former member":
+                                    Type = EntityLinkType.FormerMember;
+                                    break;
+                                case "former prisoner":
+                                    Type = EntityLinkType.FormerPrisoner;
+                                    break;
+                                case "former slave":
+                                    Type = EntityLinkType.FormerSlave;
+                                    break;
                                 default:
                                     Type = EntityLinkType.Unknown;
                                     world.ParsingErrors.Report("Unknown Entity Link Type: " + property.Value);
@@ -124,7 +141,15 @@ namespace LegendsViewer.Legends
                         }
                         else
                             Type = linkType;
+                        property.Known = true;
                         break;
+                    case "type":
+                        property.Known = true;
+                        EntityLinkDirection linkDirection = EntityLinkDirection.Unknown;
+                        if (!Enum.TryParse(Formatting.InitCaps(property.Value), out linkDirection))
+                            world.ParsingErrors.Report("Unknown Entity Link Direction: " + property.Value);
+                        LinkDirection = linkDirection;
+                        break; // parent/child direction
                 }
             }
         }
@@ -149,6 +174,13 @@ namespace LegendsViewer.Legends
         [Description("Respected for heroic acts")]
         Hero,
         Unknown
+    }
+
+    public enum EntityLinkDirection
+    {
+        Unknown,
+        Child,
+        Parent,
     }
 
     public class SiteLink

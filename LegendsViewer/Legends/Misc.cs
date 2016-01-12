@@ -8,10 +8,18 @@ namespace LegendsViewer.Legends
 {
     internal static class Misc
     {
-        public static void AddEvent(this WorldObject worldObject, WorldEvent worldEvent)
+        public static bool AddEvent(this WorldObject worldObject, WorldEvent worldEvent)
         {
             if (worldObject != null)
-                worldObject.Events.Add(worldEvent);
+            {
+                int idx = worldObject.Events.BinarySearch(worldEvent);
+                if (idx < 0)
+                {
+                    worldObject.Events.Insert(~idx, worldEvent);
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

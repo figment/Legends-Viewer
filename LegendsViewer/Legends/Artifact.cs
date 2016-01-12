@@ -8,22 +8,43 @@ namespace LegendsViewer.Legends
     {
         public string Name { get; set; }
         public string Item { get; set; }
+        public string Type { get; set; }
+        public string SubType { get; set; }
+        public string Description { get; set; }
+        public string Material { get; set; }
         public static List<string> Filters;
         public override List<WorldEvent> FilteredEvents
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
+        public Artifact()
+        {
+            Name = "Untitled";
+        }
         public Artifact(List<Property> properties, World world)
             : base(properties, world)
         {
             Name = "Untitled";
-            foreach(Property property in properties)
-                switch(property.Name)
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
+            foreach (Property property in properties)
+                switch (property.Name)
                 {
                     case "name": Name = Formatting.InitCaps(property.Value); break;
-                    case "item": Item = Formatting.InitCaps(property.Value); break;
+                    case "item": Item = string.Intern(Formatting.InitCaps(property.Value)); break;
+                    case "item_type": Type = string.Intern(Formatting.InitCaps(property.Value)); break;
+                    case "item_subtype": SubType = string.Intern(Formatting.InitCaps(property.Value)); break;
+                    case "item_description": Description = Formatting.InitCaps(property.Value); break;
+                    case "mat": Material = string.Intern(Formatting.InitCaps(property.Value)); break;
                 }
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
         public override string ToString() { return Name; }

@@ -6,24 +6,23 @@ using System.Text;
 
 namespace LegendsViewer.Legends
 {
-    public class UndergroundRegion : WorldObject
+    public class WorldConstruction : WorldObject
     {
-        public int Depth { get; set; }
+        public string Name { get; set; }
         public string Type { get; set; }
-        public List<Battle> Battles { get; set; }
+        public List<Location> Locations { get; set; }
         public static List<string> Filters;
         public override List<WorldEvent> FilteredEvents
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
-        public List<Location> Locations { get; set; }
-        public UndergroundRegion() { Type = "INVALID UNDERGROUND REGION"; Depth = 0; Battles = new List<Battle>(); }
-        public UndergroundRegion(List<Property> properties, World world)
+
+        public WorldConstruction() { Name = "Unknown"; Type = "INVALID CONSTRUCTION"; Locations = new List<Location>(); }
+
+        public WorldConstruction(List<Property> properties, World world)
             : base(properties, world)
         {
-            Depth = 0;
-            Type = "";
-            Battles = new List<Battle>();
+            Name = "Unknown"; Type = "INVALID CONSTRUCTION"; Locations = new List<Location>();
             InternalMerge(properties, world);
         }
         private void InternalMerge(List<Property> properties, World world)
@@ -31,34 +30,32 @@ namespace LegendsViewer.Legends
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "depth": Depth = Convert.ToInt32(property.Value); property.Known = true; break;
-                    case "type": Type = Formatting.InitCaps(property.Value); property.Known = true; break;
+                    case "name": Name = Formatting.InitCaps(property.Value); property.Known = true; break;
+                    case "type": Type = string.Intern(Formatting.InitCaps(property.Value)); property.Known = true; break;
                     case "coords": Locations = property.Value.Split(new[] { "|" }, StringSplitOptions.RemoveEmptyEntries)
                      .Select(Formatting.ConvertToLocation).ToList(); property.Known = true; break;
                 }
         }
         public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
             InternalMerge(properties, world);
         }
 
         public override string ToString() { return this.Type; }
+
+
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
-            string name;
-            if (this.Type == "Cavern") name = "the depths of the world";
-            else if (this.Type == "Underworld") name = "the Underworld";
-            else name = "an underground region (" + this.Type + ")";
-
             if (link)
             {
                 if (pov != this)
-                    return "<a href = \"uregion#" + this.ID + "\">" + name + "</a>";
+                    return "<a href = \"construct#" + this.ID + "\">" + Name + "</a>";
                 else
-                    return HTMLStyleUtil.CurrentDwarfObject(name);
+                    return HTMLStyleUtil.CurrentDwarfObject(Name);
             }
             else
-                return name;
+                return Name;
         }
         
     }

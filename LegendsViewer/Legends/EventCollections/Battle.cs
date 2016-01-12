@@ -92,12 +92,17 @@ namespace LegendsViewer.Legends
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
+        public Battle() { Initialize(); }
         public Battle(List<Property> properties, World world)
             : base(properties, world)
         {
 
             Initialize();
+            InternalMerge(properties, world);
+        }
 
+        private void InternalMerge(List<Property> properties, World world)
+        {
             List<string> attackerSquadRace, defenderSquadRace;
             List<int> attackerSquadEntityPopulation, attackerSquadNumbers, attackerSquadDeaths, attackerSquadSite,
                          defenderSquadEntityPopulation, defenderSquadNumbers, defenderSquadDeaths, defenderSquadSite;
@@ -110,15 +115,18 @@ namespace LegendsViewer.Legends
             Attackers = new List<Squad>();
             Defenders = new List<Squad>();
             NonCombatants = new List<HistoricalFigure>();
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "outcome": switch (property.Value)
+                    case "outcome":
+                        switch (property.Value)
                         {
                             case "attacker won": Outcome = BattleOutcome.AttackerWon; break;
                             case "defender won": Outcome = BattleOutcome.DefenderWon; break;
                             default: Outcome = BattleOutcome.Unknown; world.ParsingErrors.Report("Unknown Battle Outcome: " + property.Value); break;
-                        } break;
+                        }
+                        break;
                     case "name": Name = Formatting.InitCaps(property.Value); break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
                     case "war_eventcol": ParentCollection = world.GetEventCollection(Convert.ToInt32(property.Value)); break;
@@ -230,6 +238,12 @@ namespace LegendsViewer.Legends
                 && Victor == Attacker
                 && AttackerDeathCount < ((NotableAttackers.Count + attackerSquadNumbers.Sum()) * 0.1)) //NotableAttackers lossses < 10%
                 Notable = false;
+        }
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
         private void Initialize()

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using LegendsViewer.Controls;
@@ -12,7 +13,7 @@ namespace LegendsViewer.Legends
         public string Name { get; set; }
         public string UntranslatedName { get; set; }
         public Location Coordinates { get; set; }
-        public bool Structures { get; set; }
+        public bool HasStructures { get; set; }
         public List<EventCollection> Warfare { get; set; }
         public List<Battle> Battles { get { return Warfare.OfType<Battle>().ToList(); } set { } }
         public List<SiteConquered> Conquerings { get { return Warfare.OfType<SiteConquered>().ToList(); } set { } }
@@ -65,6 +66,7 @@ namespace LegendsViewer.Legends
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
+        public List<Structure> Structures { get; set; }
         public class Official
         {
             public HistoricalFigure HistoricalFigure;
@@ -84,6 +86,7 @@ namespace LegendsViewer.Legends
             Populations = new List<Population>();
             Officials = new List<Official>();
             BeastAttacks = new List<BeastAttack>();
+            Structures = new List<Structure>(1);
         }
 
         public Site(List<Property> properties, World world)
@@ -96,19 +99,71 @@ namespace LegendsViewer.Legends
             Populations = new List<Population>();
             Officials = new List<Official>();
             BeastAttacks = new List<BeastAttack>();
-            foreach(Property property in properties)
-                switch(property.Name)
+            Structures = new List<Structure>(1);
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world, bool merge = false)
+        {
+            foreach (Property property in properties)
+                switch (property.Name)
                 {
-                    case "type": Type = Formatting.InitCaps(property.Value); break;
-                    case "name": Name = Formatting.InitCaps(property.Value); break;
+                    case "type": Type = Formatting.InitCaps(property.Value); property.Known = true; break;
+                    case "name": Name = Formatting.InitCaps(property.Value); property.Known = true; break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
-                    case "structures": Structures = true; property.Known = true; break;
+                    case "structures":
+                        {
+                            HasStructures = true; property.Known = true;
+                            foreach (var subprop in property.SubProperties) {
+                                subprop.Known = true;
+                                UpsertStructure(subprop.SubProperties, world);
+                            }
+
+                        } break;
                 }
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world, true);
         }
 
         public void AddConnection(Site connection)
         {
             if (!Connections.Contains(connection)) Connections.Add(connection);
+        }
+
+        public Structure GetStructure(int id)
+        {
+            if (id == -1) return null;
+            else
+            {
+                int min = 0;
+                int max = Structures.Count - 1;
+                while (min <= max)
+                {
+                    int mid = min + (max - min) / 2;
+                    if (id > Structures[mid].ID)
+                        min = mid + 1;
+                    else if (id < Structures[mid].ID)
+                        max = mid - 1;
+                    else
+                        return Structures[mid];
+                }
+                return null;
+            }
+        }
+
+        private void UpsertStructure(List<Property> properties, World world)
+        {
+            var id = properties.Where(x => x.Name == "id").Select(x => new int?(System.Convert.ToInt32(x.Value))).FirstOrDefault();
+            if (id.HasValue && id.Value > -1)
+            {
+                int index = Structures.BinarySearch(0, Structures.Count, new Structure() {ID = id.Value}, new LambaComparer<Structure>((x,y) => Comparer<int>.Default.Compare(x.ID,y.ID))  );
+                if (index >= 0)
+                    Structures[index].Merge(properties, world);
+                else
+                    Structures.Insert(~index, new Structure(properties, world));
+            }
         }
 
         public override string ToString() { return this.Name; }

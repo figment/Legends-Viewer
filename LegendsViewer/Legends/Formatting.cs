@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Drawing;
+using System.Text.RegularExpressions;
 
 namespace LegendsViewer.Legends
 {
@@ -302,6 +303,13 @@ namespace LegendsViewer.Legends
 
             return seasonString;
         }
+
+        public static string ExtractInteractionString(string value)
+        {
+            var m = Regex.Match(value, "^\\[[A-Za-z_0-9]+:\\s*(?<val>[^\\]]+)\\s*\\]\\s*");
+            return m?.Groups["val"].ToString();
+        }
+
     }
 }
 

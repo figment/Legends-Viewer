@@ -115,6 +115,15 @@ namespace LegendsViewer.Controls
                 HTML.AppendLine("</ol>");
             }
 
+            if (Site.Structures.Any())
+            {
+                HTML.AppendLine("<b>Structures</b></br>");
+                HTML.AppendLine("<ol>");
+                foreach (var structure in Site.Structures)
+                    HTML.AppendLine("<li>" + structure.ToLink());
+                HTML.AppendLine("</ol>");
+            }
+
             if (Site.Officials.Count > 0)
             {
                 HTML.AppendLine("<b>Officials</b></br>");
@@ -159,7 +168,7 @@ namespace LegendsViewer.Controls
                 }
                 if (outcastsPops.Any())
                 {
-                    HTML.AppendLine("<b>Outcasts</b></br>");
+                    HTML.AppendLine("<b>Outcasts</b><br/>");
                     HTML.AppendLine("<ul>");
                     foreach (Population population in outcastsPops)
                         HTML.AppendLine("<li>" + population.Count + " " + population.Race);

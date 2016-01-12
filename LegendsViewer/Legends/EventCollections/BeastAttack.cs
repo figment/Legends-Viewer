@@ -37,7 +37,18 @@ namespace LegendsViewer.Legends
             : base(properties, world)
         {
             Initialize();
+            InternalMerge(properties, world);
+            Site.BeastAttacks.Add(this);
 
+            //--------Attacking Beast is calculated after parsing event collections in ParseXML()
+            //--------So that it can also look at eventsList from duel sub collections to calculate the Beast
+
+            //-------Fill in some missing event details with details from collection
+            //-------Filled in after parsing event collections in ParseXML()
+        }
+
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -49,15 +60,14 @@ namespace LegendsViewer.Legends
                     case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
                     case "defending_enid": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
                 }
-
-            Site.BeastAttacks.Add(this);
-
-            //--------Attacking Beast is calculated after parsing event collections in ParseXML()
-            //--------So that it can also look at eventsList from duel sub collections to calculate the Beast
-
-            //-------Fill in some missing event details with details from collection
-            //-------Filled in after parsing event collections in ParseXML()
         }
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+
 
         private void Initialize()
         {

@@ -7,15 +7,46 @@ namespace LegendsViewer.Legends
 {
     public class EntityPopulation : WorldObject
     {
+        public string Race;
+        public int Count;
+        public int CivID;
+
         public static List<string> Filters;
         public override List<WorldEvent> FilteredEvents
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
+
+        public EntityPopulation() : base()
+        {
+        }
+
         public EntityPopulation(List<Property> properties, World world)
             : base(properties, world)
         {
-            
+            InternalMerge(properties, world);
         }
+
+        private void InternalMerge(List<Property> properties, World world)
+        {
+            foreach (Property property in properties)
+                switch (property.Name)
+                {
+                    case "race":
+                    {
+                        var vals = property.Value.Split(':');
+                        if (vals.Length == 2) { Race = Formatting.InitCaps(vals[0]); Count = Convert.ToInt32(vals[1]); }
+                        property.Known = true;
+                    } break;
+                    case "civ_id": CivID = Convert.ToInt32(property.Value); property.Known = true; break;
+                }
+        }
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+
     }
 }

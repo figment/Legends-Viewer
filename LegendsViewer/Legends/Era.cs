@@ -15,17 +15,12 @@ namespace LegendsViewer.Legends
         }
         public int StartYear, EndYear;
         public string Name;
+
         public Era(List<Property> properties, World world)
             : base(properties, world)
         {
             this.ID = world.Eras.Count;
-            foreach(Property property in properties)
-                switch(property.Name)
-                {
-                    case "start_year": StartYear = Convert.ToInt32(property.Value); break;
-                    case "name": Name = property.Value; break;
-                }
-            
+            InternalMerge(properties, world);
         }
 
         public Era(int startYear, int endYear, World world)
@@ -40,7 +35,21 @@ namespace LegendsViewer.Legends
                                                                                                     || (war.StartYear <= StartYear && war.EndYear >= EndYear) //war started before & ended after
                                                                                                     || (war.StartYear <= StartYear && war.EndYear == -1)).ToList();
         }
-        
+        private void InternalMerge(List<Property> properties, World world)
+        {
+            foreach (Property property in properties)
+                switch (property.Name)
+                {
+                    case "start_year": StartYear = Convert.ToInt32(property.Value); break;
+                    case "name": Name = property.Value; break;
+                }
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
             if (Name != "") return Name;
