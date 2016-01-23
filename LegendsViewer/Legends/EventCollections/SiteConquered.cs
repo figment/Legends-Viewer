@@ -36,24 +36,7 @@ namespace LegendsViewer.Legends
             : base(properties, world)
         {
             Initialize();
-            foreach (Property property in properties)
-                switch (property.Name)
-                {
-                    case "ordinal": Ordinal = Convert.ToInt32(property.Value); break;
-                    case "war_eventcol": ParentCollection = world.GetEventCollection(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "attacking_enid": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defending_enid": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                }
-
-            
-
-            if (Collection.OfType<PlunderedSite>().Any()) ConquerType = SiteConqueredType.Pillaging;
-            else if (Collection.OfType<DestroyedSite>().Any()) ConquerType = SiteConqueredType.Destruction;
-            else if (Collection.OfType<NewSiteLeader>().Any() || Collection.OfType<SiteTakenOver>().Any()) ConquerType = SiteConqueredType.Conquest;
-            else ConquerType = SiteConqueredType.Unknown;
-
-            if (ConquerType == SiteConqueredType.Pillaging) Notable = false;
+            InternalMerge(properties, world);
 
             Site.Warfare.Add(this);
             if (ParentCollection != null)
@@ -65,8 +48,33 @@ namespace LegendsViewer.Legends
                 else 
                     (ParentCollection as War).DefenderVictories.Add(this);
             }
-
         }
+
+        private void InternalMerge(List<Property> properties, World world)
+        {
+            foreach (Property property in properties)
+                switch (property.Name)
+                {
+                    case "ordinal": Ordinal = Convert.ToInt32(property.Value); break;
+                    case "war_eventcol": ParentCollection = world.GetEventCollection(Convert.ToInt32(property.Value)); break;
+                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "attacking_enid": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "defending_enid": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                }
+
+            if (Collection.OfType<PlunderedSite>().Any()) ConquerType = SiteConqueredType.Pillaging;
+            else if (Collection.OfType<DestroyedSite>().Any()) ConquerType = SiteConqueredType.Destruction;
+            else if (Collection.OfType<NewSiteLeader>().Any() || Collection.OfType<SiteTakenOver>().Any()) ConquerType = SiteConqueredType.Conquest;
+            else ConquerType = SiteConqueredType.Unknown;
+
+            if (ConquerType == SiteConqueredType.Pillaging) Notable = false;
+        }
+
+        public override void Merge(List<Property> properties, World world)
+            {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+            }
 
         private void Initialize()
         {

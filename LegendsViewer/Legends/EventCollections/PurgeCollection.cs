@@ -4,8 +4,11 @@ using System.Linq;
 
 namespace LegendsViewer.Legends.EventCollections
 {
-    public class CeremonyCollection : EventCollection
+    public class PurgeCollection : EventCollection
     {
+        public String Name;
+        public string Adjective;
+        public Site Site { get; set; }
         public int Ordinal;
 
         public List<string> Filters;
@@ -13,10 +16,12 @@ namespace LegendsViewer.Legends.EventCollections
         {
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
-        public CeremonyCollection() { Ordinal = -1; }
-        public CeremonyCollection(List<Property> properties, World world)
+
+        public PurgeCollection() { Ordinal = -1; }
+        public PurgeCollection(List<Property> properties, World world)
             : base(properties, world)
         {
+            Adjective = "";
             InternalMerge(properties, world);
         }
 
@@ -25,8 +30,11 @@ namespace LegendsViewer.Legends.EventCollections
             foreach (Property property in properties)
                 switch (property.Name)
                 {
+                    case "adjective": Adjective = String.Intern(property.Value); break;
+                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
                     case "ordinal": Ordinal = Convert.ToInt32(property.Value); break;
                 }
+            Name = string.Format("The {0} {1} Purge in {2}", GetOrdinal(Ordinal), Adjective, Site.ToString());
         }
 
         public override void Merge(List<Property> properties, World world)
@@ -37,7 +45,12 @@ namespace LegendsViewer.Legends.EventCollections
 
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
-            return "a ceremony";
+            return Name;
+        }
+
+        public override string ToString()
+        {
+            return Name;
         }
     }
 }

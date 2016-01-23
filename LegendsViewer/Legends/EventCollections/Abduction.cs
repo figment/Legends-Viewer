@@ -7,7 +7,7 @@ namespace LegendsViewer.Legends
 {
     public class Abduction : EventCollection
     {
-        public string Ordinal;
+        public int Ordinal;
         public Location Coordinates;
         public HistoricalFigure Abductee;
         public WorldRegion Region;
@@ -19,13 +19,21 @@ namespace LegendsViewer.Legends
         {
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
+
+        public Abduction(){}
+
         public Abduction(List<Property> properties, World world)
             : base(properties, world)
+        {
+            InternalMerge(properties, world);
+        }
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "ordinal": Ordinal = String.Intern(property.Value); break;
+                    case "ordinal": Ordinal = Convert.ToInt32(property.Value); break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
                     case "parent_eventcol": ParentCollection = world.GetEventCollection(Convert.ToInt32(property.Value)); break;
                     case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
@@ -35,6 +43,13 @@ namespace LegendsViewer.Legends
                     case "defending_enid": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
                 }
         }
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
             return "an abduction";

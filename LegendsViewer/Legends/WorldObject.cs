@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using LegendsViewer.Controls;
 
 namespace LegendsViewer.Legends
 {
@@ -13,18 +14,32 @@ namespace LegendsViewer.Legends
         {
             ID = -1;
             Events = new List<WorldEvent>();
-            foreach(Property property in properties)
-                switch(property.Name)
-                {
-                    case "id": ID = Convert.ToInt32(property.Value); property.Known = true; break;
-                    default: break;
-                }
+            InternalMerge(properties, world);
         }
         public WorldObject() { 
             ID = -1; 
             Events = new List<WorldEvent>(); 
         }
-        
+
+        private void InternalMerge(List<Property> properties, World world)
+        {
+            foreach (Property property in properties)
+                switch (property.Name)
+                {
+                    case "id": ID = Convert.ToInt32(property.Value); property.Known = true; break;
+                    default: break;
+                }
+        }
+
+        internal static IComparer<T> GetDefaultComparer<T>() where T : WorldObject
+        {
+            return new LambaComparer<T>((x, y) => Comparer<int>.Default.Compare(x.ID, y.ID));
+        }
+
+        public virtual void Merge(List<Property> properties, World world)
+        {
+            InternalMerge(properties, world);
+        }
 
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {

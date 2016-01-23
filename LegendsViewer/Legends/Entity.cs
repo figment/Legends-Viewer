@@ -22,9 +22,11 @@ namespace LegendsViewer.Legends
     public class Entity : WorldObject
     {
         public string Name { get; set; }
+        public bool NameSet { get; set; }
         public Entity Parent { get; set; }
         public bool IsCiv { get; set; }
         public string Race { get; set; }
+        public bool RaceSet { get; set; }
         public List<HistoricalFigure> Worshipped { get; set; }
         public List<string> LeaderTypes { get; set; }
         public List<List<HistoricalFigure>> Leaders { get; set; }
@@ -50,7 +52,8 @@ namespace LegendsViewer.Legends
 
         public EntityType Type { get; set; } // legends_plus.xml
         public List<EntitySiteLink> SiteLinks { get; set; } // legends_plus.xml
-        public List<EntityEntityLink> EntityLinks { get; set; } // legends_plus.xml
+        //public List<EntityEntityLink> EntityLinks { get; set; } // legends_plus.xml
+        public List<EntityLink> EntityLinks { get; set; }
 
         public List<War> Wars { get; set; }
         public List<War> WarsAttacking { get { return Wars.Where(war => war.Attacker == this).ToList(); } set { } }
@@ -92,20 +95,21 @@ namespace LegendsViewer.Legends
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
-        public Entity(World world)
+        public Entity()
         {
+            Initialize();
             ID = -1; Name = "INVALID ENTITY"; Race = "Unknown";
-            Parent = null;
-            Worshipped = new List<HistoricalFigure>();
-            LeaderTypes = new List<string>();
-            Leaders = new List<List<HistoricalFigure>>();
-            Groups = new List<Entity>();
-            SiteHistory = new List<OwnerPeriod>();
-            Wars = new List<War>();
-            Populations = new List<Population>();
         }
+
+        public Entity(World world) : base() { Initialize(); }
+
         public Entity(List<Property> properties, World world)
             : base(properties, world)
+        {
+            Initialize();
+            InternalMerge(properties, world);
+        }
+        public void Initialize()
         {
             Name = "";
             Race = "Unknown";
@@ -117,67 +121,50 @@ namespace LegendsViewer.Legends
             Groups = new List<Entity>();
             SiteHistory = new List<OwnerPeriod>();
             SiteLinks = new List<EntitySiteLink>();
-            EntityLinks = new List<EntityEntityLink>();
             Wars = new List<War>();
             Populations = new List<Population>();
+            EntityLinks = new List<EntityLink>();
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "name": Name = Formatting.InitCaps(property.Value); break;
-                    case "race":
-                        Race = Formatting.MakePopulationPlural(Formatting.FormatRace(property.Value));
+                    case "name": Name = Formatting.InitCaps(property.Value); NameSet = true; break;
+                    case "race": Race = Formatting.MakePopulationPlural(Formatting.FormatRace(property.Value)); RaceSet = true; break;
+                    case "child": property.Known = true; break;
+                    case "entity_link":
+                        EntityLinks.Add(new EntityLink(property.SubProperties, world)); property.Known = true;
+                        world.AddEntityEntityLink(this, property);
                         break;
                     case "type":
-                        switch (property.Value)
+                        EntityType type;
+                        if (!Enum.TryParse(property.Value, true, out type))
                         {
-                            case "civilization":
-                                Type = EntityType.Civilization;
-                                break;
-                            case "religion":
-                                Type = EntityType.Religion;
-                                break;
-                            case "sitegovernment":
-                                Type = EntityType.SiteGovernment;
-                                break;
-                            case "nomadicgroup":
-                                Type = EntityType.NomadicGroup;
-                                break;
-                            case "outcast":
-                                Type = EntityType.Outcast;
-                                break;
-                            case "migratinggroup":
-                                Type = EntityType.MigratingGroup;
-                                break;
-                            case "performancetroupe":
-                                Type = EntityType.PerformanceTroupe;
-                                break;
-                            default:
-                                Type = EntityType.Unknown;
-                                world.ParsingErrors.Report("Unknown Entity Type: " + property.Value);
-                                break;
+                            type = EntityType.Unknown;
+                            world.ParsingErrors.Report("Unknown Entity Type: " + property.Value);
                         }
-                        break;
-                    case "child":
-                        property.Known = true;
+                        Type = type;
                         break;
                     case "site_link":
                         SiteLinks.Add(new EntitySiteLink(property.SubProperties, world));
-                        break;
-                    case "entity_link":
-                        property.Known = true;
-                        foreach (Property subProperty in property.SubProperties)
-                        {
-                            subProperty.Known = true;
-                        }
-                        world.AddEntityEntityLink(this, property);
                         break;
                     case "worship_id":
                         property.Known = true;
                         break;
                 }
             }
+            if (!NameSet)
+                Name = $"{(Type == EntityType.Unknown ? "Group" : Type.ToString())} of {Race}";
+            //IsCiv = String.Compare(Type,"Civilization", StringComparison.OrdinalIgnoreCase) == 0;
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+
         public override string ToString() { return this.Name; }
 
 
@@ -209,7 +196,7 @@ namespace LegendsViewer.Legends
             if (this.Parent != null && this.Parent != null)
             {
                 Parent.AddOwnedSite(newSite);
-                this.Race = Parent.Race;
+                if (!RaceSet || string.IsNullOrEmpty(Race)) this.Race = Parent.Race;
             }
         }
 

@@ -5,25 +5,25 @@ namespace LegendsViewer.Controls
 {
     public class WorldConstructionPrinter : HTMLPrinter
     {
-        WorldContruction WorldContruction;
+        WorldConstruction _worldConstruction;
 
-        public WorldConstructionPrinter(WorldContruction worldContruction)
+        public WorldConstructionPrinter(WorldConstruction worldConstruction)
         {
-            WorldContruction = worldContruction;
+            _worldConstruction = worldConstruction;
         }
 
         public override string Print()
         {
             HTML = new StringBuilder();
-            HTML.AppendLine("<h1>" + WorldContruction.Name + "</h1><br />");
+            HTML.AppendLine("<h1>" + _worldConstruction.Name + "</h1><br />");
 
-            PrintEventLog(WorldContruction.Events, WorldContruction.Filters, WorldContruction);
+            PrintEventLog(_worldConstruction.Events, WorldConstruction.Filters, _worldConstruction);
             return HTML.ToString();
         }
 
         public override string GetTitle()
         {
-            return WorldContruction.Name;
+            return _worldConstruction.Name;
         }
     }
 }

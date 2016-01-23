@@ -43,13 +43,14 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="SevenZipSharp, Version=0.64.3890.29348, Culture=neutral, PublicKeyToken=20de82c62b055c88, processorArchitecture=MSIL">
@@ -175,6 +176,7 @@
     <Compile Include="Legends\EventCollections\Battle.cs" />
     <Compile Include="Legends\EventCollections\BeastAttack.cs" />
     <Compile Include="Legends\EventCollections\CeremonyCollection.cs" />
+    <Compile Include="Legends\EventCollections\PurgeCollection.cs" />
     <Compile Include="Legends\EventCollections\CompetitionCollection.cs" />
     <Compile Include="Legends\EventCollections\Duel.cs" />
     <Compile Include="Legends\EventCollections\EventCollections.cs" />
@@ -196,8 +198,8 @@
     <Compile Include="Legends\OwnerPeriod.cs" />
     <Compile Include="Legends\ParsingErrors.cs" />
     <Compile Include="Legends\Population.cs" />
-    <Compile Include="Legends\Region.cs" />
     <Compile Include="Legends\Link.cs" />
+    <Compile Include="Legends\Region.cs" />
     <Compile Include="Legends\Site.cs" />
     <Compile Include="Legends\SitesAndPopsParser.cs" />
     <Compile Include="Legends\Structure.cs" />

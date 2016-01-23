@@ -5,19 +5,19 @@ using System.Linq;
 
 namespace LegendsViewer.Legends
 {
-    public class WorldContruction : WorldObject
+    public class WorldConstruction : WorldObject
     {
         public string Name { get; set; } // legends_plus.xml
         public string Type { get; set; } // legends_plus.xml
         public List<Location> Coordinates { get; set; } // legends_plus.xml
         public static List<string> Filters;
+
         public override List<WorldEvent> FilteredEvents
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
-        public WorldContruction(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             Name = "Untitled";
             Coordinates = new List<Location>();
@@ -40,6 +40,11 @@ namespace LegendsViewer.Legends
                         break;
                 }
             }
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
         public override string ToString() { return Name; }

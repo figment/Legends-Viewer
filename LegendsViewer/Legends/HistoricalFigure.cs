@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using LegendsViewer.Controls;
 
 namespace LegendsViewer.Legends
 {
@@ -91,7 +92,12 @@ namespace LegendsViewer.Legends
             : base(properties, world)
         {
             Initialize();
-            List<string> knownEntitySubProperties = new List<string>() { "entity_id", "link_strength", "link_type", "position_profile_id", "start_year", "end_year" };
+            InternalMerge(properties, world);               
+            if (Name == "") Name = "(Unnamed)";
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
+            List<string> knownEntitySubProperties = new List<string>() { "entity_id", "link_strength", "link_type", "position_profile_id", "start_year", "end_year", "type", "target", "strength", "child" };
             List<string> knownReputationSubProperties = new List<string>() { "entity_id", "unsolved_murders", "first_ageless_year", "first_ageless_season_count", "rep_enemy_fighter", "rep_trade_partner", "rep_killer", "rep_poet", "rep_bard", "rep_storyteller", "rep_dancer" };
             List<string> knownSiteLinkSubProperties = new List<string>() { "link_type", "site_id", "sub_id", "entity_id", "occupation_id" };
             List<string> knownEntitySquadLinkProperties = new List<string>() { "squad_id", "squad_position", "entity_id", "start_year", "end_year" };
@@ -217,6 +223,11 @@ namespace LegendsViewer.Legends
                         break;
                 }
             if (Name == "") Name = "(Unnamed)";
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
         private void Initialize()

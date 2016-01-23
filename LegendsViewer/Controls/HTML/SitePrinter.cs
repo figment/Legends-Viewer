@@ -115,6 +115,15 @@ namespace LegendsViewer.Controls
                 HTML.AppendLine("</ol>");
             }
 
+            if (Site.Structures.Any())
+            {
+                HTML.AppendLine("<b>Structures</b></br>");
+                HTML.AppendLine("<ol>");
+                foreach (var structure in Site.Structures)
+                    HTML.AppendLine("<li>" + structure.ToLink());
+                HTML.AppendLine("</ol>");
+            }
+
             if (Site.Officials.Count > 0)
             {
                 HTML.AppendLine("<b>Officials</b></br>");

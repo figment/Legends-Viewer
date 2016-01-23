@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 
 namespace LegendsViewer.Legends
 {
@@ -13,20 +14,27 @@ namespace LegendsViewer.Legends
         public string Type { get; set; }
         public EventCollection ParentCollection { get; set; }
         public World World;
-        public WorldEvent(List<Property> properties, World world)
+        public WorldEvent() { ID = -1; Year = -1; Seconds72 = -1; Type = "INVALID"; }
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             World = world;
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "id": ID = Convert.ToInt32(property.Value); property.Known = true; break;
-                    case "year": Year = Convert.ToInt32(property.Value); property.Known = true; break;
-                    case "seconds72": Seconds72 = Convert.ToInt32(property.Value); property.Known = true; break;
-                    case "type": Type = string.Intern(property.Value); property.Known = true; break;
+                    case "id": this.ID = property.ValueAsInt(); break;
+                    case "year": this.Year = property.ValueAsInt(); break;
+                    case "seconds72": this.Seconds72 = property.ValueAsInt(); break;
+                    case "type": this.Type = String.Intern(property.Value.Replace('_',' ')); break;
                     default: break;
                 }
         }
-        public WorldEvent() { ID = -1; Year = -1; Seconds72 = -1; Type = "INVALID"; }
+
+        public virtual void Merge(List<Property> properties, World world)
+        {
+            InternalMerge(properties, world);
+        }
+
         public virtual string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime() + Type;
@@ -109,85 +117,59 @@ namespace LegendsViewer.Legends
         public HistoricalFigure HistoricalFigure;
         public HfEntityLinkType LinkType;
         public string Position;
-        public AddHFEntityLink(List<Property> properties, World world)
-            : base(properties, world)
+
+        public AddHFEntityLink()
         {
             LinkType = HfEntityLinkType.Unknown;
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
                     case "civ":
                     case "civ_id":
-                        Entity = world.GetEntity(Convert.ToInt32(property.Value));
+                        Entity = world.GetEntity(property.ValueAsInt());
+                        Entity.AddEvent(this);
                         break;
                     case "histfig":
                         HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt());
-                        break;
-                    case "link_type":
-                        switch (property.Value)
-                        {
-                            case "position":
-                                LinkType = HfEntityLinkType.Position;
-                                break;
-                            case "prisoner":
-                                LinkType = HfEntityLinkType.Prisoner;
-                                break;
-                            case "enemy":
-                                LinkType = HfEntityLinkType.Enemy;
-                                break;
-                            case "member":
-                                LinkType = HfEntityLinkType.Member;
-                                break;
-                            case "slave":
-                                LinkType = HfEntityLinkType.Slave;
-                                break;
-                            case "squad":
-                                LinkType = HfEntityLinkType.Squad;
-                                break;
-                            default:
-                                world.ParsingErrors.Report("Unknown HfEntityLinkType: " + property.Value);
-                                break;
-                        }
+                        HistoricalFigure.AddEvent(this);
                         break;
                     case "position":
-                        Position = property.Value;
+                        Position = string.Intern(Formatting.InitCaps(property.Value));
+                        break;
+                    case "link_type":
+                        if (!Enum.TryParse(property.Value, true, out LinkType))
+                        {
+                            world.ParsingErrors.Report("Unknown HfEntityLinkType: " + property.Value);
+                            LinkType = HfEntityLinkType.Unknown;
+                        }
                         break;
                 }
             }
-
-            HistoricalFigure.AddEvent(this);
-            Entity.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
-            if (HistoricalFigure != null) eventString += HistoricalFigure.ToLink(link, pov);
-            else eventString += "UNKNOWN HISTORICAL FIGURE";
+            eventString += HistoricalFigure.ToSafeLink(link, pov);
             switch (LinkType)
             {
-                case HfEntityLinkType.Prisoner:
-                    eventString += " was imprisoned by ";
-                    break;
-                case HfEntityLinkType.Slave:
-                    eventString += " was enslaved by ";
-                    break;
-                case HfEntityLinkType.Enemy:
-                    eventString += " became an enemy of ";
-                    break;
-                case HfEntityLinkType.Member:
-                    eventString += " became a member of ";
-                    break;
+                case HfEntityLinkType.Prisoner: eventString += " was imprisoned by ";   break;
+                case HfEntityLinkType.Slave:    eventString += " was enslaved by ";     break;
+                case HfEntityLinkType.Enemy:    eventString += " became an enemy of ";  break;
+                case HfEntityLinkType.Member:   eventString += " became a member of ";  break;
                 case HfEntityLinkType.Squad:
-                case HfEntityLinkType.Position:
-                    eventString += " became the " + Position + " of ";
-                    break;
-                default:
-                    eventString += " linked to ";
-                    break;
+                case HfEntityLinkType.Position: eventString += " became the " + Position + " of ";  break;
+                default: eventString += " linked to "; break;
             }
-
-            eventString += Entity.ToLink(link, pov) + ". ";
+            eventString += Entity.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -196,35 +178,35 @@ namespace LegendsViewer.Legends
     {
         public HistoricalFigure HistoricalFigure, HistoricalFigureTarget;
         public HistoricalFigureLinkType LinkType;
-        public AddHFHFLink(List<Property> properties, World world)
-            : base(properties, world)
+        public bool LinkTypeSet;
+        public AddHFHFLink() { LinkType = HistoricalFigureLinkType.Unknown; }
+
+        private void InternalMerge(List<Property> properties, World world)
         {
-            LinkType = HistoricalFigureLinkType.Unknown;
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "hfid_target": HistoricalFigureTarget = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "hf":
+                    case "hfid":
+                    case "histfig1":
+                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); 
+                        break;
+                    case "histfig2":
+                    case "hf_target":
+                    case "hfid_target":
+                        HistoricalFigureTarget = world.GetHistoricalFigure(property.ValueAsInt()); break;
                     case "link_type":
-                        HistoricalFigureLinkType linkType = HistoricalFigureLinkType.Unknown;
-                        if (!Enum.TryParse(Formatting.InitCaps(property.Value.Replace("_", " ")).Replace(" ", ""), out linkType))
+                        if (!Enum.TryParse(Formatting.InitCaps(property.Value.Replace("_", " ")).Replace(" ", ""), true, out LinkType))
                         {
                             LinkType = HistoricalFigureLinkType.Unknown;
                             world.ParsingErrors.Report("Unknown HF Link Type: " + property.Value);
                         }
-                        else
-                            LinkType = linkType;
+                        LinkTypeSet = true;
                         break;
-                    case "histfig1":
-                    case "histfig2":
-                        property.Known = true;
-                        break;
-                    case "hf": if (HistoricalFigure == null) { HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "hf_target": if (HistoricalFigureTarget == null) { HistoricalFigureTarget = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
                 }
 
             //Fill in LinkType by looking at related historical figures.
-            if (LinkType == HistoricalFigureLinkType.Unknown && HistoricalFigure != HistoricalFigure.Unknown && HistoricalFigureTarget != HistoricalFigure.Unknown)
+            if (!LinkTypeSet && LinkType == HistoricalFigureLinkType.Unknown && HistoricalFigure != HistoricalFigure.Unknown && HistoricalFigureTarget != HistoricalFigure.Unknown)
             {
                 List<HistoricalFigureLink> historicalFigureToTargetLinks = HistoricalFigure.RelatedHistoricalFigures.Where(link => link.Type != HistoricalFigureLinkType.Child).Where(link => link.HistoricalFigure == HistoricalFigureTarget).ToList();
                 HistoricalFigureLink historicalFigureToTargetLink = null;
@@ -246,20 +228,19 @@ namespace LegendsViewer.Legends
                 HistoricalFigure.RelatedHistoricalFigures.Add(new HistoricalFigureLink(HistoricalFigureTarget, HistoricalFigureLinkType.ExSpouse));
                 HistoricalFigureTarget.RelatedHistoricalFigures.Add(new HistoricalFigureLink(HistoricalFigure, HistoricalFigureLinkType.ExSpouse));
             }
+        }
 
-            HistoricalFigure.AddEvent(this);
-            HistoricalFigureTarget.AddEvent(this);
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
 
-            if (pov == HistoricalFigureTarget)
-                eventString += HistoricalFigureTarget.ToLink(link, pov);
-            else
-                eventString += HistoricalFigure.ToLink(link, pov);
-
+            eventString += ((pov == HistoricalFigureTarget) ? HistoricalFigureTarget : HistoricalFigure).ToSafeLink(link, pov);
             switch (LinkType)
             {
                 case HistoricalFigureLinkType.Apprentice:
@@ -310,11 +291,7 @@ namespace LegendsViewer.Legends
                 default:
                     throw new Exception("Unhandled Link Type in AddHFHFLink: " + LinkType.GetDescription());
             }
-
-            if (pov == HistoricalFigureTarget)
-                eventString += HistoricalFigure.ToLink(link, pov);
-            else
-                eventString += HistoricalFigureTarget.ToLink(link, pov);
+            eventString += (pov == HistoricalFigureTarget ? HistoricalFigure : HistoricalFigureTarget).ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -325,27 +302,31 @@ namespace LegendsViewer.Legends
     {
         public Artifact Artifact { get; set; }
         public Site Site { get; set; }
-        public ArtifactLost(List<Property> properties, World world) : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
-            {
                 switch (property.Name)
                 {
-                    case "artifact_id": Artifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "artifact":
+                    case "artifact_id": Artifact = world.GetArtifact(property.ValueAsInt()); Artifact.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                 }
-            }
+        }
 
-            Artifact.AddEvent(this);
-            Site.AddEvent(this);
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Artifact != null ? Artifact.ToLink(link, pov) : "UNKNOWN ARTIFACT";
+            eventString += Artifact.ToSafeLink(link, pov);
             eventString += " was lost in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "an unknown site";
+            eventString += Site.ToSafeLink(link,pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -358,31 +339,28 @@ namespace LegendsViewer.Legends
         public HistoricalFigure HistoricalFigure { get; set; }
         public Site Site { get; set; }
 
-        public ArtifactPossessed(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
-            {
                 switch (property.Name)
                 {
-                    case "artifact_id": Artifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
-                    case "unit_id": UnitID = Convert.ToInt32(property.Value); break;
-                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "artifact_id": Artifact = world.GetArtifact(property.ValueAsInt()); Artifact.AddEvent(this); break;
+                    case "unit_id": UnitID = property.ValueAsInt(); break;
+                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                 }
-            }
-
-            Artifact.AddEvent(this);
-            HistoricalFigure.AddEvent(this);
-            Site.AddEvent(this);
         }
-
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + Artifact.ToLink(link, pov) + " was claimed";
+            string eventString = GetYearTime() + Artifact.ToSafeLink(link, pov) + " was claimed";
             if (Site != null)
-                eventString += " in " + Site.ToLink(link, pov);
-            eventString += " by " + HistoricalFigure.ToLink(link, pov) + ". ";
+                eventString += " in " + Site.ToSafeLink(link, pov);
+            eventString += " by " + HistoricalFigure.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -394,28 +372,25 @@ namespace LegendsViewer.Legends
         public HistoricalFigure HistoricalFigure { get; set; }
         public Site Site { get; set; }
 
-        public ArtifactStored(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
-            {
                 switch (property.Name)
                 {
-                    case "artifact_id": Artifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
-                    case "unit_id": UnitID = Convert.ToInt32(property.Value); break;
-                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "artifact_id": Artifact = world.GetArtifact(property.ValueAsInt()); Artifact.AddEvent(this); break;
+                    case "unit_id": UnitID = property.ValueAsInt(); break;
+                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                 }
             }
-
-            Artifact.AddEvent(this);
-            HistoricalFigure.AddEvent(this);
-            Site.AddEvent(this);
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
-
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + Artifact.ToLink(link, pov) + " was stored in " + Site.ToLink(link, pov) + " by " + HistoricalFigure.ToLink(link, pov) + ". ";
+            string eventString = GetYearTime() + Artifact.ToSafeLink(link, pov) + " was stored in " + Site.ToSafeLink(link, pov) + " by " + HistoricalFigure.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -426,29 +401,29 @@ namespace LegendsViewer.Legends
         public Site Site { get; set; }
         public HistoricalFigure Destroyer { get; set; }
 
-        public ArtifactDestroyed(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "artifact_id": Artifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "destroyer_enid": Destroyer = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "artifact_id": Artifact = world.GetArtifact(property.ValueAsInt()); Artifact.AddEvent(this); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "destroyer_enid": Destroyer = world.GetHistoricalFigure(property.ValueAsInt()); Destroyer.AddEvent(this); break;
                 }
-            Site.AddEvent(this);
-            Artifact.AddEvent(this);
-            Destroyer.AddEvent(this);
         }
-
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Artifact.ToLink(link, pov);
+            eventString += Artifact.ToSafeLink(link, pov);
             eventString += " was destroyed by ";
-            eventString += Destroyer.ToLink(link, pov);
+            eventString += Destroyer.ToSafeLink(link, pov);
             eventString += " in ";
-            eventString += Site.ToLink(link, pov);
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ".";
             return eventString;
         }
@@ -460,27 +435,26 @@ namespace LegendsViewer.Legends
         public HistoricalFigure Identity { get; set; }
         public Entity Target { get; set; }
 
-        public AssumeIdentity(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "trickster_hfid": Trickster = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "identity_id": property.Known = true; Identity = HistoricalFigure.Unknown; break; //Bad ID, so unknown for now.
-                    case "target_enid": Target = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "trickster_hfid": Trickster = world.GetHistoricalFigure(property.ValueAsInt()); Trickster.AddEvent(this); break;
+                    case "identity_id": Identity = HistoricalFigure.Unknown; Identity.AddEvent(this); break; //Bad ID, so unknown for now.
+                    case "target_enid": Target = world.GetEntity(property.ValueAsInt()); Target.AddEvent(this); break;
                 }
             }
-
-            Trickster.AddEvent(this);
-            Identity.AddEvent(this);
-            Target.AddEvent(this);
         }
-
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + Trickster.ToLink(link, pov) + " fooled " + Target.ToLink(link, pov) + " into believing " + Trickster.CasteNoun() + " was " + Identity.ToLink(link, pov) + ". ";
+            string eventString = GetYearTime() + Trickster.ToSafeLink(link, pov) + " fooled " + Target.ToSafeLink(link, pov) + " into believing " + Trickster.CasteNoun() + " was " + Identity.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -491,36 +465,35 @@ namespace LegendsViewer.Legends
         public Entity Attacker, Defender, SiteEntity;
         public Site Site;
         public HistoricalFigure AttackerGeneral, DefenderGeneral;
-        public AttackedSite(List<Property> properties, World world)
-            : base(properties, world)
+        public AttackedSite() { }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "attacker_civ_id": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defender_civ_id": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "attacker_general_hfid": AttackerGeneral = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "defender_general_hfid": DefenderGeneral = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "attacker_civ_id": Attacker = world.GetEntity(property.ValueAsInt()); Attacker.AddEvent(this); break;
+                    case "defender_civ_id": Defender = world.GetEntity(property.ValueAsInt()); Defender.AddEvent(this); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); SiteEntity.AddEvent(this); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "attacker_general_hfid": AttackerGeneral = world.GetHistoricalFigure(property.ValueAsInt()); AttackerGeneral.AddEvent(this); break;
+                    case "defender_general_hfid": DefenderGeneral = world.GetHistoricalFigure(property.ValueAsInt()); DefenderGeneral.AddEvent(this); break;
                 }
-            Attacker.AddEvent(this);
-            Defender.AddEvent(this);
-            SiteEntity.AddEvent(this);
-            Site.AddEvent(this);
-            AttackerGeneral.AddEvent(this);
-            DefenderGeneral.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime() + Attacker.PrintEntity(true, pov) + " attacked ";
             if (SiteEntity != null) eventString += SiteEntity.PrintEntity(true, pov);
             else eventString += Defender.PrintEntity(true, pov);
-            eventString += " at " + Site.ToLink(link, pov) + ". ";
+            eventString += " at " + Site.ToSafeLink(link, pov) + ". ";
             if (AttackerGeneral != null)
-                eventString += AttackerGeneral.ToLink(link, pov) + " led the attack";
+                eventString += AttackerGeneral.ToSafeLink(link, pov) + " led the attack";
             if (DefenderGeneral != null)
-                eventString += ", and the defenders were led by " + DefenderGeneral.ToLink(link, pov);
+                eventString += ", and the defenders were led by " + DefenderGeneral.ToSafeLink(link, pov);
             else eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -544,59 +517,43 @@ namespace LegendsViewer.Legends
         public WorldRegion Region { get; set; }
         public UndergroundRegion UndergroundRegion { get; set; }
         public Location Coordinates { get; set; }
-        public BodyAbused(List<Property> properties, World world)
-            : base(properties, world)
+        public string PropItemSubItem;
+
+        public BodyAbused() { }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "civ": Abuser = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "bodies": Body = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "props_item_type": ItemType = property.Value; break;
-                    case "props_item_subtype": ItemSubType = property.Value; break;
-                    case "props_item_mat": Material = property.Value; break;
-                    case "abuse_type": AbuseTypeID = Convert.ToInt32(property.Value); break;
-                    case "props_pile_type": PileTypeID = Convert.ToInt32(property.Value); break;
-                    case "props_item_mat_type": MaterialTypeID = Convert.ToInt32(property.Value); break;
-                    case "props_item_mat_index": MaterialIndex = Convert.ToInt32(property.Value); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
+                    case "civ": Abuser = world.GetEntity(property.ValueAsInt()); Abuser.AddEvent(this); break;
+                    case "bodies": Body = world.GetHistoricalFigure(property.ValueAsInt()); Body.AddEvent(this); break;
+                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "abuse_type": AbuseTypeID = property.ValueAsInt(); break;
+                    case "props_pile_type": PileTypeID = property.ValueAsInt(); break;
+                    case "props_item_subtype": PropItemSubItem = string.Intern(property.Value); break;
+                    case "props_item_mat": property.Known = true; break;
+                    case "props_item_mat_type": MaterialTypeID = property.ValueAsInt(); break;
+                    case "props_item_mat_index": MaterialIndex = property.ValueAsInt(); break;
                 }
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
-            Body.AddEvent(this);
-            HistoricalFigure.AddEvent(this);
-            Abuser.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            if (Body != null)
-            {
-                eventString += Body.ToLink(link, pov);
-            }
-            else
-            {
-                eventString += "UNKNOWN HISTORICAL FIGURE";
-            }
+            eventString += Body.ToSafeLink(link, pov);
             eventString += "'s body was abused by ";
-            if (Abuser != null)
-            {
-                eventString += Abuser.ToLink(link, pov);
-            }
-            else
-            {
-                eventString += "UNKNOWN ENTITY";
-            }
+            eventString += Abuser.ToSafeLink(link, pov);
             if (Site != null)
-            {
-                eventString += " in " + Site.ToLink(link, pov);
-            }
+                eventString += " in " + Site.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -615,14 +572,13 @@ namespace LegendsViewer.Legends
         public Location Coordinates { get; set; }
         private string UnknownBodyState;
 
-        public ChangeHFBodyState(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
                     case "body_state":
                         switch (property.Value)
                         {
@@ -634,27 +590,28 @@ namespace LegendsViewer.Legends
                                 break;
                         }
                         break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "building_id": StructureID = Convert.ToInt32(property.Value); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "building_id": Structure = Site?.GetStructure(property.ValueAsInt()); Structure.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
                 }
             }
-            if (Site != null)
-            {
-                Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
-            }
-            Structure.AddEvent(this);
+            
             HistoricalFigure.AddEvent(this);
             Site.AddEvent(this);
             Region.AddEvent(this);
             UndergroundRegion.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
 
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + HistoricalFigure.ToLink(link, pov) + " ";
+            string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " ";
             string stateString = "";
             switch (BodyState)
             {
@@ -663,11 +620,11 @@ namespace LegendsViewer.Legends
             }
             eventString += stateString;
             if (Region != null)
-                eventString += " in " + Region.ToLink(link, pov);
+                eventString += " in " + Region.ToSafeLink(link, pov);
             if (Site != null)
-                eventString += " at " + Site.ToLink(link, pov);
+                eventString += " at " + Site.ToSafeLink(link, pov);
             eventString += " within ";
-            eventString += Structure != null ? Structure.ToLink(link, pov) : "UNKNOWN STRUCTURES";
+            eventString += Structure != null ? Structure.ToSafeLink(link, pov) : "UNKNOWN STRUCTURES";
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -686,32 +643,48 @@ namespace LegendsViewer.Legends
         public Site Site;
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
-        public string NewJob { get; set; }
-        public string OldJob { get; set; }
-        public ChangeHFJob(List<Property> properties, World world)
-            : base(properties, world)
+        public string OldJob, NewJob;
+
+        public ChangeHFJob()
         {
             NewJob = "UNKNOWN JOB";
             OldJob = "UNKNOWN JOB";
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
-                    case "new_job": NewJob = property.Value.Replace("_", " "); break;
-                    case "old_job": OldJob = property.Value.Replace("_", " "); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
+                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
+                    case "old_job": OldJob = string.Intern(Formatting.InitCaps(property.Value.Replace("_", " "))); break;
+                    case "new_job": NewJob = string.Intern(Formatting.InitCaps(property.Value.Replace("_", " "))); break;
                 }
-            HistoricalFigure.AddEvent(this);
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + HistoricalFigure.ToLink(link, pov);
+            // TODO: Sort out differences
+            //string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
+            //if (!string.IsNullOrEmpty(NewJob))
+            //{
+            //    if (!string.IsNullOrEmpty(OldJob))
+            //        eventString += $" changed jobs from {OldJob} to {NewJob}";
+            //    else
+            //        eventString += $" became a {NewJob}";
+            //}
+            //else if (!string.IsNullOrEmpty(OldJob))
+            //    eventString += " stopped working as a " + OldJob;
+            //else 
+            //    eventString += " became a UNKNOWN JOB";
+            string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
             if (OldJob != "standard" && NewJob != "standard")
             {
                 eventString += " gave up being a " + OldJob + " to become a " + NewJob;
@@ -730,7 +703,7 @@ namespace LegendsViewer.Legends
             }
             if (Site != null)
             {
-                eventString += " in " + Site.ToLink(link, pov);
+                eventString += " in " + Site.ToSafeLink(link, pov);
             }
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
@@ -760,8 +733,9 @@ namespace LegendsViewer.Legends
         public Location Coordinates;
         public HFState State;
         private string UnknownState;
-        public ChangeHFState(List<Property> properties, World world)
-            : base(properties, world)
+
+        public ChangeHFState() { }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
@@ -781,26 +755,30 @@ namespace LegendsViewer.Legends
                         }
                         break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
-                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
+                    case "hfid":
+                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt());
+                        if (HistoricalFigure != null && HistoricalFigure.AddEvent(this))
+                            HistoricalFigure.States.Add(new HistoricalFigure.State(State, Year));
+                        break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
                 }
             if (HistoricalFigure != null)
             {
-                HistoricalFigure.AddEvent(this);
-                HistoricalFigure.States.Add(new HistoricalFigure.State(State, Year));
                 HistoricalFigure.State lastState = HistoricalFigure.States.LastOrDefault();
                 if (lastState != null) lastState.EndYear = Year;
                 HistoricalFigure.CurrentState = State;
             }
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + HistoricalFigure.ToLink(link, pov);
+            string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
             if (State == HFState.Settled) eventString += " settled in ";
             else if (State == HFState.Refugee || State == HFState.Snatcher || State == HFState.Thief) eventString += " became a " + State.ToString().ToLower() + " in ";
             else if (State == HFState.Wandering) eventString += " began wandering ";
@@ -811,9 +789,9 @@ namespace LegendsViewer.Legends
             {
                 eventString += " " + UnknownState + " in ";
             }
-            if (Site != null) eventString += Site.ToLink(link, pov);
-            else if (Region != null) eventString += Region.ToLink(link, pov);
-            else if (UndergroundRegion != null) eventString += UndergroundRegion.ToLink(link, pov);
+            if (Site != null) eventString += Site.ToSafeLink(link, pov);
+            else if (Region != null) eventString += Region.ToSafeLink(link, pov);
+            else if (UndergroundRegion != null) eventString += UndergroundRegion.ToSafeLink(link, pov);
             else eventString += "the wilds";
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
@@ -824,8 +802,8 @@ namespace LegendsViewer.Legends
     {
         public HistoricalFigure Changee, Changer;
         public string OldRace, OldCaste, NewRace, NewCaste;
-        public ChangedCreatureType(List<Property> properties, World world)
-            : base(properties, world)
+        public ChangedCreatureType() { }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
@@ -834,16 +812,21 @@ namespace LegendsViewer.Legends
                     case "old_caste": OldCaste = property.Value; break;
                     case "new_race": NewRace = Formatting.FormatRace(property.Value); break;
                     case "new_caste": NewCaste = property.Value; break;
-                    case "changee_hfid": Changee = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "changer_hfid": Changer = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "changee_hfid": Changee = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "changer_hfid": Changer = world.GetHistoricalFigure(property.ValueAsInt()); break;
                 }
             Changee.PreviousRace = OldRace;
             Changee.AddEvent(this);
             Changer.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Changer.ToLink(link, pov) + " changed " + Changee.ToLink(link, pov) + " from a " + OldRace + " into a " + NewRace + ". ";
+            string eventString = this.GetYearTime() + Changer.ToSafeLink(link, pov) + " changed " + Changee.ToSafeLink(link, pov) + " from a " + OldRace + " into a " + NewRace + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -857,64 +840,63 @@ namespace LegendsViewer.Legends
         public string Position { get; set; }
         public int Reason { get; set; } // TODO // legends_plus.xml
 
-        public CreateEntityPosition(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
-            {
                 switch (property.Name)
                 {
-                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "civ": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ": SiteCiv = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "position": Position = property.Value; break;
-                    case "reason": Reason = Convert.ToInt32(property.Value); break;
+                    case "civ":
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); Civ.AddEvent(this); break;
+                    case "site_civ": SiteCiv = world.GetEntity(property.ValueAsInt()); SiteCiv.AddEvent(this); break;
+                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "reason": Reason = property.ValueAsInt(); break;
+                    case "position": Position = string.Intern(Formatting.InitCaps(property.Value)); break;
                 }
-            }
-            HistoricalFigure.AddEvent(this);
-            Civ.AddEvent(this);
-            SiteCiv.AddEvent(this);
         }
-
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
             switch (Reason)
             {
                 case 0:
-                    eventString += HistoricalFigure != null ? HistoricalFigure.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+                    eventString += HistoricalFigure.ToSafeLink(link, pov);
                     eventString += " of ";
-                    eventString += Civ != null ? Civ.ToLink(link, pov) : "UNKNOWN CIV";
+                    eventString += Civ.ToSafeLink(link, pov, "CIV");
                     eventString += " created the position of ";
                     eventString += !string.IsNullOrWhiteSpace(Position) ? Position : "UNKNOWN POSITION";
                     eventString += " through force of argument. ";
                     break;
                 case 1:
-                    eventString += HistoricalFigure != null ? HistoricalFigure.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+                    eventString += HistoricalFigure.ToSafeLink(link, pov);
                     eventString += " of ";
-                    eventString += Civ != null ? Civ.ToLink(link, pov) : "UNKNOWN CIV";
+                    eventString += Civ.ToSafeLink(link, pov, "CIV");
                     eventString += " compelled the creation of the position of ";
                     eventString += !string.IsNullOrWhiteSpace(Position) ? Position : "UNKNOWN POSITION";
                     eventString += " with threats of violence. ";
                     break;
                 case 2:
-                    eventString += SiteCiv != null ? SiteCiv.ToLink(link, pov) : "UNKNOWN ENTITY";
+                    eventString += SiteCiv.ToSafeLink(link, pov);
                     eventString += " collaborated to create the position of ";
                     eventString += !string.IsNullOrWhiteSpace(Position) ? Position : "UNKNOWN POSITION";
                     eventString += ". ";
                     break;
                 case 3:
-                    eventString += HistoricalFigure != null ? HistoricalFigure.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+                    eventString += HistoricalFigure.ToSafeLink(link, pov);
                     eventString += " of ";
-                    eventString += Civ != null ? Civ.ToLink(link, pov) : "UNKNOWN CIV";
+                    eventString += Civ.ToSafeLink(link, pov, "CIV");
                     eventString += " created the position of ";
                     eventString += !string.IsNullOrWhiteSpace(Position) ? Position : "UNKNOWN POSITION";
                     eventString += ", pushed by a wave of popular support. ";
                     break;
                 case 4:
-                    eventString += HistoricalFigure != null ? HistoricalFigure.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+                    eventString += HistoricalFigure.ToSafeLink(link, pov);
                     eventString += " of ";
-                    eventString += Civ != null ? Civ.ToLink(link, pov) : "UNKNOWN CIV";
+                    eventString += Civ.ToSafeLink(link, pov, "CIV");
                     eventString += " created the position of ";
                     eventString += !string.IsNullOrWhiteSpace(Position) ? Position : "UNKNOWN POSITION";
                     eventString += " as a matter of course. ";
@@ -930,16 +912,15 @@ namespace LegendsViewer.Legends
         public Entity Civ, SiteEntity;
         public Site Site;
         public HistoricalFigure Builder;
-        public CreatedSite(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "civ_id": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "builder_hfid": Builder = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "builder_hfid": Builder = world.GetHistoricalFigure(property.ValueAsInt()); break;
                 }
             if (SiteEntity != null)
             {
@@ -959,17 +940,22 @@ namespace LegendsViewer.Legends
             Civ.AddEvent(this);
             Builder.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
             if (Builder != null)
             {
-                eventString += Builder.ToLink(link, pov) + " created " + Site.ToLink(link, pov) + ". ";
+                eventString += Builder.ToSafeLink(link, pov) + " created " + Site.ToSafeLink(link, pov) + ". ";
             }
             else
             {
-                if (SiteEntity != null) eventString += SiteEntity.ToLink(link, pov) + " of ";
-                eventString += Civ.ToLink(link, pov) + " founded " + Site.ToLink(link, pov) + ". ";
+                if (SiteEntity != null) eventString += SiteEntity.ToSafeLink(link, pov) + " of ";
+                eventString += Civ.ToSafeLink(link, pov) + " founded " + Site.ToSafeLink(link, pov) + ". ";
             }
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -979,20 +965,20 @@ namespace LegendsViewer.Legends
     {
         public Entity Civ, SiteEntity;
         public Site Site1, Site2;
-        public WorldContruction WorldConstruction, MasterWorldConstruction;
-        public CreatedWorldConstruction(List<Property> properties, World world)
-            : base(properties, world)
+        public WorldConstruction WorldConstruction, MasterWorldConstruction;
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "civ_id": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id1": Site1 = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "site_id2": Site2 = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "wcid": WorldConstruction = world.GetWorldConstruction(Convert.ToInt32(property.Value)); break;
-                    case "master_wcid": MasterWorldConstruction = world.GetWorldConstruction(Convert.ToInt32(property.Value)); break;
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id1": Site1 = world.GetSite(property.ValueAsInt()); break;
+                    case "site_id2": Site2 = world.GetSite(property.ValueAsInt()); break;
+                    case "wcid": WorldConstruction = world.GetWorldConstruction(property.ValueAsInt()); break;
+                    case "master_wcid": MasterWorldConstruction = world.GetWorldConstruction(property.ValueAsInt()); break;
                 }
             }
 
@@ -1008,23 +994,28 @@ namespace LegendsViewer.Legends
             Site1.AddConnection(Site2);
             Site2.AddConnection(Site1);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += SiteEntity != null ? SiteEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += SiteEntity.ToSafeLink(link, pov);
             eventString += " of ";
-            eventString += Civ != null ? Civ.ToLink(link, pov) : "UNKNOWN CIV";
+            eventString += Civ.ToSafeLink(link, pov, "CIV");
             eventString += " constructed ";
-            eventString += WorldConstruction != null ? WorldConstruction.ToLink(link, pov) : "UNKNOWN CONSTRUCTION";
+            eventString += WorldConstruction.ToSafeLink(link, pov);
             if (MasterWorldConstruction != null)
             {
                 eventString += " as part of ";
-                eventString += MasterWorldConstruction.ToLink(link, pov);
+                eventString += MasterWorldConstruction.ToSafeLink(link, pov);
             }
             eventString += " connecting ";
-            eventString += Site1 != null ? Site1.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site1.ToSafeLink(link, pov);
             eventString += " and ";
-            eventString += Site2 != null ? Site2.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site2.ToSafeLink(link, pov);
             return eventString;
         }
     }
@@ -1038,35 +1029,44 @@ namespace LegendsViewer.Legends
         public Site Site;
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
-        public CreatureDevoured(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
-                    case "victim": Victim = world.GetHistoricalFigure((Convert.ToInt32(property.Value))); break;
-                    case "eater": Eater = world.GetHistoricalFigure((Convert.ToInt32(property.Value))); break;
-                    case "entity": Entity = world.GetEntity((Convert.ToInt32(property.Value))); break;
-                    case "race": Race = property.Value.Replace("_", " "); break;
-                    case "caste": Caste = property.Value; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
+                    case "eater": Eater = world.GetHistoricalFigure(property.ValueAsInt()); Eater.AddEvent(this); break;
+                    case "race": Race = Formatting.InitCaps(property.Value.Replace("_", " ")); break;
+                    case "caste": Caste = Formatting.InitCaps(property.Value.Replace("_", " ")); break;
+                    case "victim": Victim = world.GetHistoricalFigure((property.ValueAsInt())); Victim.AddEvent(this); break;
+                    case "entity": Entity = world.GetEntity((property.ValueAsInt())); Entity.AddEvent(this); break;
+                   //case "entity": Victim = world.GetHistoricalFigure(property.ValueAsInt()); Victim.AddEvent(this); break;
                 }
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
-            Eater.AddEvent(this);
-            Victim.AddEvent(this);
-            Entity.AddEvent(this);
+
+
+
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
+            string eater = Eater != null ? Eater.ToSafeLink(link, pov) : Race ?? "UNKNOWN HISTORICAL FIGURE";
+            string victim = Victim != null ? Victim.ToSafeLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
             string eventString = this.GetYearTime();
+            eventString += $"{eater} devoured {victim} in ";
+            if (Site != null) eventString += Site.ToSafeLink(link, pov);
+            else if (Region != null) eventString += Region.ToSafeLink(link, pov);
+            else if (UndergroundRegion != null) eventString += UndergroundRegion.ToSafeLink(link, pov);
             if (Eater != null)
             {
-                eventString += Eater.ToLink(link, pov);
+                eventString += Eater.ToSafeLink(link, pov);
             }
             else
             {
@@ -1075,7 +1075,7 @@ namespace LegendsViewer.Legends
             eventString += " devoured ";
             if (Victim != null)
             {
-                eventString += Victim.ToLink(link, pov);
+                eventString += Victim.ToSafeLink(link, pov);
             }
             else if (!string.IsNullOrWhiteSpace(Race))
             {
@@ -1093,15 +1093,15 @@ namespace LegendsViewer.Legends
             eventString += " in ";
             if (Site != null)
             {
-                eventString += Site.ToLink(link, pov);
+                eventString += Site.ToSafeLink(link, pov);
             }
             else if (Region != null)
             {
-                eventString += Region.ToLink(link, pov);
+                eventString += Region.ToSafeLink(link, pov);
             }
             else if (UndergroundRegion != null)
             {
-                eventString += UndergroundRegion.ToLink(link, pov);
+                eventString += UndergroundRegion.ToSafeLink(link, pov);
             }
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
@@ -1113,16 +1113,15 @@ namespace LegendsViewer.Legends
     {
         public Site Site;
         public Entity SiteEntity, Attacker, Defender;
-        public DestroyedSite(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "attacker_civ_id": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defender_civ_id": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "attacker_civ_id": Attacker = world.GetEntity(property.ValueAsInt()); break;
+                    case "defender_civ_id": Defender = world.GetEntity(property.ValueAsInt()); break;
                 }
 
             if (Site.OwnerHistory.Count == 0)
@@ -1144,11 +1143,16 @@ namespace LegendsViewer.Legends
             Attacker.AddEvent(this);
             Defender.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Attacker.ToLink(link, pov) + " defeated ";
-            if (SiteEntity != null && SiteEntity != Defender) eventString += SiteEntity.ToLink(link, pov) + " of ";
-            eventString += Defender.ToLink(link, pov) + " and destroyed " + Site.ToLink(link, pov) + ". ";
+            string eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " defeated ";
+            if (SiteEntity != null && SiteEntity != Defender) eventString += SiteEntity.ToSafeLink(link, pov) + " of ";
+            eventString += Defender.ToSafeLink(link, pov) + " and destroyed " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -1160,19 +1164,18 @@ namespace LegendsViewer.Legends
         public HistoricalFigure AttackerGeneral, DefenderGeneral;
         public UndergroundRegion UndergroundRegion;
         public Location Coordinates;
-        public FieldBattle(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
-                    case "attacker_civ_id": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defender_civ_id": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "attacker_general_hfid": AttackerGeneral = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "defender_general_hfid": DefenderGeneral = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
+                    case "attacker_civ_id": Attacker = world.GetEntity(property.ValueAsInt()); break;
+                    case "defender_civ_id": Defender = world.GetEntity(property.ValueAsInt()); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); break;
+                    case "attacker_general_hfid": AttackerGeneral = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "defender_general_hfid": DefenderGeneral = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); break;
                 }
             Attacker.AddEvent(this);
             Defender.AddEvent(this);
@@ -1181,10 +1184,15 @@ namespace LegendsViewer.Legends
             Region.AddEvent(this);
             UndergroundRegion.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Attacker.ToLink(link, pov) + " attacked " + Defender.ToLink(link, pov) + " in " + Region.ToLink(link, pov) + ". " +
-                AttackerGeneral.ToLink(link, pov) + " led the attack, and the defenders were led by " + DefenderGeneral.ToLink(link, pov) + ". ";
+            string eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " attacked " + Defender.ToSafeLink(link, pov) + " in " + Region.ToSafeLink(link, pov) + ". " +
+                AttackerGeneral.ToSafeLink(link, pov) + " led the attack, and the defenders were led by " + DefenderGeneral.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -1196,17 +1204,16 @@ namespace LegendsViewer.Legends
         public Site Site { get; set; }
         public WorldRegion Region { get; set; }
         public UndergroundRegion UndergroundRegion { get; set; }
-        public HFAbducted(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "target_hfid": Target = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "snatcher_hfid": Snatcher = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
+                    case "target_hfid": Target = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "snatcher_hfid": Snatcher = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); break;
                 }
             Target.AddEvent(this);
             Snatcher.AddEvent(this);
@@ -1214,14 +1221,19 @@ namespace LegendsViewer.Legends
             Region.AddEvent(this);
             UndergroundRegion.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
             if (Snatcher != null)
-                eventString += Snatcher.ToLink(link, pov);
+                eventString += Snatcher.ToSafeLink(link, pov);
             else
                 eventString += "(UNKNOWN HISTORICAL FIGURE)";
-            eventString += " abducted " + Target.ToLink(link, pov) + " from " + Site.ToLink(link, pov) + ". ";
+            eventString += " abducted " + Target.ToSafeLink(link, pov) + " from " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -1239,8 +1251,7 @@ namespace LegendsViewer.Legends
         private string UnknownSituation;
         private List<string> UnknownReasons;
 
-        public HFConfronted(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             Reasons = new List<ConfrontReason>();
             UnknownReasons = new List<string>();
@@ -1248,7 +1259,7 @@ namespace LegendsViewer.Legends
             {
                 switch (property.Name)
                 {
-                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); break;
                     case "situation":
                         switch (property.Value)
                         {
@@ -1272,9 +1283,9 @@ namespace LegendsViewer.Legends
                                 break;
                         }
                         break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
                 }
             }
@@ -1285,9 +1296,14 @@ namespace LegendsViewer.Legends
             UndergroundRegion.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + HistoricalFigure.ToLink(link, pov);
+            string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
             string situationString = "";
             switch (Situation)
             {
@@ -1297,10 +1313,10 @@ namespace LegendsViewer.Legends
             eventString += " " + situationString;
 
             if (Region != null)
-                eventString += " in " + Region.ToLink(link, pov);
+                eventString += " in " + Region.ToSafeLink(link, pov);
 
             if (Site != null)
-                eventString += " at " + Site.ToLink(link, pov);
+                eventString += " at " + Site.ToSafeLink(link, pov);
 
             string reasonString = "after ";
             int unknownReasonIndex = 0;
@@ -1368,11 +1384,13 @@ namespace LegendsViewer.Legends
         public string ShooterItemMaterial { get; set; }
         public Artifact ShooterArtifact { get; set; }
 
-        public HFDied(List<Property> properties, World world)
-            : base(properties, world)
+        public HFDied()
         {
             ItemID = -1;
             ShooterItemID = -1;
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             SlayerItemID = -1;
             SlayerShooterItemID = -1;
             SlayerRace = "UNKNOWN";
@@ -1381,8 +1399,10 @@ namespace LegendsViewer.Legends
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "slayer_item_id": SlayerItemID = Convert.ToInt32(property.Value); break;
-                    case "slayer_shooter_item_id": SlayerShooterItemID = Convert.ToInt32(property.Value); break;
+                    case "item":
+                    case "slayer_item_id": SlayerItemID = property.ValueAsInt(); break;
+                    case "slayer_shooter_item_id": SlayerShooterItemID = property.ValueAsInt(); break;
+                    case "death_cause":
                     case "cause":
                         switch (property.Value)
                         {
@@ -1426,49 +1446,43 @@ namespace LegendsViewer.Legends
                         break;
                     case "slayer_race": SlayerRace = Formatting.FormatRace(property.Value); break;
                     case "slayer_caste": SlayerCaste = property.Value; break;
-                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "slayer_hfid": Slayer = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
-                    case "victim_hf": if (HistoricalFigure == null) { HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "slayer_hf": if (Slayer == null) { Slayer = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "death_cause": property.Known = true; break;
-                    case "item": ItemID = Convert.ToInt32(property.Value); break;
+                    case "victim_hf":
+                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "slayer_hf":
+                    case "slayer_hfid": Slayer = world.GetHistoricalFigure(property.ValueAsInt()); Slayer.AddEvent(this); if (Slayer != null) Slayer.NotableKills.Add(this);  break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
                     case "item_type": ItemType = property.Value; break;
-                    case "item_subtype": ItemSubType = property.Value; break;
-                    case "mat": ItemMaterial = property.Value; break;
-                    case "artifact_id": Artifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
-                    case "shooter_item": ShooterItemID = Convert.ToInt32(property.Value); break;
+                    case "item_subtype": ItemType = property.Value; break;
+                    case "mat": 
+                    case "item_material": ItemMaterial = property.Value; break;
+                    case "artifact_id": Artifact = world.GetArtifact(property.ValueAsInt()); Artifact.AddEvent(this); break;
+                    case "shooter_item": ShooterItemID = property.ValueAsInt(); break;
                     case "shooter_item_type": ShooterItemType = property.Value; break;
                     case "shooter_item_subtype": ShooterItemSubType = property.Value; break;
                     case "shooter_mat": ShooterItemMaterial = property.Value; break;
-                    case "shooter_artifact_id": ShooterArtifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
+                    case "shooter_artifact_id": ShooterArtifact = world.GetArtifact(property.ValueAsInt()); break;
                 }
-            HistoricalFigure.AddEvent(this);
             if (HistoricalFigure.DeathCause == DeathCause.None)
                 HistoricalFigure.DeathCause = Cause;
-            if (Slayer != null)
-            {
-                Slayer.AddEvent(this);
-                Slayer.NotableKills.Add(this);
-            }
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
-            Artifact.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + HistoricalFigure.ToLink(link, pov) + " ";
+            string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " ";
             string deathString = "";
 
             if (Slayer != null || (SlayerRace != "UNKNOWN" && SlayerRace != "-1"))
             {
                 string slayerString;
                 if (Slayer == null) slayerString = " a " + SlayerRace.ToLower();
-                else slayerString = Slayer.ToLink(link, pov);
+                else slayerString = Slayer.ToSafeLink(link, pov);
 
                 if (Cause == DeathCause.DragonsFire) deathString = "burned up in " + slayerString + "'s dragon fire";
                 else if (Cause == DeathCause.Burned) deathString = "was burned to death by " + slayerString + "'s fire";
@@ -1522,11 +1536,20 @@ namespace LegendsViewer.Legends
 
             eventString += deathString;
 
+            string slayeritem = null;
+            if (!string.IsNullOrEmpty(ItemSubType))
+                slayeritem = !string.IsNullOrEmpty(ItemMaterial) ? ItemMaterial + " " + ItemSubType : ItemSubType;
+            else if (!string.IsNullOrEmpty(ItemType))
+                slayeritem = !string.IsNullOrEmpty(ItemMaterial) ? ItemMaterial + " " + ItemType : ItemType;
+            else if (SlayerItemID >= 0)
+                slayeritem = "(" + SlayerItemID + ")";
+            if (slayeritem != null) eventString += " with a " + slayeritem;
+            else if (SlayerShooterItemID >= 0) eventString += " with a (shot) (" + SlayerShooterItemID + ")";
             if (ItemID >= 0)
             {
                 if (Artifact != null)
                 {
-                    eventString += " with " + Artifact.ToLink(link, pov);
+                    eventString += " with " + Artifact.ToSafeLink(link, pov);
                 }
                 else if (!string.IsNullOrWhiteSpace(ItemType) || !string.IsNullOrWhiteSpace(ItemSubType))
                 {
@@ -1539,7 +1562,7 @@ namespace LegendsViewer.Legends
             {
                 if (ShooterArtifact != null)
                 {
-                    eventString += " (shot) with " + ShooterArtifact.ToLink(link, pov);
+                    eventString += " (shot) with " + ShooterArtifact.ToSafeLink(link, pov);
                 }
                 else if (!string.IsNullOrWhiteSpace(ShooterItemType) || !string.IsNullOrWhiteSpace(ShooterItemSubType))
                 {
@@ -1551,9 +1574,9 @@ namespace LegendsViewer.Legends
             else if (SlayerItemID >= 0) eventString += " with a (" + SlayerItemID + ")";
             else if (SlayerShooterItemID >= 0) eventString += " (shot) with a (" + SlayerShooterItemID + ")";
 
-            if (Site != null) eventString += " in " + Site.ToLink(link, pov);
-            else if (Region != null) eventString += " in " + Region.ToLink(link, pov);
-            else if (UndergroundRegion != null) eventString += " in " + UndergroundRegion.ToLink(link, pov);
+            if (Site != null) eventString += " in " + Site.ToSafeLink(link, pov);
+            else if (Region != null) eventString += " in " + Region.ToSafeLink(link, pov);
+            else if (UndergroundRegion != null) eventString += " in " + UndergroundRegion.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -1564,61 +1587,71 @@ namespace LegendsViewer.Legends
     {
         public HistoricalFigure Doer { get; set; }
         public HistoricalFigure Target { get; set; }
+        public Site Site { get; set; }
+        public WorldRegion Region { get; set; }
         public string Interaction { get; set; }
         public string InteractionAction { get; set; }
         public string InteractionString { get; set; }
+        public string InteractionDescription { get; set; }
         public string Source { get; set; }
-        public WorldRegion Region { get; set; }
-        public Site Site { get; set; }
 
-        public HFDoesInteraction(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "doer_hfid": Doer = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "target_hfid": Target = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "doer":
+                    case "doer_hfid": Doer = world.GetHistoricalFigure(property.ValueAsInt()); Doer.AddEvent(this); break;
+                    case "target":
+                    case "target_hfid": Target = world.GetHistoricalFigure(property.ValueAsInt()); Target.AddEvent(this); break;
                     case "interaction": Interaction = property.Value; break;
-                    case "doer": if (Doer == null) { Doer = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "target": if (Target == null) { Target = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
+                    case "site": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "region": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
                     case "interaction_action": InteractionAction = property.Value.Replace("[IS_HIST_STRING_1:", "").Replace("[IS_HIST_STRING_2:", "").Replace("]", ""); break;
                     case "interaction_string": InteractionString = property.Value.Replace("[IS_HIST_STRING_2:", "").Replace("[I_TARGET:A:CREATURE", "").Replace("]", ""); break;
                     case "source": Source = property.Value; break;
-                    case "region": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "site": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
                 }
             }
-
-            if (Target != null && !string.IsNullOrWhiteSpace(Interaction) && !Target.ActiveInteractions.Contains(Interaction))
+            InteractionDescription = Interaction;
+            if (!string.IsNullOrEmpty(InteractionAction) && !string.IsNullOrEmpty(InteractionString))
             {
-                Target.ActiveInteractions.Add(Interaction);
+                InteractionDescription = Formatting.ExtractInteractionString(InteractionAction) + " " +
+                                         Formatting.ExtractInteractionString(InteractionString);
             }
-            Doer.AddEvent(this);
-            Target.AddEvent(this);
-            Region.AddEvent(this);
-            Site.AddEvent(this);
+            else
+            {
+                InteractionDescription = $"({Interaction})";
+            }
         }
 
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+            if (Target != null && !string.IsNullOrWhiteSpace(Interaction) && !Target.ActiveInteractions.Contains(Interaction))
+                Target.ActiveInteractions.Add(Interaction);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
+            //string eventString = GetYearTime() + Doer.ToSafeLink(link, pov) + InteractionDescription + " on " + Target.ToSafeLink(link, pov) + ". ";
             string eventString = GetYearTime();
-            eventString += Doer.ToLink(link, pov);
+            eventString += Doer.ToSafeLink(link, pov);
             if (InteractionString == "")
             {
                 eventString += " bit ";
-                eventString += Target.ToLink(link, pov);
+                eventString += Target.ToSafeLink(link, pov);
                 eventString += !string.IsNullOrWhiteSpace(InteractionAction) ? InteractionAction : ", passing on the " + Interaction + " ";
             }
             else
             {
                 eventString += !string.IsNullOrWhiteSpace(InteractionAction) ? InteractionAction : " put " + Interaction + " on ";
-                eventString += Target.ToLink(link, pov);
+                eventString += Target.ToSafeLink(link, pov);
                 eventString += !string.IsNullOrWhiteSpace(InteractionString) ? InteractionString : "";
             }
             eventString += " in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -1631,14 +1664,13 @@ namespace LegendsViewer.Legends
         public SecretGoal Goal { get; set; }
         private string UnknownGoal;
 
-        public HFGainsSecretGoal(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
                     case "secret_goal":
                         switch (property.Value)
                         {
@@ -1652,13 +1684,16 @@ namespace LegendsViewer.Legends
                         break;
                 }
             }
-
-            HistoricalFigure.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + HistoricalFigure.ToLink(link, pov);
+            string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
             string goalString = "";
             switch (Goal)
             {
@@ -1684,49 +1719,51 @@ namespace LegendsViewer.Legends
         public Artifact Artifact { get; set; }
         public string Interaction { get; set; }
         public string SecretText { get; set; }
+        public string InteractionDescription { get; set; }
 
-        public HFLearnsSecret(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "student_hfid": Student = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "teacher_hfid": Teacher = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "artifact_id": Artifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
+                    case "student":
+                    case "student_hfid": Student = world.GetHistoricalFigure(property.ValueAsInt()); Student.AddEvent(this); break;
+                    case "teacher":
+                    case "teacher_hfid": Teacher = world.GetHistoricalFigure(property.ValueAsInt()); Teacher.AddEvent(this); break;
+                    case "artifact":
+                    case "artifact_id": Artifact = world.GetArtifact(property.ValueAsInt()); Artifact.AddEvent(this); break;
                     case "interaction": Interaction = property.Value; break;
-                    case "student": if (Student == null) { Student = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "teacher": if (Teacher == null) { Teacher = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "artifact": if (Artifact == null) { Artifact = world.GetArtifact(Convert.ToInt32(property.Value)); } else property.Known = true; break;
                     case "secret_text": SecretText = property.Value.Replace("[IS_NAME:", "").Replace("]", ""); break;
                 }
             }
-
-            Student.AddEvent(this);
-            Teacher.AddEvent(this);
-            Artifact.AddEvent(this);
+            InteractionDescription = !string.IsNullOrEmpty(SecretText) ? Formatting.ExtractInteractionString(SecretText) : Interaction;
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
 
             if (Teacher != null)
             {
-                eventString += Teacher.ToLink(link, pov);
+                eventString += Teacher.ToSafeLink(link, pov);
                 eventString += " taught ";
-                eventString += Student != null ? Student.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+                eventString += Student.ToSafeLink(link, pov);
                 eventString += " ";
                 eventString += !string.IsNullOrWhiteSpace(SecretText) ? SecretText : "(" + Interaction + ")";
             }
             else
             {
-                eventString += Student != null ? Student.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+                eventString += Student.ToSafeLink(link, pov);
                 eventString += " learned ";
                 eventString += !string.IsNullOrWhiteSpace(SecretText) ? SecretText : "(" + Interaction + ")";
                 eventString += " from ";
-                eventString += Artifact != null ? Artifact.ToLink(link, pov) : "UNKNOWN ARTIFACT";
+                eventString += Artifact.ToSafeLink(link, pov);
             }
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
@@ -1742,48 +1779,47 @@ namespace LegendsViewer.Legends
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
         public Location Coordinates;
-        public HFNewPet(List<Property> properties, World world)
-            : base(properties, world)
+
+        public HFNewPet() { Pet = "UNKNOWN"; }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
-                    case "group_hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "group": if (HistoricalFigure == null) { HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "pets": Pet = property.Value.Replace("_", " ").Replace("2", "two"); break;
+                    case "group":
+                    case "group_hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
+                    case "pets": Pet = Formatting.InitCaps(property.Value.Replace("_", " ").Replace("2", "two")); break;
                 }
-            HistoricalFigure.AddEvent(this);
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + HistoricalFigure.ToLink(link, pov) + " tamed the creatures named ";
-            if (!string.IsNullOrWhiteSpace(Pet))
-            {
-                eventString += Pet;
-            }
-            else
-            {
-                eventString += "UNKNOWN";
-            }
+            //string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " tamed " + PetType;
+            //if (Site != null) eventString += " at " + Site.ToSafeLink(link, pov);
+            //else if (Region != null) eventString += " in " + Region.ToSafeLink(link, pov);
+            //else if (UndergroundRegion != null) eventString += " in " + UndergroundRegion.ToSafeLink(link, pov);
+            string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " tamed the creatures named ";
+            eventString += !string.IsNullOrWhiteSpace(Pet) ? Pet : "UNKNOWN";
             if (Site != null)
             {
-                eventString += " in " + Site.ToLink(link, pov);
+                eventString += " in " + Site.ToSafeLink(link, pov);
             }
             else if (Region != null)
             {
-                eventString += " in " + Region.ToLink(link, pov);
+                eventString += " in " + Region.ToSafeLink(link, pov);
             }
             else if (UndergroundRegion != null)
             {
-                eventString += " in " + UndergroundRegion.ToLink(link, pov);
+                eventString += " in " + UndergroundRegion.ToSafeLink(link, pov);
             }
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
@@ -1799,36 +1835,33 @@ namespace LegendsViewer.Legends
         public int StructureID { get; set; }
         public Structure Structure { get; set; }
 
-        public HFProfanedStructure(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "hist_fig_id": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "structure_id": StructureID = Convert.ToInt32(property.Value); break;
-                    case "structure": StructureID = Convert.ToInt32(property.Value); break;
-                    case "histfig": if (HistoricalFigure == null) { HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "action": Action = Convert.ToInt32(property.Value); break;
+                    case "histfig":
+                    case "hist_fig_id": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "structure":
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this); break;
+                    case "action": Action = property.ValueAsInt(); break;
                 }
             }
-            if (Site != null)
-            {
-                Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
-            }
-            HistoricalFigure.AddEvent(this);
-            Site.AddEvent(this);
-            Structure.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + HistoricalFigure.ToLink(link, pov) + " profaned ";
-            eventString += Structure != null ? Structure.ToLink(link, pov) : "UNKNOWN STRUCTURE";
-            eventString += " in " + Site.ToLink(link, pov) + ". ";
+            string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " profaned ";
+            eventString += Structure.ToSafeLink(link, pov);
+            eventString += " in " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -1840,17 +1873,17 @@ namespace LegendsViewer.Legends
         public Site Site;
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
-        public HFReunion(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "group_1_hfid": HistoricalFigure1 = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "group_2_hfid": HistoricalFigure2 = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
+                    case "group_1_hfid": HistoricalFigure1 = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "group_2_hfid": HistoricalFigure2 = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); break;
                 }
             HistoricalFigure1.AddEvent(this);
             HistoricalFigure2.AddEvent(this);
@@ -1858,11 +1891,16 @@ namespace LegendsViewer.Legends
             Region.AddEvent(this);
             UndergroundRegion.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + " " + HistoricalFigure1.ToLink(link, pov) + " was reunited with " + HistoricalFigure2.ToLink(link, pov);
-            if (Site != null) eventString += " in " + Site.ToLink(link, pov);
-            else if (Region != null) eventString += " in " + Region.ToLink(link, pov);
+            string eventString = this.GetYearTime() + " " + HistoricalFigure1.ToSafeLink(link, pov) + " was reunited with " + HistoricalFigure2.ToSafeLink(link, pov);
+            if (Site != null) eventString += " in " + Site.ToSafeLink(link, pov);
+            else if (Region != null) eventString += " in " + Region.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -1877,45 +1915,45 @@ namespace LegendsViewer.Legends
         public Site Site { get; set; }
         public Location Coordinates;
 
-        public HFReachSummit(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "group_hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
-                    case "site": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "group":
+                    case "group_hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
+                    case "site": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
-                    case "group": if (HistoricalFigure == null) { HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
                 }
             }
-            HistoricalFigure.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
-            Site.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += HistoricalFigure != null ? HistoricalFigure.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += HistoricalFigure.ToSafeLink(link, pov);
             eventString += " reached the summit";
             if (Region != null)
             {
                 eventString += ", which rises above ";
-                eventString += Region.ToLink(link, pov);
+                eventString += Region.ToSafeLink(link, pov);
             }
             else if (UndergroundRegion != null)
             {
                 eventString += ", in the depths of ";
-                eventString += UndergroundRegion.ToLink(link, pov);
+                eventString += UndergroundRegion.ToSafeLink(link, pov);
             }
             if (Site != null)
             {
                 eventString += " in ";
-                eventString += Site.ToLink(link, pov);
+                eventString += Site.ToSafeLink(link, pov);
             }
             eventString += ".";
             return eventString;
@@ -1949,8 +1987,7 @@ namespace LegendsViewer.Legends
         public Site Site;
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
-        public HFSimpleBattleEvent(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
@@ -1971,35 +2008,35 @@ namespace LegendsViewer.Legends
                             default: SubType = HFSimpleBattleType.Unknown; UnknownSubType = property.Value; world.ParsingErrors.Report("Unknown HF Battle SubType: " + UnknownSubType); break;
                         }
                         break;
-                    case "group_1_hfid": HistoricalFigure1 = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "group_2_hfid": HistoricalFigure2 = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
+                    case "group_1_hfid": HistoricalFigure1 = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure1.AddEvent(this); break;
+                    case "group_2_hfid": HistoricalFigure2 = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure2.AddEvent(this); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
                 }
-            HistoricalFigure1.AddEvent(this);
-            HistoricalFigure2.AddEvent(this);
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + HistoricalFigure1.ToLink(link, pov);
-            if (SubType == HFSimpleBattleType.HF2LostAfterGivingWounds) eventString = this.GetYearTime() + HistoricalFigure2.ToLink(link, pov) + " was forced to retreat from "
-                + HistoricalFigure1.ToLink(link, pov) + " despite the latter's wounds";
-            else if (SubType == HFSimpleBattleType.HF2LostAfterMutualWounds) eventString += " eventually prevailed and " + HistoricalFigure2.ToLink(link, pov)
+            string eventString = this.GetYearTime() + HistoricalFigure1.ToSafeLink(link, pov);
+            if (SubType == HFSimpleBattleType.HF2LostAfterGivingWounds) eventString = this.GetYearTime() + HistoricalFigure2.ToSafeLink(link, pov) + " was forced to retreat from "
+                + HistoricalFigure1.ToSafeLink(link, pov) + " despite the latter's wounds";
+            else if (SubType == HFSimpleBattleType.HF2LostAfterMutualWounds) eventString += " eventually prevailed and " + HistoricalFigure2.ToSafeLink(link, pov)
                 + " was forced to make a hasty escape";
-            else if (SubType == HFSimpleBattleType.HF2LostAfterReceivingWounds) eventString = this.GetYearTime() + HistoricalFigure2.ToLink(link, pov) + " managed to escape from "
-                + HistoricalFigure1.ToLink(link, pov) + "'s onslaught";
-            else if (SubType == HFSimpleBattleType.Scuffle) eventString += " fought with " + HistoricalFigure2.ToLink(link, pov) + ". While defeated, the latter escaped unscathed";
-            else if (SubType == HFSimpleBattleType.Attacked) eventString += " attacked " + HistoricalFigure2.ToLink(link, pov);
-            else if (SubType == HFSimpleBattleType.Confronted) eventString += " confronted " + HistoricalFigure2.ToLink(link, pov);
-            else if (SubType == HFSimpleBattleType.HappenedUpon) eventString += " happened upon " + HistoricalFigure2.ToLink();
-            else if (SubType == HFSimpleBattleType.Ambushed) eventString += " ambushed " + HistoricalFigure2.ToLink();
-            else if (SubType == HFSimpleBattleType.Cornered) eventString += " cornered " + HistoricalFigure2.ToLink();
-            else if (SubType == HFSimpleBattleType.Surprised) eventString += " suprised " + HistoricalFigure2.ToLink();
-            else eventString += " fought (" + UnknownSubType + ") " + HistoricalFigure2.ToLink(link, pov);
+            else if (SubType == HFSimpleBattleType.HF2LostAfterReceivingWounds) eventString = this.GetYearTime() + HistoricalFigure2.ToSafeLink(link, pov) + " managed to escape from "
+                + HistoricalFigure1.ToSafeLink(link, pov) + "'s onslaught";
+            else if (SubType == HFSimpleBattleType.Scuffle) eventString += " fought with " + HistoricalFigure2.ToSafeLink(link, pov) + ". While defeated, the latter escaped unscathed";
+            else if (SubType == HFSimpleBattleType.Attacked) eventString += " attacked " + HistoricalFigure2.ToSafeLink(link, pov);
+            else if (SubType == HFSimpleBattleType.Confronted) eventString += " confronted " + HistoricalFigure2.ToSafeLink(link, pov);
+            else if (SubType == HFSimpleBattleType.HappenedUpon) eventString += " happened upon " + HistoricalFigure2.ToSafeLink();
+            else if (SubType == HFSimpleBattleType.Ambushed) eventString += " ambushed " + HistoricalFigure2.ToSafeLink();
+            else if (SubType == HFSimpleBattleType.Cornered) eventString += " cornered " + HistoricalFigure2.ToSafeLink();
+            else if (SubType == HFSimpleBattleType.Surprised) eventString += " suprised " + HistoricalFigure2.ToSafeLink();
+            else eventString += " fought (" + UnknownSubType + ") " + HistoricalFigure2.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -2014,8 +2051,7 @@ namespace LegendsViewer.Legends
         public Site Site;
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
-        public HFTravel(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
@@ -2023,26 +2059,31 @@ namespace LegendsViewer.Legends
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
                     case "escape": Escaped = true; property.Known = true; break;
                     case "return": Returned = true; property.Known = true; break;
-                    case "group_hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
+                    case "group_hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); break;
                 }
             HistoricalFigure.AddEvent(this);
             Site.AddEvent(this);
             Region.AddEvent(this);
             UndergroundRegion.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + HistoricalFigure.ToLink(link, pov);
-            if (Escaped) return this.GetYearTime() + HistoricalFigure.ToLink(link, pov) + " escaped from the " + UndergroundRegion.ToLink(link, pov);
+            string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
+            if (Escaped) return this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " escaped from the " + UndergroundRegion.ToSafeLink(link, pov);
             else if (Returned) eventString += " returned to ";
             else eventString += " made a journey to ";
 
-            if (UndergroundRegion != null) eventString += UndergroundRegion.ToLink(link, pov);
-            else if (Site != null) eventString += Site.ToLink(link, pov);
-            else if (Region != null) eventString += Region.ToLink(link, pov);
+            if (UndergroundRegion != null) eventString += UndergroundRegion.ToSafeLink(link, pov);
+            else if (Site != null) eventString += Site.ToSafeLink(link, pov);
+            else if (Region != null) eventString += Region.ToSafeLink(link, pov);
 
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
@@ -2063,56 +2104,54 @@ namespace LegendsViewer.Legends
         public Site Site;
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
-        public HFWounded(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "woundee_hfid": Woundee = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "wounder_hfid": Wounder = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
-                    case "woundee": if (Woundee == null) { Woundee = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "wounder": if (Wounder == null) { Wounder = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "woundee_race": WoundeeRace = Convert.ToInt32(property.Value); break;
-                    case "woundee_caste": WoundeeCaste = Convert.ToInt32(property.Value); break;
-                    case "body_part": BodyPart = Convert.ToInt32(property.Value); break;
-                    case "injury_type": InjuryType = Convert.ToInt32(property.Value); break;
-                    case "part_lost": PartLost = Convert.ToInt32(property.Value); break;
+                    case "woundee":
+                    case "woundee_hfid": Woundee = world.GetHistoricalFigure(property.ValueAsInt()); Woundee.AddEvent(this); break;
+                    case "wounder":
+                    case "wounder_hfid": Wounder = world.GetHistoricalFigure(property.ValueAsInt()); Wounder.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
+                    //case "woundee_race": WoundeeRace = Formatting.InitCaps(property.Value); break;
+                    //case "woundee_caste": WoundeeCaste = Formatting.InitCaps(property.Value); break;
+                    //case "body_part": BodyPart = string.Intern(property.Value); break;
+                    //case "injury_type": InjuryType = string.Intern(property.Value); break;
+                    case "part_lost": PartLost = property.ValueAsInt(); break;
+                    case "woundee_race": WoundeeRace = property.ValueAsInt(); break;
+                    case "woundee_caste": WoundeeCaste = property.ValueAsInt(); break;
+                    case "body_part": BodyPart = property.ValueAsInt(); break;
+                    case "injury_type": InjuryType = property.ValueAsInt(); break;
                 }
-            Woundee.AddEvent(this);
-            Wounder.AddEvent(this);
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            if (Woundee != null)
-                eventString += Woundee.ToLink(link, pov);
-            else
-                eventString += "UNKNOWN HISTORICAL FIGURE";
+            eventString += Woundee.ToSafeLink(link, pov);
             eventString += " was wounded by ";
-            if (Wounder != null)
-                eventString += Wounder.ToLink(link, pov);
-            else
-                eventString += "UNKNOWN HISTORICAL FIGURE";
+            eventString += Wounder.ToSafeLink(link, pov);
 
             if (Site != null)
             {
-                eventString += " in " + Site.ToLink(link, pov);
+                eventString += " in " + Site.ToSafeLink(link, pov);
             }
             else if (Region != null)
             {
-                eventString += " in " + Region.ToLink(link, pov);
+                eventString += " in " + Region.ToSafeLink(link, pov);
             }
             else if (UndergroundRegion != null)
             {
-                eventString += " in " + UndergroundRegion.ToLink(link, pov);
+                eventString += " in " + UndergroundRegion.ToSafeLink(link, pov);
             }
 
             eventString += ". ";
@@ -2124,24 +2163,29 @@ namespace LegendsViewer.Legends
     {
         public HistoricalFigure Trickster, Cover;
         public Entity Target;
-        public ImpersonateHF(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "trickster_hfid": Trickster = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "cover_hfid": Cover = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "target_enid": Target = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "trickster_hfid": Trickster = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "cover_hfid": Cover = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "target_enid": Target = world.GetEntity(property.ValueAsInt()); break;
                 }
             Trickster.AddEvent(this);
             Cover.AddEvent(this);
             Target.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Trickster.ToLink(link, pov) + " fooled " + Target.ToLink(link, pov)
-                + " into believing he/she was a manifestation of the deity " + Cover.ToLink(link, pov) + ". ";
+            string eventString = this.GetYearTime() + Trickster.ToSafeLink(link, pov) + " fooled " + Target.ToSafeLink(link, pov)
+                + " into believing he/she was a manifestation of the deity " + Cover.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2161,65 +2205,52 @@ namespace LegendsViewer.Legends
         public Site Site { get; set; }
         public Site ReturnSite { get; set; }
 
-        public ItemStolen(List<Property> properties, World world)
-            : base(properties, world)
+        public ItemStolen()
         {
             ItemType = "UNKNOWN ITEM";
             Material = "UNKNOWN MATERIAL";
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
-            {
                 switch (property.Name)
                 {
-                    case "histfig": Thief = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "entity": Entity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "item_type": ItemType = property.Value.Replace("_", " "); break;
-                    case "mat": Material = property.Value; break;
-                    case "item_subtype": ItemSubType = Convert.ToInt32(property.Value); break;
-                    case "mattype": MaterialIndex = Convert.ToInt32(property.Value); break;
-                    case "matindex": ItemSubType = Convert.ToInt32(property.Value); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "structure": StructureID = Convert.ToInt32(property.Value); break;
+                    case "item_type": ItemType = string.Intern(Formatting.InitCaps(property.Value.Replace("_", " ")));  break;
+                    case "mat": Material = string.Intern(Formatting.InitCaps(property.Value));  break;
+                    case "histfig": Thief = world.GetHistoricalFigure(property.ValueAsInt()); Thief.AddEvent(this); break;
+                    case "entity": Entity = world.GetEntity(property.ValueAsInt()); Entity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "structure":
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this); break;
+                    case "item_subtype": ItemSubType = property.ValueAsInt(); break;
+                    case "mattype": MaterialIndex = property.ValueAsInt(); break;
+                    case "matindex": ItemSubType = property.ValueAsInt(); break;
                 }
-            }
-            if (Site != null)
-            {
-                Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
-            }
-            Thief.AddEvent(this);
-            Site.AddEvent(this);
-            Entity.AddEvent(this);
-            Structure.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool path = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
+            string itemType = !string.IsNullOrEmpty(ItemType) ? (Material + " " + ItemType) : "UNKNOWN ITEM";
+            string site = Site.ToSafeLink(path, pov);
+            string thief = Thief.ToSafeLink(path, pov);
+
+            eventString += $" a {itemType} was stolen from {site} by {thief}";
+            if (Entity != null) eventString += " from " + Entity.ToSafeLink(path, pov);
+
             eventString += " a ";
             eventString += Material + " " + ItemType;
             eventString += " was stolen from ";
-            if (Site != null)
-            {
-                eventString += Site.ToLink(path, pov);
-            }
-            else
-            {
-                eventString += "UNKNOWN SITE";
-            }
-            eventString += " by ";
-            if (Thief != null)
-            {
-                eventString += Thief.ToLink(path, pov);
-            }
-            else
-            {
-                eventString += "UNKNOWN HISTORICAL FIGURE";
-            }
 
             if (ReturnSite != null)
             {
-                eventString += " and brought to " + ReturnSite.ToLink();
+                eventString += " and brought to " + ReturnSite.ToSafeLink();
             }
-
             eventString += ". ";
             eventString += PrintParentCollection(path, pov);
             return eventString;
@@ -2231,18 +2262,18 @@ namespace LegendsViewer.Legends
         public Entity Attacker, Defender, SiteEntity, NewSiteEntity;
         public Site Site;
         public HistoricalFigure NewLeader;
-        public NewSiteLeader(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "attacker_civ_id": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defender_civ_id": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "new_site_civ_id": NewSiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "new_leader_hfid": NewLeader = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "attacker_civ_id": Attacker = world.GetEntity(property.ValueAsInt()); break;
+                    case "defender_civ_id": Defender = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "new_site_civ_id": NewSiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "new_leader_hfid": NewLeader = world.GetHistoricalFigure(property.ValueAsInt()); break;
                 }
 
             if (Site.OwnerHistory.Count == 0)
@@ -2268,11 +2299,16 @@ namespace LegendsViewer.Legends
             NewSiteEntity.AddEvent(this);
             NewLeader.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Attacker.ToLink(link, pov) + " defeated ";
-            if (SiteEntity != null && SiteEntity != Defender) eventString += SiteEntity.ToLink(link, pov) + " of ";
-            eventString += Defender.ToLink(link, pov) + " and placed " + NewLeader.ToLink(link, pov) + " in charge of " + Site.ToLink(link, pov) + ". The new government was called " + NewSiteEntity.ToLink(link, pov) + ". ";
+            string eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " defeated ";
+            if (SiteEntity != null && SiteEntity != Defender) eventString += SiteEntity.ToSafeLink(link, pov) + " of ";
+            eventString += Defender.ToSafeLink(link, pov) + " and placed " + NewLeader.ToSafeLink(link, pov) + " in charge of " + Site.ToSafeLink(link, pov) + ". The new government was called " + NewSiteEntity.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2285,79 +2321,80 @@ namespace LegendsViewer.Legends
         public Entity Source { get; set; }
         public Entity Destination { get; set; }
         public Site Site;
-        public PeaceEfforts(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "topic": Topic = property.Value; break;
-                    case "source": Source = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "destination": Destination = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this);  break;
+                    case "topic": Topic = Formatting.InitCaps(property.Value);  break;
+                    case "source": Source = world.GetEntity(property.ValueAsInt()); Source.AddEvent(this);  break;
+                    case "destination": Destination = world.GetEntity(property.ValueAsInt()); Destination.AddEvent(this);  break;
                 }
-            Site.AddEvent(this);
-            Source.AddEvent(this);
-            Destination.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
+            //if (Source != null && Destination != null && Site != null)
+            //    return $"{GetYearTime()}Peace accepted by {Destination.ToSafeLink(link, pov)} in offer from {Source.ToSafeLink(link, pov)} at {Site.ToSafeLink(link, pov)}.";
+            //return $"{GetYearTime()}Peace {Decision} in {ParentCollection.ToSafeLink(link, pov)}.";
             string eventString = GetYearTime();
             if (Source != null && Destination != null)
             {
-                eventString += Destination.ToLink(link, pov) + " " + Decision + " an offer of peace from " + Source.ToLink(link, pov) + " in " + ParentCollection.ToLink(link, pov) + ".";
+                eventString += Destination.ToSafeLink(link, pov) + " " + Decision + " an offer of peace from " + Source.ToSafeLink(link, pov) + " in " + ParentCollection.ToSafeLink(link, pov) + ".";
             }
             else
             {
-                eventString += "Peace " + Decision + " in " + ParentCollection.ToLink(link, pov) + ".";
+                eventString += "Peace " + Decision + " in " + ParentCollection.ToSafeLink(link, pov) + ".";
             }
             return eventString;
         }
     }
     public class PeaceAccepted : PeaceEfforts
     {
-        public PeaceAccepted(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            Decision = "accepted";
-        }
+        public PeaceAccepted() { Decision = "accepted"; }
     }
     public class PeaceRejected : PeaceEfforts
     {
-        public PeaceRejected(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            Decision = "rejected";
-        }
+        public PeaceRejected() { Decision = "rejected"; }
     }
 
     public class PlunderedSite : WorldEvent
     {
         public Entity Attacker, Defender, SiteEntity;
         public Site Site;
-        public PlunderedSite(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "attacker_civ_id": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defender_civ_id": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "attacker_civ_id": Attacker = world.GetEntity(property.ValueAsInt()); break;
+                    case "defender_civ_id": Defender = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
                 }
             Attacker.AddEvent(this);
             Defender.AddEvent(this);
             if (Defender != SiteEntity) SiteEntity.AddEvent(this);
             Site.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Attacker.ToLink(link, pov) + " defeated ";
-            if (SiteEntity != null && Defender != SiteEntity) eventString += SiteEntity.ToLink(link, pov) + " of ";
-            eventString += Defender.ToLink(link, pov) + " and pillaged " + Site.ToLink(link, pov) + ". ";
+            string eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " defeated ";
+            if (SiteEntity != null && Defender != SiteEntity) eventString += SiteEntity.ToSafeLink(link, pov) + " of ";
+            eventString += Defender.ToSafeLink(link, pov) + " and pillaged " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2368,17 +2405,19 @@ namespace LegendsViewer.Legends
         public Entity Entity { get; set; }
         public Site Site { get; set; }
         public int StructureID { get; set; }
+        public Structure Structure { get; set; }
 
-        public RazedStructure(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "civ_id": Entity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "structure_id": StructureID = Convert.ToInt32(property.Value); break;
+                    case "civ_id": Entity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "structure":
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this);break;
+
                 }
             }
 
@@ -2386,9 +2425,16 @@ namespace LegendsViewer.Legends
             Site.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + Entity.ToLink(link, pov) + " razed (" + StructureID + ") in " + Site.ToLink(link, pov) + ". ";
+            string eventString = GetYearTime() + Entity.ToSafeLink(link, pov) + " razed ";
+            eventString += Structure != null ? Structure.Name : $"({StructureID})";
+            eventString += " in " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2398,15 +2444,14 @@ namespace LegendsViewer.Legends
     {
         public Entity Civ, SiteEntity;
         public Site Site;
-        public ReclaimSite(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "civ_id": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
                 }
             if (SiteEntity != null && SiteEntity != Civ)
                 SiteEntity.Parent = Civ;
@@ -2426,11 +2471,16 @@ namespace LegendsViewer.Legends
                 SiteEntity.AddEvent(this);
             Site.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
-            if (SiteEntity != null && SiteEntity != Civ) eventString += SiteEntity.ToLink(link, pov) + " of ";
-            eventString += Civ.ToLink(link, pov) + " launched an expedition to reclaim " + Site.ToLink(link, pov) + ". ";
+            if (SiteEntity != null && SiteEntity != Civ) eventString += SiteEntity.ToSafeLink(link, pov) + " of ";
+            eventString += Civ.ToSafeLink(link, pov) + " launched an expedition to reclaim " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2441,67 +2491,43 @@ namespace LegendsViewer.Legends
         public HistoricalFigure HistoricalFigure;
         public HfEntityLinkType LinkType;
         public string Position;
-        public RemoveHFEntityLink(List<Property> properties, World world)
-            : base(properties, world)
+
+        public RemoveHFEntityLink()
         {
             LinkType = HfEntityLinkType.Unknown;
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
                     case "civ":
-                    case "civ_id":
-                        Entity = world.GetEntity(Convert.ToInt32(property.Value));
-                        break;
-                    case "histfig":
-                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt());
-                        break;
+                    case "civ_id": Entity = world.GetEntity(property.ValueAsInt()); Entity.AddEvent(this); break;
+                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "position": Position = string.Intern(Formatting.InitCaps(property.Value)); break;
                     case "link_type":
-                        switch (property.Value)
+                        if (!Enum.TryParse(property.Value, true, out LinkType))
                         {
-                            case "position":
-                                LinkType = HfEntityLinkType.Position;
-                                break;
-                            case "prisoner":
-                                LinkType = HfEntityLinkType.Prisoner;
-                                break;
-                            case "enemy":
-                                LinkType = HfEntityLinkType.Enemy;
-                                break;
-                            case "member":
-                                LinkType = HfEntityLinkType.Member;
-                                break;
-                            case "slave":
-                                LinkType = HfEntityLinkType.Slave;
-                                break;
-                            case "squad":
-                                LinkType = HfEntityLinkType.Squad;
-                                break;
-                            default:
-                                world.ParsingErrors.Report("Unknown HfEntityLinkType: " + property.Value);
-                                break;
+                            world.ParsingErrors.Report("Unknown HfEntityLinkType: " + property.Value);
                         }
                         break;
-                    case "position":
-                        Position = property.Value;
-                        break;
+
                 }
             }
 
             HistoricalFigure.AddEvent(this);
             Entity.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
-            if (HistoricalFigure != null)
-            {
-                eventString += HistoricalFigure.ToLink(link, pov);
-            }
-            else
-            {
-                eventString += "UNKNOWN HISTORICAL FIGURE";
-            }
+            eventString += HistoricalFigure.ToSafeLink(link, pov);
             switch (LinkType)
             {
                 case HfEntityLinkType.Prisoner:
@@ -2525,7 +2551,7 @@ namespace LegendsViewer.Legends
                     break;
             }
 
-            eventString += Entity.ToLink(link, pov) + ". ";
+            eventString += Entity.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2541,42 +2567,42 @@ namespace LegendsViewer.Legends
         public bool RecievedName;
         public HistoricalFigure HistoricalFigure;
         public Site Site;
-        public ArtifactCreated(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "unit_id": UnitID = Convert.ToInt32(property.Value); break;
-                    case "artifact_id": Artifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
-                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "unit_id": UnitID = property.ValueAsInt(); break;
+                    case "artifact_id": Artifact = world.GetArtifact(property.ValueAsInt()); Artifact.AddEvent(this); break;
+                    case "hfid":
+                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "site": 
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "name_only": RecievedName = true; property.Known = true; break;
-                    case "hfid": if (HistoricalFigure == null) { HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
                 }
             if (Artifact != null)
-            {
-                Artifact.Creator = HistoricalFigure;
-            }
-            Artifact.AddEvent(this);
-            HistoricalFigure.AddEvent(this);
-            Site.AddEvent(this);
+                Artifact.Creator = HistoricalFigure;            
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Artifact.ToLink(link, pov);
+            string eventString = this.GetYearTime() + Artifact.ToSafeLink(link, pov);
             if (RecievedName)
                 eventString += " recieved its name";
             else
                 eventString += " was created";
             if (Site != null)
-                eventString += " in " + Site.ToLink(link, pov);
+                eventString += " in " + Site.ToSafeLink(link, pov);
             if (RecievedName)
                 eventString += " from ";
             else
                 eventString += " by ";
-            eventString += HistoricalFigure.ToLink(link, pov) + ". ";
+            eventString += HistoricalFigure.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2590,17 +2616,21 @@ namespace LegendsViewer.Legends
         public HistoricalFigure HistoricalFigure { get; set; }
         public Site Site { get; set; }
 
-        public ArtifactTransformed(List<Property> properties, World world)
-            : base(properties, world)
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "unit_id": UnitID = Convert.ToInt32(property.Value); break;
-                    case "new_artifact_id": NewArtifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
-                    case "old_artifact_id": OldArtifact = world.GetArtifact(Convert.ToInt32(property.Value)); break;
-                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "unit_id": UnitID = property.ValueAsInt(); break;
+                    case "new_artifact_id": NewArtifact = world.GetArtifact(property.ValueAsInt()); break;
+                    case "old_artifact_id": OldArtifact = world.GetArtifact(property.ValueAsInt()); break;
+                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
                 }
             NewArtifact.AddEvent(this);
             OldArtifact.AddEvent(this);
@@ -2610,7 +2640,7 @@ namespace LegendsViewer.Legends
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += NewArtifact.ToLink(link, pov);
+            eventString += NewArtifact.ToSafeLink(link, pov);
                 eventString += ", ";
             if (!string.IsNullOrWhiteSpace(NewArtifact.Material))
             {
@@ -2627,7 +2657,7 @@ namespace LegendsViewer.Legends
                 eventString += !string.IsNullOrWhiteSpace(NewArtifact.Type) ? NewArtifact.Type : "UNKNOWN TYPE";
             }
             eventString += ", was made from ";
-            eventString += OldArtifact.ToLink(link, pov);
+            eventString += OldArtifact.ToSafeLink(link, pov);
             eventString += ", ";
             if (!string.IsNullOrWhiteSpace(OldArtifact.Material))
             {
@@ -2644,9 +2674,9 @@ namespace LegendsViewer.Legends
                 eventString += !string.IsNullOrWhiteSpace(OldArtifact.Type) ? OldArtifact.Type : "UNKNOWN TYPE";
             }
             if (Site != null)
-                eventString += " in " + Site.ToLink(link, pov);
+                eventString += " in " + Site.ToSafeLink(link, pov);
             eventString += " by ";
-            eventString += HistoricalFigure != null ? HistoricalFigure.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += HistoricalFigure.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -2656,22 +2686,59 @@ namespace LegendsViewer.Legends
     public class DiplomatLost : WorldEvent
     {
         public Site Site;
-        public DiplomatLost(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                 }
-            Site.AddEvent(this);
+            
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + "UNKNOWN ENTITY lost a diplomat at " + Site.ToLink(link, pov)
+            string eventString = this.GetYearTime() + "UNKNOWN ENTITY lost a diplomat at " + Site.ToSafeLink(link, pov)
                 + ". They suspected the involvement of UNKNOWN ENTITY. ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
+        }
+    }
+
+    public class EntityAction 
+    {
+        public static void DelegateUpsertEvent(List<WorldEvent> events, List<Property> properties, World world)
+        {
+            var action = properties.Where(x => x.Name == "action").Select(x => new int?(System.Convert.ToInt32(x.Value))).FirstOrDefault();
+            if (action.HasValue && action.Value > -1)
+            {
+                switch (action)
+                {
+                    case 0: World.UpsertEvent<EntityPrimaryCriminals>(events, properties, world); break;
+                    case 1: World.UpsertEvent<EntityRelocate>(events, properties, world); break;
+                }
+            }
+        }
+    }
+
+    public class HFActOnBuilding
+    {
+        public static void DelegateUpsertEvent(List<WorldEvent> events, List<Property> properties, World world)
+        {
+            var action = properties.Where(x => x.Name == "action").Select(x => new int?(System.Convert.ToInt32(x.Value))).FirstOrDefault();
+            if (action.HasValue && action.Value > -1)
+            {
+                switch (action)
+                {
+                    case 0: World.UpsertEvent<HFProfanedStructure>(events, properties, world); break;
+                    //case 1: World.UpsertEvent<HFDisturbedStructure>(events, properties, world); break;
+                }
+            }
         }
     }
 
@@ -2679,26 +2746,33 @@ namespace LegendsViewer.Legends
     {
         public Entity Entity;
         public Site Site;
-        public EntityCreated(List<Property> properties, World world)
-            : base(properties, world)
+        public int StructureID;
+        public Structure Structure;
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "entity_id": Entity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "entity_id": Entity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
 
                     //Unhandled Events
-                    case "structure_id": property.Known = true; break;
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this);break;
                 }
             Entity.AddEvent(this);
             Site.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
-            eventString += Entity.ToLink(link, pov) + " formed in ";
-            eventString += (Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE") + ". ";
+            eventString += Entity.ToSafeLink(link, pov) + " formed in ";
+            eventString += (Site.ToSafeLink(link, pov)) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2712,15 +2786,14 @@ namespace LegendsViewer.Legends
         public bool LawLaid { get; set; }
         private string UnknownLawType;
 
-        public EntityLaw(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "entity_id": Entity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "entity_id": Entity = world.GetEntity(property.ValueAsInt()); break;
+                    case "hist_figure_id": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); break;
                     case "law_add":
                     case "law_remove":
                         switch (property.Value)
@@ -2741,9 +2814,14 @@ namespace LegendsViewer.Legends
             HistoricalFigure.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + HistoricalFigure.ToLink(link, pov);
+            string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
             if (LawLaid)
                 eventString += " laid a series of ";
             else
@@ -2757,7 +2835,7 @@ namespace LegendsViewer.Legends
                 eventString += " edicts upon ";
             else
                 eventString += " laws from ";
-            eventString += Entity.ToLink(link, pov);
+            eventString += Entity.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -2778,34 +2856,35 @@ namespace LegendsViewer.Legends
         public int StructureID { get; set; }
         public Structure Structure { get; set; }
 
-        public EntityPrimaryCriminals(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "entity_id": Entity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "structure_id": StructureID = Convert.ToInt32(property.Value); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "entity": if (Entity == null) { Entity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "action": Action = Convert.ToInt32(property.Value); break;
-                    case "structure": StructureID = Convert.ToInt32(property.Value); break;
+                    case "entity":
+                    case "entity_id": Entity = world.GetEntity(property.ValueAsInt()); Entity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "structure":
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this); break;
+                    case "action": Action = property.ValueAsInt(); break;
                 }
             }
-            if (Site != null)
-            {
-                Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
-            }
-            Entity.AddEvent(this);
-            Site.AddEvent(this);
-            Structure.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+            Structure.AddEvent(this);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + Entity.ToLink(link, pov) + " became the primary criminal organization in " + Site.ToLink() + ". ";
+            string eventString = GetYearTime() + Entity.ToSafeLink(link, pov) + " became the primary criminal organization in " + Site.ToSafeLink(link, pov) ;
+            eventString += " at ";
+            eventString += Structure != null ? Structure.Name : $" at ({StructureID})";
+            eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2819,43 +2898,33 @@ namespace LegendsViewer.Legends
         public int StructureID { get; set; }
         public Structure Structure { get; set; }
 
-        public EntityRelocate(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "entity_id": Entity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "structure_id": StructureID = Convert.ToInt32(property.Value); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "entity": if (Entity == null) { Entity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "action": Action = Convert.ToInt32(property.Value); break;
-                    case "structure": StructureID = Convert.ToInt32(property.Value); break;
+                    case "entity":
+                    case "entity_id": Entity = world.GetEntity(property.ValueAsInt()); Entity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "structure":
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this);break;
+                    case "action": Action = property.ValueAsInt(); break;
                 }
-            }
-            if (Site != null)
-            {
-                Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
-            }
-            Entity.AddEvent(this);
-            Site.AddEvent(this);
-            Structure.AddEvent(this);
+            } 
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = GetYearTime() + Entity.ToLink(link, pov) + " moved to ";
-            if (Structure != null)
-            {
-                eventString += Structure.ToLink(link, pov);
-            }
-            else
-            {
-                eventString += "UNKNOWN STRUCTURE";
-            }
-            eventString += " in " + Site.ToLink(link, pov) + ". ";
+            string eventString = GetYearTime() + Entity.ToSafeLink(link, pov) + " moved to ";
+            eventString += Structure.ToSafeLink(link, pov);
+            eventString += " in " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2868,26 +2937,27 @@ namespace LegendsViewer.Legends
         public Site Site;
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
-        public HFRevived(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "ghost": Ghost = property.Value; break;
-                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
+                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
                 }
-            HistoricalFigure.AddEvent(this);
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            UndergroundRegion.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + HistoricalFigure.ToLink(link, pov) + " came back from the dead as a " + Ghost + " in " + Site.ToLink(link, pov) + ". ";
+            string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " came back from the dead as a " + Ghost + " in " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -2903,36 +2973,36 @@ namespace LegendsViewer.Legends
         public string BuildingType { get; set; }
         public string BuildingSubType { get; set; }
         public int BuildingCustom { get; set; }
-
         public string Process { get; set; }
-
-        public MasterpieceArch(List<Property> properties, World world)
-            : base(properties, world)
+        
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "skill_at_time": SkillAtTime = Convert.ToInt32(property.Value); break;
-                    case "hfid": Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "entity_id": MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "maker": if (Maker == null) { Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "maker_entity": if (MakerEntity == null) { MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
+                    case "skill_at_time": SkillAtTime = property.ValueAsInt(); break;
+                    case "maker":
+                    case "hfid": Maker = world.GetHistoricalFigure(property.ValueAsInt()); Maker.AddEvent(this); break;
+                    case "maker_entity":
+                    case "entity_id": MakerEntity = world.GetEntity(property.ValueAsInt()); MakerEntity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "building_type": BuildingType = property.Value; break;
                     case "building_subtype": BuildingSubType = property.Value; break;
-                    case "building_custom": BuildingCustom = Convert.ToInt32(property.Value); break;
+                    case "building_custom": BuildingCustom = property.ValueAsInt(); break;
                 }
             }
-            Maker.AddEvent(this);
-            MakerEntity.AddEvent(this);
-            Site.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Maker != null ? Maker.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += Maker.ToSafeLink(link, pov);
             eventString += " ";
             eventString += Process;
             eventString += " a masterful ";
@@ -2945,9 +3015,9 @@ namespace LegendsViewer.Legends
                 eventString += !string.IsNullOrWhiteSpace(BuildingType) ? BuildingType : "UNKNOWN BUILDING";
             }
             eventString += " for ";
-            eventString += MakerEntity != null ? MakerEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += MakerEntity.ToSafeLink(link, pov);
             eventString += " in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -2956,20 +3026,12 @@ namespace LegendsViewer.Legends
 
     public class MasterpieceArchDesign : MasterpieceArch
     {
-        public MasterpieceArchDesign(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            Process = "designed";
-        }
+        public MasterpieceArchDesign() { Process = "designed"; }
     }
 
     public class MasterpieceArchConstructed : MasterpieceArch
     {
-        public MasterpieceArchConstructed(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            Process = "constructed";
-        }
+        public MasterpieceArchConstructed() { Process = "constructed"; }
     }
 
 
@@ -2982,37 +3044,38 @@ namespace LegendsViewer.Legends
         public int ArtID { get; set; }
         public int ArtSubID { get; set; }
 
-        public MasterpieceEngraving(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "skill_at_time": SkillAtTime = Convert.ToInt32(property.Value); break;
-                    case "hfid": Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "entity_id": MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "maker": if (Maker == null) { Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "maker_entity": if (MakerEntity == null) { MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "skill_rating": SkillAtTime = Convert.ToInt32(property.Value); break;
-                    case "art_id": ArtID = Convert.ToInt32(property.Value); break;
-                    case "art_subid": ArtSubID = Convert.ToInt32(property.Value); break;
+                    case "skill_at_time": SkillAtTime = property.ValueAsInt(); break;
+                    case "maker":
+                    case "hfid": Maker = world.GetHistoricalFigure(property.ValueAsInt()); Maker.AddEvent(this); break;
+                    case "maker_entity":
+                    case "entity_id": MakerEntity = world.GetEntity(property.ValueAsInt()); MakerEntity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "skill_rating": SkillAtTime = property.ValueAsInt(); break;
+                    case "art_id": ArtID = property.ValueAsInt(); break;
+                    case "art_subid": ArtSubID = property.ValueAsInt(); break;
                 }
-            Maker.AddEvent(this);
-            MakerEntity.AddEvent(this);
-            Site.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Maker != null ? Maker.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += Maker.ToSafeLink(link, pov);
             eventString += " created a masterful ";
             eventString += "engraving";
             eventString += " for ";
-            eventString += MakerEntity != null ? MakerEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += MakerEntity.ToSafeLink(link, pov);
             eventString += " in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -3028,52 +3091,45 @@ namespace LegendsViewer.Legends
         public int ItemID { get; set; }
         public string ItemSubType { get; set; }
 
-        public MasterpieceFood(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "skill_at_time": SkillAtTime = Convert.ToInt32(property.Value); break;
-                    case "hfid": Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "entity_id": MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "maker": if (Maker == null) { Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "maker_entity": if (MakerEntity == null) { MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
+                    case "skill_at_time": SkillAtTime = property.ValueAsInt(); break;
+                    case "maker":
+                    case "hfid": Maker = world.GetHistoricalFigure(property.ValueAsInt()); Maker.AddEvent(this); break;
+                    case "maker_entity":
+                    case "entity_id": MakerEntity = world.GetEntity(property.ValueAsInt()); MakerEntity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "item_subtype": ItemSubType = property.Value; break;
-                    case "item_id": ItemID = Convert.ToInt32(property.Value); break;
+                    case "item_id": ItemID = property.ValueAsInt(); break;
                 }
             }
-            Maker.AddEvent(this);
-            MakerEntity.AddEvent(this);
-            Site.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Maker != null ? Maker.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += Maker.ToSafeLink(link, pov);
             eventString += " prepared a masterful ";
             switch (ItemSubType)
             {
-                case "0":
-                    eventString += "biscuits";
-                    break;
-                case "1":
-                    eventString += "stew";
-                    break;
-                case "2":
-                    eventString += "roasts";
-                    break;
-                default:
-                    eventString += "meal";
-                    break;
+                case "0": eventString += "biscuits"; break;
+                case "1": eventString += "stew"; break;
+                case "2": eventString += "roasts"; break;
+                default: eventString += "meal"; break;
             }
             eventString += " for ";
-            eventString += MakerEntity != null ? MakerEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += MakerEntity.ToSafeLink(link, pov);
             eventString += " in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -3093,37 +3149,38 @@ namespace LegendsViewer.Legends
         public int MaterialType { get; set; }
         public int MaterialIndex { get; set; }
 
-        public MasterpieceItem(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "skill_at_time": SkillAtTime = Convert.ToInt32(property.Value); break;
-                    case "hfid": Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "entity_id": MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "maker": if (Maker == null) { Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "maker_entity": if (MakerEntity == null) { MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "skill_used": SkillAtTime = Convert.ToInt32(property.Value); break;
+                    case "skill_at_time": SkillAtTime = property.ValueAsInt(); break;
+                    case "maker":
+                    case "hfid": Maker = world.GetHistoricalFigure(property.ValueAsInt()); Maker.AddEvent(this); break;
+                    case "maker_entity":
+                    case "entity_id": MakerEntity = world.GetEntity(property.ValueAsInt()); MakerEntity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "skill_used": SkillAtTime = property.ValueAsInt(); break;
                     case "item_type": ItemType = property.Value.Replace("_", " "); break;
                     case "item_subtype": ItemSubType = property.Value.Replace("_", " "); break;
                     case "mat": Material = property.Value.Replace("_", " "); break;
-                    case "item_id": ItemID = Convert.ToInt32(property.Value); break;
-                    case "mat_type": MaterialType = Convert.ToInt32(property.Value); break;
-                    case "mat_index": MaterialIndex = Convert.ToInt32(property.Value); break;
+                    case "item_id": ItemID = property.ValueAsInt(); break;
+                    case "mat_type": MaterialType = property.ValueAsInt(); break;
+                    case "mat_index": MaterialIndex = property.ValueAsInt(); break;
                 }
             }
-            Maker.AddEvent(this);
-            MakerEntity.AddEvent(this);
-            Site.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Maker != null ? Maker.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += Maker.ToSafeLink(link, pov);
             eventString += " created a masterful ";
             eventString += !string.IsNullOrWhiteSpace(Material) ? Material + " " : "";
             if (!string.IsNullOrWhiteSpace(ItemSubType) && ItemSubType != "-1")
@@ -3135,9 +3192,9 @@ namespace LegendsViewer.Legends
                 eventString += !string.IsNullOrWhiteSpace(ItemType) ? ItemType : "UNKNOWN ITEM";
             }
             eventString += " for ";
-            eventString += MakerEntity != null ? MakerEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += MakerEntity.ToSafeLink(link, pov);
             eventString += " in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -3157,44 +3214,48 @@ namespace LegendsViewer.Legends
         public int DyeMaterialType { get; set; }
         public int DyeMaterialIndex { get; set; }
 
-        public MasterpieceDye(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "skill_at_time": SkillAtTime = Convert.ToInt32(property.Value); break;
-                    case "hfid": Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "entity_id": MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "maker": if (Maker == null) { Maker = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "maker_entity": if (MakerEntity == null) { MakerEntity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
+                    case "skill_at_time": SkillAtTime = property.ValueAsInt(); break;
+                    case "maker":
+                    case "hfid": Maker = world.GetHistoricalFigure(property.ValueAsInt()); Maker.AddEvent(this); break;
+                    case "maker_entity":
+                    case "entity_id": MakerEntity = world.GetEntity(property.ValueAsInt()); MakerEntity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "item_type": ItemType = property.Value.Replace("_", " "); break;
                     case "item_subtype": ItemSubType = property.Value.Replace("_", " "); break;
-                    case "mat_type": MaterialType = Convert.ToInt32(property.Value); break;
-                    case "mat_index": MaterialIndex = Convert.ToInt32(property.Value); break;
-                    case "dye_mat_type": DyeMaterialType = Convert.ToInt32(property.Value); break;
-                    case "dye_mat_index": DyeMaterialIndex = Convert.ToInt32(property.Value); break;
+                    case "mat_type": MaterialType = property.ValueAsInt(); break;
+                    case "mat_index": MaterialIndex = property.ValueAsInt(); break;
+                    case "dye_mat_type": DyeMaterialType = property.ValueAsInt(); break;
+                    case "dye_mat_index": DyeMaterialIndex = property.ValueAsInt(); break;
                 }
             }
-            Maker.AddEvent(this);
-            MakerEntity.AddEvent(this);
-            Site.AddEvent(this);
+            
+            
+            
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Maker != null ? Maker.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += Maker.ToSafeLink(link, pov);
             eventString += " masterfully dyed a ";
             eventString += "UNKNOWN ITEM";
             eventString += " with ";
             eventString += "UNKNOWN DYE";
             eventString += " for ";
-            eventString += MakerEntity != null ? MakerEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += MakerEntity.ToSafeLink(link, pov);
             eventString += " in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -3217,39 +3278,40 @@ namespace LegendsViewer.Legends
         public int ArtID { get; set; }
         public int ArtSubID { get; set; }
 
-        public MasterpieceItemImprovement(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "skill_at_time": SkillAtTime = Convert.ToInt32(property.Value); break;
-                    case "hfid": Improver = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "entity_id": ImproverEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "maker": if (Improver == null) { Improver = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "maker_entity": if (ImproverEntity == null) { ImproverEntity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "skill_used": SkillAtTime = Convert.ToInt32(property.Value); break;
+                    case "skill_at_time": SkillAtTime = property.ValueAsInt(); break;
+                    case "maker":
+                    case "hfid": Improver = world.GetHistoricalFigure(property.ValueAsInt()); Improver.AddEvent(this); break;
+                    case "maker_entity":
+                    case "entity_id": ImproverEntity = world.GetEntity(property.ValueAsInt()); ImproverEntity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "skill_used": SkillAtTime = property.ValueAsInt(); break;
                     case "item_type": ItemType = property.Value.Replace("_", " "); break;
                     case "item_subtype": ItemSubType = property.Value.Replace("_", " "); break;
                     case "mat": Material = property.Value.Replace("_", " "); break;
                     case "improvement_type": ImprovementType = property.Value.Replace("_", " "); break;
                     case "improvement_subtype": ImprovementSubType = property.Value.Replace("_", " "); break;
                     case "imp_mat": ImprovementMaterial = property.Value.Replace("_", " "); break;
-                    case "art_id": ArtID = Convert.ToInt32(property.Value); break;
-                    case "art_subid": ArtSubID = Convert.ToInt32(property.Value); break;
+                    case "art_id": ArtID = property.ValueAsInt(); break;
+                    case "art_subid": ArtSubID = property.ValueAsInt(); break;
                 }
             }
-            Improver.AddEvent(this);
-            ImproverEntity.AddEvent(this);
-            Site.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Improver != null ? Improver.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += Improver != null ? Improver.ToSafeLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
             switch (ImprovementType)
             {
                 case "art image":
@@ -3283,9 +3345,9 @@ namespace LegendsViewer.Legends
                 eventString += !string.IsNullOrWhiteSpace(ItemType) ? ItemType : "UNKNOWN ITEM";
             }
             eventString += " for ";
-            eventString += ImproverEntity != null ? ImproverEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += ImproverEntity.ToSafeLink(link, pov);
             eventString += " at ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -3294,26 +3356,29 @@ namespace LegendsViewer.Legends
 
     public class MasterpieceLost : WorldEvent
     {
+        public MasterpieceLost() { }
         public HistoricalFigure HistoricalFigure { get; set; }
         public Site Site { get; set; }
         public int MethodID { get; set; }
         public MasterpieceItem CreationEvent { get; set; }
 
-        public MasterpieceLost(List<Property> properties, World world)
-            : base(properties, world)
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "site": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "creation_event": CreationEvent = world.GetEvent(Convert.ToInt32(property.Value)) as MasterpieceItem; break;
-                    case "method": MethodID = Convert.ToInt32(property.Value); break;
+                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "site": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "creation_event": CreationEvent = world.GetEvent(property.ValueAsInt()) as MasterpieceItem; break;
+                    case "method": MethodID = property.ValueAsInt(); break;
                 }
             }
-            HistoricalFigure.AddEvent(this);
-            Site.AddEvent(this);
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
@@ -3331,11 +3396,11 @@ namespace LegendsViewer.Legends
                     eventString += !string.IsNullOrWhiteSpace(CreationEvent.ItemType) ? CreationEvent.ItemType : "UNKNOWN ITEM";
                 }
                 eventString += " created by ";
-                eventString += CreationEvent.Maker != null ? CreationEvent.Maker.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+                eventString += CreationEvent.Maker.ToSafeLink(link, pov);
                 eventString += " for ";
-                eventString += CreationEvent.MakerEntity != null ? CreationEvent.MakerEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+                eventString += CreationEvent.MakerEntity.ToSafeLink(link, pov);
                 eventString += " at ";
-                eventString += CreationEvent.Site != null ? CreationEvent.Site.ToLink(link, pov) : "UNKNOWN SITE";
+                eventString += CreationEvent.Site.ToSafeLink(link, pov);
                 eventString += " ";
                 eventString += CreationEvent.GetYearTime();
             }
@@ -3344,9 +3409,9 @@ namespace LegendsViewer.Legends
                 eventString += "UNKNOWN ITEM";
             }
             eventString += " was destroyed by ";
-            eventString += HistoricalFigure != null ? HistoricalFigure.ToLink(link, pov) : "an unknown creature";
+            eventString += HistoricalFigure != null ? HistoricalFigure.ToSafeLink(link, pov) : "an unknown creature";
             eventString += " in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ".";
             return eventString;
         }
@@ -3358,16 +3423,20 @@ namespace LegendsViewer.Legends
         public Entity Destination { get; set; }
         public Site Site { get; set; }
 
-        public Merchant(List<Property> properties, World world)
-            : base(properties, world)
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+        protected void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "source": Source = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "destination": Destination = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "source": Source = world.GetEntity(property.ValueAsInt()); break;
+                    case "destination": Destination = world.GetEntity(property.ValueAsInt()); break;
+                    case "site": Site = world.GetSite(property.ValueAsInt()); break;
                 }
             }
             Source.AddEvent(this);
@@ -3378,11 +3447,11 @@ namespace LegendsViewer.Legends
         {
             string eventString = GetYearTime();
             eventString += "merchants from ";
-            eventString += Source != null ? Source.ToLink(link, pov) : "UNKNOWN CIV";
+            eventString += Source.ToSafeLink(link, pov, "CIV");
             eventString += " visited ";
-            eventString += Destination != null ? Destination.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += Destination.ToSafeLink(link, pov);
             eventString += " at ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ".";
             return eventString;
         }
@@ -3392,15 +3461,15 @@ namespace LegendsViewer.Legends
     {
         public Entity Civ, SiteEntity;
         public Site Site;
-        public SiteAbandoned(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "civ_id": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
                 }
             Site.OwnerHistory.Last().EndYear = this.Year;
             Site.OwnerHistory.Last().EndCause = "abandoned";
@@ -3416,11 +3485,16 @@ namespace LegendsViewer.Legends
             SiteEntity.AddEvent(this);
             Site.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
-            if (SiteEntity != null && SiteEntity != Civ) eventString += SiteEntity.ToLink(link, pov) + " of ";
-            eventString += Civ.ToLink(link, pov) + " abandoned the settlement at " + Site.ToLink(link, pov) + ". ";
+            if (SiteEntity != null && SiteEntity != Civ) eventString += SiteEntity.ToSafeLink(link, pov) + " of ";
+            eventString += Civ.ToSafeLink(link, pov) + " abandoned the settlement at " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -3431,15 +3505,15 @@ namespace LegendsViewer.Legends
         public Entity Civ, SiteEntity;
         public Site Site;
         public Boolean Abandoned;
-        public SiteDied(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "civ_id": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
                     case "abandoned":
                         property.Known = true;
                         Abandoned = true;
@@ -3469,11 +3543,11 @@ namespace LegendsViewer.Legends
             string eventString = this.GetYearTime() + SiteEntity.PrintEntity(link, pov);
             if (Abandoned)
             {
-                eventString += "abandoned the settlement of " + Site.ToLink(link, pov) + ". ";
+                eventString += "abandoned the settlement of " + Site.ToSafeLink(link, pov) + ". ";
             }
             else
             {
-                eventString += " settlement of " + Site.ToLink(link, pov) + " withered. ";
+                eventString += " settlement of " + Site.ToSafeLink(link, pov) + " withered. ";
             }
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -3490,18 +3564,19 @@ namespace LegendsViewer.Legends
         public Site Site { get; set; }
         public SiteLinkType LinkType { get; set; }
 
-        public AddHFSiteLink(List<Property> properties, World world)
-            : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 LinkType = SiteLinkType.Unknown;
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "structure": StructureID = Convert.ToInt32(property.Value); break;
-                    case "civ": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "structure":
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this); break;
+                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "civ": Civ = world.GetEntity(property.ValueAsInt()); Civ.AddEvent(this); break;
                     case "link_type":
                         switch (property.Value.Replace("_", " "))
                         {
@@ -3510,7 +3585,6 @@ namespace LegendsViewer.Legends
                             case "home site building": LinkType = SiteLinkType.HomeSiteBuilding; break;
                             case "home site underground": LinkType = SiteLinkType.HomeSiteUnderground; break;
                             case "home structure": LinkType = SiteLinkType.HomeStructure; break;
-                            case "seat_of_power":
                             case "seat of power": LinkType = SiteLinkType.SeatOfPower; break;
                             case "occupation": LinkType = SiteLinkType.Occupation; break;
                             case "home site realization building": LinkType = SiteLinkType.HomeSiteRealizationBuilding; break;
@@ -3519,23 +3593,24 @@ namespace LegendsViewer.Legends
                                 world.ParsingErrors.Report("Unknown Site Link Type: " + property.Value.Replace("_", " "));
                                 break;
                         }
+
                         break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
                 }
-            }
-            if (Site != null)
-            {
-                Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
             }
             HistoricalFigure.AddEvent(this);
             Civ.AddEvent(this);
             Site.AddEvent(this);
             Structure.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += HistoricalFigure != null ? HistoricalFigure.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += HistoricalFigure.ToSafeLink(link, pov);
             switch (LinkType)
             {
                 case SiteLinkType.HomeSiteRealizationBuilding:
@@ -3548,14 +3623,14 @@ namespace LegendsViewer.Legends
                     eventString += " UNKNOWN LINKTYPE (" + LinkType + ") ";
                     break;
             }
-            eventString += Structure != null ? Structure.ToLink(link, pov) : "UNKNOWN STRUCTURE";
+            eventString += Structure.ToSafeLink(link, pov);
             if (Civ != null)
             {
-                eventString += " of " + Civ.ToLink(link, pov);
+                eventString += " of " + Civ.ToSafeLink(link, pov);
             }
             if (Site != null)
             {
-                eventString += " in " + Site.ToLink(link, pov);
+                eventString += " in " + Site.ToSafeLink(link, pov);
             }
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
@@ -3580,12 +3655,18 @@ namespace LegendsViewer.Legends
         public Site Site { get; set; }
         public AgreementTopic Topic { get; set; }
 
-        public AgreementMade(List<Property> properties, World world) : base(properties, world)
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "topic":
                         switch (property.Value)
                         {
@@ -3598,13 +3679,9 @@ namespace LegendsViewer.Legends
                                 break;
                         }
                         break;
-                    case "source": Source = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "destination": Destination = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
+                    case "source": Source = world.GetEntity(property.ValueAsInt()); Source.AddEvent(this); break;
+                    case "destination": Destination = world.GetEntity(property.ValueAsInt()); Destination.AddEvent(this); break;
                 }
-            Site.AddEvent(this);
-            Source.AddEvent(this);
-            Destination.AddEvent(this);
         }
 
         public override string Print(bool link = true, DwarfObject pov = null)
@@ -3626,11 +3703,11 @@ namespace LegendsViewer.Legends
                     break;
             }
             eventString += " proposed by ";
-            eventString += Source != null ? Source.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += Source.ToSafeLink(link, pov);
             eventString += " was accepted by ";
-            eventString += Destination != null ? Destination.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += Destination.ToSafeLink(link, pov);
             eventString += " at ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ".";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -3645,12 +3722,18 @@ namespace LegendsViewer.Legends
         public AgreementTopic Topic { get; set; }
         public int Result { get; set; }
 
-        public AgreementConcluded(List<Property> properties, World world) : base(properties, world)
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "topic":
                         switch (property.Value)
                         {
@@ -3663,14 +3746,10 @@ namespace LegendsViewer.Legends
                                 break;
                         }
                         break;
-                    case "source": Source = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "destination": Destination = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "result": Result = Convert.ToInt32(property.Value); break;
+                    case "source": Source = world.GetEntity(property.ValueAsInt()); Source.AddEvent(this); break;
+                    case "destination": Destination = world.GetEntity(property.ValueAsInt()); Destination.AddEvent(this); break;
+                    case "result": Result = property.ValueAsInt(); break;
                 }
-            Site.AddEvent(this);
-            Source.AddEvent(this);
-            Destination.AddEvent(this);
         }
 
         public override string Print(bool link = true, DwarfObject pov = null)
@@ -3691,11 +3770,11 @@ namespace LegendsViewer.Legends
                     eventString += "UNKNOWN AGREEMENT";
                     break;
             }
-            eventString += Source != null ? Source.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += Source.ToSafeLink(link, pov);
             eventString += " and ";
-            eventString += Destination != null ? Destination.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += Destination.ToSafeLink(link, pov);
             eventString += " at ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += " concluded";
             switch (Result)
             {
@@ -3745,14 +3824,19 @@ namespace LegendsViewer.Legends
         private string AgreementSubjectId { get; set; }
         private AgreementReason Reason { get; set; }
 
-        public AgreementFormed(List<Property> properties, World world) : base(properties, world)
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
                     case "agreement_id": AgreementId = property.Value; break;
-                    case "concluder_hfid": Concluder = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "concluder_hfid": Concluder = world.GetHistoricalFigure(property.ValueAsInt()); break;
                     case "agreement_subject_id": AgreementSubjectId = property.Value; break;
                     case "reason":
                         switch (property.Value)
@@ -3774,7 +3858,7 @@ namespace LegendsViewer.Legends
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Concluder != null ? Concluder.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += Concluder != null ? Concluder.ToSafeLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
             eventString += " formed an agreement";
             switch (Reason)
             {
@@ -3803,55 +3887,53 @@ namespace LegendsViewer.Legends
         public Site Site { get; set; }
         public HistoricalFigure Builder { get; set; }
 
-        public CreatedStructure(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "structure_id": StructureID = Convert.ToInt32(property.Value); break;
-                    case "civ_id": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "builder_hfid": Builder = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "structure": StructureID = Convert.ToInt32(property.Value); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "civ": if (Civ == null) { Civ = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site_civ": if (SiteEntity == null) { SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "builder_hf": if (Builder == null) { Builder = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); } else property.Known = true; break;
+                    case "structure":
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this);break;
+                    case "civ":
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); Civ.AddEvent(this); break;
+                    case "site_civ": 
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); SiteEntity.AddEvent(this); break;
+                    case "site": 
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "builder_hf": 
+                    case "builder_hfid": Builder = world.GetHistoricalFigure(property.ValueAsInt()); Builder.AddEvent(this); break;
                 }
 
             if (Site != null)
             {
                 Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
             }
-            Civ.AddEvent(this);
-            SiteEntity.AddEvent(this);
-            Site.AddEvent(this);
-            Builder.AddEvent(this);
-            Structure.AddEvent(this);
         }
-
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
             if (Builder != null)
             {
-                eventString += Builder != null ? Builder.ToLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+                eventString += Builder.ToSafeLink(link, pov);
                 eventString += ", thrust a spire of slade up from the underworld, naming it ";
-                eventString += Structure != null ? Structure.ToLink(link, pov) : "UNKNOWN STRUCTURE";
+                eventString += Structure.ToSafeLink(link, pov);
                 eventString += ", and established a gateway between worlds in ";
-                eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+                eventString += Site.ToSafeLink(link, pov);
                 eventString += ". ";
             }
             else
             {
-                eventString += SiteEntity != null ? SiteEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
-                eventString += " of ";
-                eventString += Civ != null ? Civ.ToLink(link, pov) : "UNKNOWN CIV";
+                eventString += SiteEntity.ToSafeLink(link, pov) + " of ";
+                eventString += Civ.ToSafeLink(link, pov, "CIV");
                 eventString += " constructed ";
-                eventString += Structure != null ? Structure.ToLink(link, pov) : "UNKNOWN STRUCTURE";
+                eventString += Structure.ToSafeLink(link, pov);
                 eventString += " in ";
-                eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+                eventString += Site.ToSafeLink(link, pov);
                 eventString += ". ";
             }
             eventString += PrintParentCollection(link, pov);
@@ -3861,32 +3943,33 @@ namespace LegendsViewer.Legends
 
     public class HFRazedStructure : WorldEvent
     {
-        public int StructureID;
+        public int StructureID { get; set; }
+        public Structure Structure { get; set; }
         public HistoricalFigure HistoricalFigure;
         public Site Site;
 
-        public HFRazedStructure(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "structure_id":
-                        StructureID = Convert.ToInt32(property.Value);
-                        break;
-                    case "hist_fig_id":
-                        HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
-                        break;
-                    case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
-                        break;
+                    case "structure":
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this);break;
+                    case "hist_fig_id": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                 }
-            HistoricalFigure.AddEvent(this);
-            Site.AddEvent(this);
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + HistoricalFigure.ToLink(link, pov) + " razed a (" + StructureID + ") in " + Site.ToLink(link, pov) + ". ";
+            string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " razed a ";
+            eventString += Structure != null ? Structure.Name : $"({StructureID})";
+            eventString += " in " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -3901,16 +3984,20 @@ namespace LegendsViewer.Legends
         public Site Site { get; set; }
         public SiteLinkType LinkType { get; set; }
 
-        public RemoveHFSiteLink(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "structure": StructureID = Convert.ToInt32(property.Value); break;
-                    case "civ": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "structure":
+                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this);break;
+                    case "histfig":
+                    case "hist_fig_id": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
+                    case "civ":
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); Civ.AddEvent(this); break;
                     case "link_type":
                         switch (property.Value.Replace("_", " "))
                         {
@@ -3929,30 +4016,19 @@ namespace LegendsViewer.Legends
                                 break;
                         }
                         break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
                 }
             }
-            if (Site != null)
-            {
-                Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
-            }
-            HistoricalFigure.AddEvent(this);
-            Civ.AddEvent(this);
-            Site.AddEvent(this);
-            Structure.AddEvent(this);
         }
-
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
+
             string eventString = GetYearTime();
-            if (HistoricalFigure != null)
-            {
-                eventString += HistoricalFigure.ToLink(link, pov);
-            }
-            else
-            {
-                eventString += "UNKNOWN HISTORICAL FIGURE";
-            }
+            eventString += HistoricalFigure.ToSafeLink(link, pov);
             switch (LinkType)
             {
                 case SiteLinkType.HomeSiteRealizationBuilding:
@@ -3965,22 +4041,11 @@ namespace LegendsViewer.Legends
                     eventString += " UNKNOWN LINKTYPE (" + LinkType + ") ";
                     break;
             }
-            if (Structure != null)
-            {
-                eventString += Structure.ToLink(link, pov);
-            }
-            else
-            {
-                eventString += "UNKNOWN STRUCTURE";
-            }
+            eventString += Structure.ToSafeLink(link, pov);
             if (Civ != null)
-            {
-                eventString += " of " + Civ.ToLink(link, pov);
-            }
+                eventString += " of " + Civ.ToSafeLink(link, pov);
             if (Site != null)
-            {
-                eventString += " in " + Site.ToLink(link, pov);
-            }
+                eventString += " in " + Site.ToSafeLink(link, pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -3990,50 +4055,48 @@ namespace LegendsViewer.Legends
     public class ReplacedStructure : WorldEvent
     {
         public int OldStructureID, NewStructureID;
+        public Structure OldStructure, NewStructure;
         public Entity Civ, SiteEntity;
         public Site Site;
-        public Structure OldStructure, NewStructure;
 
-        public ReplacedStructure(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "old_ab_id": OldStructureID = Convert.ToInt32(property.Value); break;
-                    case "new_ab_id": NewStructureID = Convert.ToInt32(property.Value); break;
-                    case "civ_id": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "site": if (Site == null) { Site = world.GetSite(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "civ": if (Civ == null) { Civ = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "site_civ": if (SiteEntity == null) { SiteEntity = world.GetEntity(Convert.ToInt32(property.Value)); } else property.Known = true; break;
-                    case "old_structure": OldStructureID = Convert.ToInt32(property.Value); break;
-                    case "new_structure": NewStructureID = Convert.ToInt32(property.Value); break;
+                    case "old_structure":
+                    case "old_ab_id": OldStructure = Site?.GetStructure(OldStructureID = property.ValueAsInt()); OldStructure.AddEvent(this); break;
+                    case "new_structure":
+                    case "new_ab_id": NewStructure = Site?.GetStructure(NewStructureID = property.ValueAsInt()); NewStructure.AddEvent(this); break;
+                    case "civ":
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); Civ.AddEvent(this); break;
+                    case "site_civ":
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); SiteEntity.AddEvent(this); break;
+                    case "site":
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                 }
             }
-            if (Site != null)
-            {
-                OldStructure = Site.Structures.FirstOrDefault(structure => structure.ID == OldStructureID);
-                NewStructure = Site.Structures.FirstOrDefault(structure => structure.ID == NewStructureID);
-            }
-            Civ.AddEvent(this);
-            SiteEntity.AddEvent(this);
-            Site.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+
 
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += SiteEntity != null ? SiteEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += SiteEntity.ToSafeLink(link, pov);
             eventString += " of ";
-            eventString += Civ != null ? Civ.ToLink(link, pov) : "UNKNOWN CIV";
+            eventString += Civ.ToSafeLink(link, pov, "CIV");
             eventString += " replaced ";
-            eventString += OldStructure != null ? OldStructure.ToLink(link, pov) : "UNKNOWN STRUCTURE";
+            eventString += OldStructure.ToSafeLink(link, pov);
             eventString += " in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += " with ";
-            eventString += NewStructure != null ? NewStructure.ToLink(link, pov) : "UNKNOWN STRUCTURE";
+            eventString += NewStructure.ToSafeLink(link, pov);
             eventString += ".";
             return eventString;
         }
@@ -4044,26 +4107,16 @@ namespace LegendsViewer.Legends
         public Entity Attacker, Defender, NewSiteEntity, SiteEntity;
         public Site Site;
 
-        public SiteTakenOver(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "attacker_civ_id":
-                        Attacker = world.GetEntity(Convert.ToInt32(property.Value));
-                        break;
-                    case "defender_civ_id":
-                        Defender = world.GetEntity(Convert.ToInt32(property.Value));
-                        break;
-                    case "new_site_civ_id":
-                        NewSiteEntity = world.GetEntity(Convert.ToInt32(property.Value));
-                        break;
-                    case "site_civ_id":
-                        SiteEntity = world.GetEntity(Convert.ToInt32(property.Value));
-                        break;
-                    case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
-                        break;
+                    case "attacker_civ_id": Attacker = world.GetEntity(property.ValueAsInt()); break;
+                    case "defender_civ_id": Defender = world.GetEntity(property.ValueAsInt()); break;
+                    case "new_site_civ_id": NewSiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteEntity = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
                 }
 
             if (Site.OwnerHistory.Count == 0)
@@ -4088,20 +4141,18 @@ namespace LegendsViewer.Legends
                 SiteEntity.AddEvent(this);
             Site.AddEvent(this);
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
 
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Attacker.ToLink(link, pov) + " defeated ";
-            if (SiteEntity != null && SiteEntity != Defender) eventString += SiteEntity.ToLink(link, pov) + " of ";
-            if (Defender == null)
-            {
-                eventString += "UNKNOWN";
-            }
-            else
-            {
-                eventString += Defender.ToLink(link, pov);
-            }
-            eventString += " and took over " + Site.ToLink(link, pov) + ". The new government was called " + NewSiteEntity.ToLink(link, pov) + ". ";
+            string eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " defeated ";
+            if (SiteEntity != null && SiteEntity != Defender) eventString += SiteEntity.ToSafeLink(link, pov) + " of ";
+            Defender.ToSafeLink(link, pov);
+            eventString += " and took over " + Site.ToSafeLink(link, pov) + ". The new government was called " + NewSiteEntity.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -4127,7 +4178,7 @@ namespace LegendsViewer.Legends
         public Site Site2 { get; set; }
         private string unknownDispute;
 
-        public SiteDispute(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
@@ -4161,16 +4212,16 @@ namespace LegendsViewer.Legends
                         }
                         break;
                     case "entity_id_1":
-                        Entity1 = world.GetEntity(Convert.ToInt32(property.Value));
+                        Entity1 = world.GetEntity(property.ValueAsInt());
                         break;
                     case "entity_id_2":
-                        Entity2 = world.GetEntity(Convert.ToInt32(property.Value));
+                        Entity2 = world.GetEntity(property.ValueAsInt());
                         break;
                     case "site_id_1":
-                        Site1 = world.GetSite(Convert.ToInt32(property.Value));
+                        Site1 = world.GetSite(property.ValueAsInt());
                         break;
                     case "site_id_2":
-                        Site2 = world.GetSite(Convert.ToInt32(property.Value));
+                        Site2 = world.GetSite(property.ValueAsInt());
                         break;
                 }
 
@@ -4180,6 +4231,11 @@ namespace LegendsViewer.Legends
             Site2.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string dispute = unknownDispute;
@@ -4206,13 +4262,13 @@ namespace LegendsViewer.Legends
             }
 
             string eventString = GetYearTime();
-            eventString += Entity1 != null ? Entity1.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += Entity1.ToSafeLink(link, pov);
             eventString += " of ";
-            eventString += Site1 != null ? Site1.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site1.ToSafeLink(link, pov);
             eventString += " and ";
-            eventString += Entity2 != null ? Entity2.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += Entity2.ToSafeLink(link, pov);
             eventString += " of ";
-            eventString += Site2 != null ? Site2.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site2.ToSafeLink(link, pov);
             eventString += " became embroiled in a dispute over " + dispute + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
@@ -4226,39 +4282,31 @@ namespace LegendsViewer.Legends
         private Entity SiteCiv { get; set; }
         private Site Site { get; set; }
 
-        public HfAttackedSite(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "attacker_hfid":
-                        Attacker = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
-                        break;
-                    case "defender_civ_id":
-                        DefenderCiv = world.GetEntity(Convert.ToInt32(property.Value));
-                        break;
-                    case "site_civ_id":
-                        SiteCiv = world.GetEntity(Convert.ToInt32(property.Value));
-                        break;
-                    case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
-                        break;
+                    case "attacker_hfid": Attacker = world.GetHistoricalFigure(property.ValueAsInt()); Attacker.AddEvent(this);break;
+                    case "defender_civ_id": DefenderCiv = world.GetEntity(property.ValueAsInt()); DefenderCiv.AddEvent(this);break;
+                    case "site_civ_id": SiteCiv = world.GetEntity(property.ValueAsInt()); SiteCiv.AddEvent(this); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                 }
-
-            Attacker.AddEvent(this);
-            DefenderCiv.AddEvent(this);
-            SiteCiv.AddEvent(this);
-            Site.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            String eventString = this.GetYearTime() + Attacker.ToLink(link, pov) + " attacked " + SiteCiv.ToLink(link, pov);
+            String eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " attacked " + SiteCiv.ToSafeLink(link, pov);
             if (DefenderCiv != null)
             {
-                eventString += " of " + DefenderCiv.ToLink(link, pov);
+                eventString += " of " + DefenderCiv.ToSafeLink(link, pov);
             }
-            eventString += " at " + Site.ToLink(link, pov) + ". ";
+            eventString += " at " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -4271,22 +4319,22 @@ namespace LegendsViewer.Legends
         private Entity SiteCiv { get; set; }
         private Site Site { get; set; }
 
-        public HfDestroyedSite(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "attacker_hfid":
-                        Attacker = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
+                        Attacker = world.GetHistoricalFigure(property.ValueAsInt());
                         break;
                     case "defender_civ_id":
-                        DefenderCiv = world.GetEntity(Convert.ToInt32(property.Value));
+                        DefenderCiv = world.GetEntity(property.ValueAsInt());
                         break;
                     case "site_civ_id":
-                        SiteCiv = world.GetEntity(Convert.ToInt32(property.Value));
+                        SiteCiv = world.GetEntity(property.ValueAsInt());
                         break;
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
+                        Site = world.GetSite(property.ValueAsInt());
                         break;
                 }
 
@@ -4321,14 +4369,19 @@ namespace LegendsViewer.Legends
             }
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            String eventString = this.GetYearTime() + Attacker.ToLink(link, pov) + " routed " + SiteCiv.ToLink(link, pov);
+            String eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " routed " + SiteCiv.ToSafeLink(link, pov);
             if (DefenderCiv != null)
             {
-                eventString += " of " + DefenderCiv.ToLink(link, pov);
+                eventString += " of " + DefenderCiv.ToSafeLink(link, pov);
             }
-            eventString += " and destroyed " + Site.ToLink(link, pov) + ". ";
+            eventString += " and destroyed " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }
@@ -4341,23 +4394,23 @@ namespace LegendsViewer.Legends
         public Entity SiteEntity { get; set; }
         public Site Site { get; set; }
 
-        public SiteTributeForced(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
                     case "attacker_civ_id":
-                        Attacker = world.GetEntity(Convert.ToInt32(property.Value));
+                        Attacker = world.GetEntity(property.ValueAsInt());
                         break;
                     case "defender_civ_id":
-                        Defender = world.GetEntity(Convert.ToInt32(property.Value));
+                        Defender = world.GetEntity(property.ValueAsInt());
                         break;
                     case "site_civ_id":
-                        SiteEntity = world.GetEntity(Convert.ToInt32(property.Value));
+                        SiteEntity = world.GetEntity(property.ValueAsInt());
                         break;
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
+                        Site = world.GetSite(property.ValueAsInt());
                         break;
                 }
             }
@@ -4368,14 +4421,19 @@ namespace LegendsViewer.Legends
             Site.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Attacker.ToLink(link, pov) + " secured tribute from " + SiteEntity.ToLink(link, pov);
+            string eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " secured tribute from " + SiteEntity.ToSafeLink(link, pov);
             if (Defender != null)
             {
-                eventString += " of " + Defender.ToLink(link, pov);
+                eventString += " of " + Defender.ToSafeLink(link, pov);
             }
-            eventString += ", to be delivered from " + Site.ToLink(link, pov) + ". ";
+            eventString += ", to be delivered from " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection();
             return eventString;
         }
@@ -4397,7 +4455,7 @@ namespace LegendsViewer.Legends
         public Boolean ActualStart { get; set; }
         private string unknownOutcome;
 
-        public InsurrectionStarted(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             ActualStart = false;
 
@@ -4406,10 +4464,10 @@ namespace LegendsViewer.Legends
                 switch (property.Name)
                 {
                     case "target_civ_id":
-                        Civ = world.GetEntity(Convert.ToInt32(property.Value));
+                        Civ = world.GetEntity(property.ValueAsInt());
                         break;
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
+                        Site = world.GetSite(property.ValueAsInt());
                         break;
                     case "outcome":
                         switch (property.Value)
@@ -4434,26 +4492,31 @@ namespace LegendsViewer.Legends
             Site.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
             if (ActualStart)
             {
-                eventString += "an insurrection against " + Civ.ToLink(link, pov) + " began in " + Site.ToLink(link, pov) + ". ";
+                eventString += "an insurrection against " + Civ.ToSafeLink(link, pov) + " began in " + Site.ToSafeLink(link, pov) + ". ";
             }
             else
             {
-                eventString += "the insurrection in " + Site.ToLink(link, pov);
+                eventString += "the insurrection in " + Site.ToSafeLink(link, pov);
                 switch (Outcome)
                 {
                     case InsurrectionOutcome.LeadershipOverthrown:
-                        eventString += " concluded with " + Civ.ToLink(link, pov) + " overthrown. ";
+                        eventString += " concluded with " + Civ.ToSafeLink(link, pov) + " overthrowing leadership. ";
                         break;
                     case InsurrectionOutcome.PopulationGone:
                         eventString += " ended with the disappearance of the rebelling population. ";
                         break;
                     default:
-                        eventString += " against " + Civ.ToLink(link, pov) + " concluded with (" + unknownOutcome + "). ";
+                        eventString += " against " + Civ.ToSafeLink(link, pov) + " concluded with (" + unknownOutcome + "). ";
                         break;
                 }
             }
@@ -4468,16 +4531,21 @@ namespace LegendsViewer.Legends
         public Site Site;
         public Entity Contactor;
         public Entity Contacted;
-        public FirstContact(List<Property> properties, World world)
-            : base(properties, world)
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "contactor_enid": Contactor = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "contacted_enid": Contacted = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "contactor_enid": Contactor = world.GetEntity(property.ValueAsInt()); break;
+                    case "contacted_enid": Contacted = world.GetEntity(property.ValueAsInt()); break;
                 }
             }
             Site.AddEvent(this);
@@ -4487,11 +4555,11 @@ namespace LegendsViewer.Legends
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Contactor != null ? Contactor.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += Contactor.ToSafeLink(link, pov);
             eventString += " made contact with ";
-            eventString += Contacted != null ? Contacted.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += Contacted.ToSafeLink(link, pov);
             eventString += " at ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             return eventString;
         }
     }
@@ -4502,16 +4570,20 @@ namespace LegendsViewer.Legends
         public Entity Civ { get; set; }
         public Entity SiteCiv { get; set; }
         public string First { get; set; }
-        public SiteRetired(List<Property> properties, World world)
-            : base(properties, world)
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "civ_id": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "site_civ_id": SiteCiv = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); break;
+                    case "site_civ_id": SiteCiv = world.GetEntity(property.ValueAsInt()); break;
                     case "first": First = property.Value; break;
                 }
             }
@@ -4522,11 +4594,11 @@ namespace LegendsViewer.Legends
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += SiteCiv != null ? SiteCiv.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += SiteCiv.ToSafeLink(link, pov);
             eventString += " of ";
-            eventString += Civ != null ? Civ.ToLink(link, pov) : "UNKNOWN CIV";
+            eventString += Civ.ToSafeLink(link, pov, "CIV");
             eventString += " at the settlement of ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += " regained their senses after an initial period of questionable judgment.";
             return eventString;
         }
@@ -4553,28 +4625,28 @@ namespace LegendsViewer.Legends
         public int ScheduleId { get; set; }
         public OccasionType OccasionType { get; set; }
 
-        public OccasionEvent(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "civ_id":
-                        Civ = world.GetEntity(Convert.ToInt32(property.Value));
+                        Civ = world.GetEntity(property.ValueAsInt());
                         break;
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
+                        Site = world.GetSite(property.ValueAsInt());
                         break;
                     case "subregion_id":
-                        Region = world.GetRegion(Convert.ToInt32(property.Value));
+                        Region = world.GetRegion(property.ValueAsInt());
                         break;
                     case "feature_layer_id":
-                        UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value));
+                        UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt());
                         break;
                     case "occasion_id":
-                        OccasionId = Convert.ToInt32(property.Value);
+                        OccasionId = property.ValueAsInt();
                         break;
                     case "schedule_id":
-                        ScheduleId = Convert.ToInt32(property.Value);
+                        ScheduleId = property.ValueAsInt();
                         break;
                 }
             Civ.AddEvent(this);
@@ -4583,14 +4655,19 @@ namespace LegendsViewer.Legends
             UndergroundRegion.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Civ != null ? Civ.ToLink(link, pov) : "UNKNOWN CIV";
+            eventString += Civ.ToSafeLink(link, pov, "CIV");
             eventString += " held a ";
             eventString += OccasionType.ToString().ToLower();
             eventString += " in ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             //eventString += " as part of UNKNOWN OCCASION (" + OccasionId + ") with UNKNOWN SCHEDULE(" + ScheduleId + ")";
             eventString += ".";
             return eventString;
@@ -4599,7 +4676,7 @@ namespace LegendsViewer.Legends
 
     public class Procession : OccasionEvent
     {
-        public Procession(List<Property> properties, World world) : base(properties, world)
+        public Procession()
         {
             OccasionType = OccasionType.Procession;
         }
@@ -4607,7 +4684,7 @@ namespace LegendsViewer.Legends
 
     public class Ceremony : OccasionEvent
     {
-        public Ceremony(List<Property> properties, World world) : base(properties, world)
+        public Ceremony()
         {
             OccasionType = OccasionType.Ceremony;
         }
@@ -4615,7 +4692,7 @@ namespace LegendsViewer.Legends
 
     public class Performance : OccasionEvent
     {
-        public Performance(List<Property> properties, World world) : base(properties, world)
+        public Performance()
         {
             OccasionType = OccasionType.Performance;
         }
@@ -4623,10 +4700,10 @@ namespace LegendsViewer.Legends
 
     public class Competition : OccasionEvent
     {
-        private HistoricalFigure Winner { get; set; }
-        private List<HistoricalFigure> Competitors { get; set; }
+        HistoricalFigure Winner { get; set; }
+        List<HistoricalFigure> Competitors { get; set; }
 
-        public Competition(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             OccasionType = OccasionType.Competition;
             Competitors = new List<HistoricalFigure>();
@@ -4634,16 +4711,21 @@ namespace LegendsViewer.Legends
                 switch (property.Name)
                 {
                     case "winner_hfid":
-                        Winner = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
+                        Winner = world.GetHistoricalFigure(property.ValueAsInt());
                         break;
                     case "competitor_hfid":
-                        Competitors.Add(world.GetHistoricalFigure(Convert.ToInt32(property.Value)));
+                        Competitors.Add(world.GetHistoricalFigure(property.ValueAsInt()));
                         break;
                 }
             Winner.AddEvent(this);
             Competitors.ForEach(competitor => competitor.AddEvent(this));
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = base.Print(link, pov);
@@ -4656,15 +4738,15 @@ namespace LegendsViewer.Legends
                     HistoricalFigure competitor = Competitors.ElementAt(i);
                     if (i == 0)
                     {
-                        eventString += competitor.ToLink(link, pov);
+                        eventString += competitor.ToSafeLink(link, pov);
                     }
                     else if (i == Competitors.Count - 1)
                     {
-                        eventString += " and " + competitor.ToLink(link, pov);
+                        eventString += " and " + competitor.ToSafeLink(link, pov);
                     }
                     else
                     {
-                        eventString += ", " + competitor.ToLink(link, pov);
+                        eventString += ", " + competitor.ToSafeLink(link, pov);
                     }
                 }
                 eventString += ". ";
@@ -4672,7 +4754,7 @@ namespace LegendsViewer.Legends
             if (Winner != null)
             {
                 eventString += "The winner was ";
-                eventString += Winner.ToLink(link, pov);
+                eventString += Winner.ToSafeLink(link, pov);
                 eventString += ".";
             }
             return eventString;
@@ -4701,16 +4783,16 @@ namespace LegendsViewer.Legends
         public int CircumstanceId { get; set; }
         public FormType FormType { get; set; }
 
-        public FormCreatedEvent(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "hist_figure_id":
-                        HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
+                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt());
                         break;
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
+                        Site = world.GetSite(property.ValueAsInt());
                         break;
                     case "form_id":
                         FormId = property.Value;
@@ -4719,16 +4801,16 @@ namespace LegendsViewer.Legends
                         Reason = property.Value;
                         break;
                     case "reason_id":
-                        ReasonId = Convert.ToInt32(property.Value);
+                        ReasonId = property.ValueAsInt();
                         break;
                     case "circumstance":
                         Circumstance = property.Value;
                         break;
                     case "circumstance_id":
-                        CircumstanceId = Convert.ToInt32(property.Value);
+                        CircumstanceId = property.ValueAsInt();
                         break;
                     case "subregion_id":
-                        Region = world.GetRegion(Convert.ToInt32(property.Value));
+                        Region = world.GetRegion(property.ValueAsInt());
                         break;
                 }
             Site.AddEvent(this);
@@ -4745,7 +4827,11 @@ namespace LegendsViewer.Legends
                 PrayToHF.AddEvent(this);
             }
         }
-
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
@@ -4766,21 +4852,21 @@ namespace LegendsViewer.Legends
                     break;
             }
             eventString += " was created by ";
-            eventString += HistoricalFigure.ToLink(link, pov);
+            eventString += HistoricalFigure.ToSafeLink(link, pov);
             if (Site != null)
             {
                 eventString += " in ";
-                eventString += Site.ToLink(link, pov);
+                eventString += Site.ToSafeLink(link, pov);
             }
             if (GlorifiedHF != null)
             {
-                eventString += " in order to glorify " + GlorifiedHF.ToLink(link, pov);
+                eventString += " in order to glorify " + GlorifiedHF.ToSafeLink(link, pov);
             }
             if (!string.IsNullOrWhiteSpace(Circumstance))
             {
                 if (PrayToHF != null)
                 {
-                    eventString += " after praying to " + PrayToHF.ToLink(link, pov);
+                    eventString += " after praying to " + PrayToHF.ToSafeLink(link, pov);
                 }
                 else
                 {
@@ -4794,7 +4880,7 @@ namespace LegendsViewer.Legends
 
     public class PoeticFormCreated : FormCreatedEvent
     {
-        public PoeticFormCreated(List<Property> properties, World world) : base(properties, world)
+        public PoeticFormCreated()
         {
             FormType = FormType.Poetic;
         }
@@ -4802,7 +4888,7 @@ namespace LegendsViewer.Legends
 
     public class MusicalFormCreated : FormCreatedEvent
     {
-        public MusicalFormCreated(List<Property> properties, World world) : base(properties, world)
+        public MusicalFormCreated()
         {
             FormType = FormType.Musical;
         }
@@ -4810,7 +4896,7 @@ namespace LegendsViewer.Legends
 
     public class DanceFormCreated : FormCreatedEvent
     {
-        public DanceFormCreated(List<Property> properties, World world) : base(properties, world)
+        public DanceFormCreated()
         {
             FormType = FormType.Dance;
         }
@@ -4830,19 +4916,19 @@ namespace LegendsViewer.Legends
         public string Circumstance { get; set; }
         public int CircumstanceId { get; set; }
 
-        public WrittenContentComposed(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "civ_id":
-                        Civ = world.GetEntity(Convert.ToInt32(property.Value));
+                        Civ = world.GetEntity(property.ValueAsInt());
                         break;
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
+                        Site = world.GetSite(property.ValueAsInt());
                         break;
                     case "hist_figure_id":
-                        HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
+                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt());
                         break;
                     case "wc_id":
                         WrittenContent = property.Value;
@@ -4851,16 +4937,16 @@ namespace LegendsViewer.Legends
                         Reason = property.Value;
                         break;
                     case "reason_id":
-                        ReasonId = Convert.ToInt32(property.Value);
+                        ReasonId = property.ValueAsInt();
                         break;
                     case "circumstance":
                         Circumstance = property.Value;
                         break;
                     case "circumstance_id":
-                        CircumstanceId = Convert.ToInt32(property.Value);
+                        CircumstanceId = property.ValueAsInt();
                         break;
                     case "subregion_id":
-                        Region = world.GetRegion(Convert.ToInt32(property.Value));
+                        Region = world.GetRegion(property.ValueAsInt());
                         break;
                 }
             Civ.AddEvent(this);
@@ -4878,21 +4964,25 @@ namespace LegendsViewer.Legends
                 CircumstanceHF.AddEvent(this);
             }
         }
-
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
             eventString += "UNKNOWN WRITTEN CONTENT";
             eventString += " was authored by ";
-            eventString += HistoricalFigure.ToLink(link, pov);
+            eventString += HistoricalFigure.ToSafeLink(link, pov);
             if (Site != null)
             {
                 eventString += " in ";
-                eventString += Site.ToLink(link, pov);
+                eventString += Site.ToSafeLink(link, pov);
             }
             if (GlorifiedHF != null)
             {
-                eventString += " in order to glorify " + GlorifiedHF.ToLink(link, pov);
+                eventString += " in order to glorify " + GlorifiedHF.ToSafeLink(link, pov);
             }
             if (!string.IsNullOrWhiteSpace(Circumstance))
             {
@@ -4901,10 +4991,10 @@ namespace LegendsViewer.Legends
                     switch (Circumstance)
                     {
                         case "pray to hf":
-                            eventString += " after praying to " + CircumstanceHF.ToLink(link, pov);
+                            eventString += " after praying to " + CircumstanceHF.ToSafeLink(link, pov);
                             break;
                         case "dream about hf":
-                            eventString += " after dreaming of " + CircumstanceHF.ToLink(link, pov);
+                            eventString += " after dreaming of " + CircumstanceHF.ToSafeLink(link, pov);
                             break;
                     }
                 }
@@ -4925,13 +5015,13 @@ namespace LegendsViewer.Legends
         public bool First { get; set; }
         public HistoricalFigure HistoricalFigure { get; set; }
 
-        public KnowledgeDiscovered(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "hfid":
-                        HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
+                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt());
                         break;
                     case "knowledge":
                         Knowledge = property.Value.Split(':');
@@ -4944,10 +5034,15 @@ namespace LegendsViewer.Legends
             HistoricalFigure.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += HistoricalFigure.ToLink(link, pov);
+            eventString += HistoricalFigure.ToSafeLink(link, pov);
             if (First)
             {
                 eventString += " was the first to discover ";
@@ -4980,25 +5075,25 @@ namespace LegendsViewer.Legends
         public string Reason { get; set; }
         public HistoricalFigure ReasonHF { get; set; }
 
-        public HFRelationShipDenied(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
+                        Site = world.GetSite(property.ValueAsInt());
                         break;
                     case "subregion_id":
-                        Region = world.GetRegion(Convert.ToInt32(property.Value));
+                        Region = world.GetRegion(property.ValueAsInt());
                         break;
                     case "feature_layer_id":
-                        UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value));
+                        UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt());
                         break;
                     case "seeker_hfid":
-                        Seeker = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
+                        Seeker = world.GetHistoricalFigure(property.ValueAsInt());
                         break;
                     case "target_hfid":
-                        Target = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
+                        Target = world.GetHistoricalFigure(property.ValueAsInt());
                         break;
                     case "relationship":
                         Relationship = property.Value;
@@ -5007,7 +5102,7 @@ namespace LegendsViewer.Legends
                         Reason = property.Value;
                         break;
                     case "reason_id":
-                        ReasonHF = world.GetHistoricalFigure(Convert.ToInt32(property.Value));
+                        ReasonHF = world.GetHistoricalFigure(property.ValueAsInt());
                         break;
                 }
             Site.AddEvent(this);
@@ -5021,10 +5116,15 @@ namespace LegendsViewer.Legends
             }
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Seeker.ToLink(link, pov);
+            eventString += Seeker.ToSafeLink(link, pov);
             eventString += " was denied ";
             switch (Relationship)
             {
@@ -5034,21 +5134,21 @@ namespace LegendsViewer.Legends
                 default:
                     break;
             }
-            eventString += Target.ToLink(link, pov);
+            eventString += Target.ToSafeLink(link, pov);
             if (Site != null)
             {
                 eventString += " in ";
-                eventString += Site.ToLink(link, pov);
+                eventString += Site.ToSafeLink(link, pov);
             }
             if (ReasonHF != null)
             {
                 switch (Reason)
                 {
                     case "jealousy":
-                        eventString += " due to jealousy of " + ReasonHF.ToLink(link, pov);
+                        eventString += " due to jealousy of " + ReasonHF.ToSafeLink(link, pov);
                         break;
                     case "prefers working alone":
-                        eventString += " as " + ReasonHF.ToLink(link, pov) + " prefers to work alone";
+                        eventString += " as " + ReasonHF.ToSafeLink(link, pov) + " prefers to work alone";
                         break;
                     default:
                         break;
@@ -5068,25 +5168,25 @@ namespace LegendsViewer.Legends
         public WorldRegion PopSourceRegion { get; set; }
         public string PopFlId { get; set; }
 
-        public RegionpopIncorporatedIntoEntity(List<Property> properties, World world) : base(properties, world)
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "join_entity_id":
-                        JoinEntity = world.GetEntity(Convert.ToInt32(property.Value));
+                        JoinEntity = world.GetEntity(property.ValueAsInt());
                         break;
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
+                        Site = world.GetSite(property.ValueAsInt());
                         break;
                     case "pop_race":
                         PopRace = property.Value;
                         break;
                     case "pop_number_moved":
-                        PopNumberMoved = Convert.ToInt32(property.Value);
+                        PopNumberMoved = property.ValueAsInt();
                         break;
                     case "pop_srid":
-                        PopSourceRegion = world.GetRegion(Convert.ToInt32(property.Value));
+                        PopSourceRegion = world.GetRegion(property.ValueAsInt());
                         break;
                     case "pop_flid":
                         PopFlId = property.Value;
@@ -5097,6 +5197,11 @@ namespace LegendsViewer.Legends
             PopSourceRegion.AddEvent(this);
         }
 
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
@@ -5114,11 +5219,11 @@ namespace LegendsViewer.Legends
             }
             eventString += "UNKNOWN RACE";
             eventString += " from ";
-            eventString += PopSourceRegion != null ? PopSourceRegion.ToLink(link, pov) : "UNKNOWN REGION";
+            eventString += PopSourceRegion.ToSafeLink(link, pov);
             eventString += " joined with ";
-            eventString += JoinEntity != null ? JoinEntity.ToLink(link, pov) : "UNKNOWN ENTITY";
+            eventString += JoinEntity.ToSafeLink(link, pov);
             eventString += " at ";
-            eventString += Site != null ? Site.ToLink(link, pov) : "UNKNOWN SITE";
+            eventString += Site.ToSafeLink(link, pov);
             eventString += ".";
             return eventString;
         }

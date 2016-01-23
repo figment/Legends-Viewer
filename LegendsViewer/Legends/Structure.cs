@@ -1,54 +1,51 @@
 ﻿using LegendsViewer.Controls.HTML.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace LegendsViewer.Legends
 {
     public class Structure : WorldObject
     {
-        public string Name { get; set; } // legends_plus.xml
-        public string AltName { get; set; } // legends_plus.xml
-        public string Type { get; set; } // legends_plus.xml
+        //public int ID { get; set; }
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public string AltName { get; set; }
+
         public static List<string> Filters;
         public override List<WorldEvent> FilteredEvents
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
-        public Structure(List<Property> properties, World world)
-            : base(properties, world)
+        public Structure()
         {
-            Name = "UNKNOWN STRUCTURE";
+            ID = -1; Name = "UNKNOWN STRUCTURE"; Type = "INVALID";
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
-            {
                 switch (property.Name)
                 {
-                    case "name": Name = Formatting.InitCaps(property.Value); break;
-                    case "name2": AltName = Formatting.InitCaps(property.Value); break;
-                    case "type": Type = Formatting.InitCaps(property.Value); break;
+                    case "id": ID = Convert.ToInt32(property.Value);  break;
+                    case "name": Name = Formatting.InitCaps(property.Value);  break;
+                    case "name2": AltName = Formatting.InitCaps(property.Value);  break;
+                    case "type": Type = string.Intern(Formatting.InitCaps(property.Value));  break;
                 }
-            }
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
-        public override string ToString() { return Name; }
+        public override string ToString() { return this.Name; }
 
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
-            //if (link)
-            //{
-            //    string linkedString = "";
-            //    if (pov != this)
-            //    {
-            //        string title = "Events: " + this.Events.Count;
-
-            //        linkedString = "<a href = \"structure#" + this.ID + "\" title=\"" + title + "\">" + Name + "</a>";
-            //    }
-            //    else
-            //        linkedString = HTMLStyleUtil.CurrentDwarfObject(Name);
-            //    return linkedString;
-            //}
-            //else
-                return Name;
+            return $"{Name} ({AltName}), {Type}";
         }
+
     }
 }

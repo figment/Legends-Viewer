@@ -16,23 +16,28 @@ namespace LegendsViewer.Legends
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
-        public EntityPopulation(List<Property> properties, World world)
-            : base(properties, world)
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
-            {
                 switch (property.Name)
                 {
                     case "race":
-                        var raceCount = property.Value.Split(':');
-                        Race = raceCount[0];
-                        Count = Convert.ToInt32(raceCount[1]);
-                        break;
+                    {
+                        var vals = property.Value.Split(':');
+                        if (vals.Length == 2) { Race = Formatting.InitCaps(vals[0]); Count = Convert.ToInt32(vals[1]); }
+                        property.Known = true;
+                    } break;
                     case "civ_id":
                         Entity = world.GetEntity(property.ValueAsInt());
                         break;
                 }
             }
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
     }
 }

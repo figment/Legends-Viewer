@@ -17,8 +17,14 @@ namespace LegendsViewer.Legends.EventCollections
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
+        public Insurrection() { Ordinal = -1; }
         public Insurrection(List<Property> properties, World world)
             : base(properties, world)
+        {
+            InternalMerge(properties, world);
+        }
+
+        private void InternalMerge(List<Property> properties, World world)
         {
             Filters = new List<string>();
             foreach (Property property in properties)
@@ -31,7 +37,7 @@ namespace LegendsViewer.Legends.EventCollections
                     case "target_enid":
                         TargetEntity = world.GetEntity(Convert.ToInt32(property.Value));
                         break;
-                    case"ordinal":
+                    case "ordinal":
                         Ordinal = Convert.ToInt32(property.Value);
                         break;
                 }
@@ -43,6 +49,12 @@ namespace LegendsViewer.Legends.EventCollections
             {
                 insurrectionStart.ActualStart = true;
             }
+        }
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
         }
 
         public override string ToLink(bool link = true, DwarfObject pov = null)

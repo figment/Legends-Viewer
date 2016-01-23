@@ -24,25 +24,24 @@ namespace LegendsViewer.Legends
             Depth = 0;
             Type = "";
             Battles = new List<Battle>();
-            Coordinates = new List<Location>();
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
                 switch(property.Name)
                 {
-                    case "depth": Depth = Convert.ToInt32(property.Value); break;
-                    case "type": Type = Formatting.InitCaps(property.Value); break;
-                    case "coords":
-                        string[] coordinateStrings = property.Value.Split(new char[] { '|' },
-                            StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var coordinateString in coordinateStrings)
-                        {
-                            string[] xYCoordinates = coordinateString.Split(',');
-                            int x = Convert.ToInt32(xYCoordinates[0]);
-                            int y = Convert.ToInt32(xYCoordinates[1]);
-                            Coordinates.Add(new Location(x, y));
-                        }
-                        break;
+                    case "depth": Depth = Convert.ToInt32(property.Value); property.Known = true; break;
+                    case "type": Type = Formatting.InitCaps(property.Value); property.Known = true; break;
+                    case "coords": Coordinates = property.Value.Split(new[] { "|" }, StringSplitOptions.RemoveEmptyEntries)
+                     .Select(Formatting.ConvertToLocation).ToList(); property.Known = true; break;
                 }
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            InternalMerge(properties, world);
+        }
+
         public override string ToString() { return this.Type; }
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {

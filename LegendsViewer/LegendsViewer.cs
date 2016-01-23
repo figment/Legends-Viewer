@@ -39,14 +39,19 @@ namespace LegendsViewer
         public frmLegendsViewer(string file = "")
         {
             InitializeComponent();
-
+            FileLoader = new LegendsViewer.FileLoader(this
+                , btnXML, txtXML
+                , btnHistory, txtHistory
+                , btnSitePops, txtSitePops
+                , btnMap, txtMap
+                , btnXMLPlus, txtXMLPlus
+                , lblStatus, txtLog);
             System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
             FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
             version = fvi.FileVersion;
 
             Text = "Legends Viewer";
             lblVersion.Text = "v" + version;
-            FileLoader = new FileLoader(this, btnXML, txtXML, btnHistory, txtHistory, btnSitePops, txtSitePops, btnMap, txtMap, lblStatus, txtLog);
             EventTabs = new TabPage[] { tpHFEvents, tpSiteEvents, tpRegionEvents, tpURegionEvents, tpCivEvents, tpWarEvents, tpBattlesEvents, tpConqueringsEvents, tpEraEvents, tpBeastAttackEvents, tpArtifactsEvents };
             tcWorld.Height = ClientSize.Height;
             btnBack.Location = new Point(tcWorld.Right + 3, 3);
@@ -581,6 +586,10 @@ namespace LegendsViewer
                              group eventType by eventType.Type into type
                              select type.Key;
 
+            var artifactTypes = world.Artifacts.Select(x => x.Type).SkipWhile(string.IsNullOrEmpty).Distinct().OrderBy(x=>x);
+
+            var artifactMaterials = world.Artifacts.Select(x => x.Material).SkipWhile(string.IsNullOrEmpty).Distinct().OrderBy(x => x);
+
             TabEvents = new List<List<string>>();
             foreach (Type eventTabType in EventTabTypes)
             {
@@ -644,6 +653,13 @@ namespace LegendsViewer
             foreach(var civPopulation in civPopulationTypes)
                 cmbEntityPopulation.Items.Add(civPopulation.Key);
 
+            cbmArtTypeFilter.Items.Add("All");cbmArtTypeFilter.SelectedIndex = 0;
+            cbmArtTypeFilter.Items.AddRange(artifactTypes.ToArray());
+            lblArtTypeFilter.Visible = cbmArtTypeFilter.Visible = artifactTypes.Any();
+
+            cbmArtMatFilter.Items.Add("All"); cbmArtMatFilter.SelectedIndex = 0;
+            cbmArtMatFilter.Items.AddRange(artifactMaterials.ToArray());
+            lblArtMatFilter.Visible = cbmArtMatFilter.Visible = artifactMaterials.Any();
 
             numStart.Maximum = numEraEnd.Value = numEraEnd.Maximum = world.Events.Last().Year;
             
@@ -730,6 +746,9 @@ namespace LegendsViewer
             listArtifactSearch.Items.Clear();
             radArtifactSortNone.Checked = true;
 
+            cbmArtMatFilter.Items.Clear();
+            cbmArtTypeFilter.Items.Clear();
+
             listEras.Items.Clear();
             numStart.Value = -1;
             numEraEnd.Value = 0;
@@ -809,6 +828,8 @@ namespace LegendsViewer
                 artifactSearch.Name = txtArtifactSearch.Text;
                 artifactSearch.SortEvents = radArtifactSortEvents.Checked;
                 artifactSearch.SortFiltered = radArtifactSortFiltered.Checked;
+                artifactSearch.Type = cbmArtTypeFilter.SelectedIndex==0?null: cbmArtTypeFilter.SelectedItem.ToString();
+                artifactSearch.Material = cbmArtMatFilter.SelectedIndex == 0 ? null : cbmArtMatFilter.SelectedItem.ToString();
                 IEnumerable<Artifact> list = artifactSearch.GetList();
                 listArtifactSearch.Items.Clear();
                 listArtifactSearch.Items.AddRange(list.ToArray());
@@ -823,8 +844,19 @@ namespace LegendsViewer
                 lblArtifactList.ForeColor = Control.DefaultForeColor;
                 lblArtifactList.Font = new Font(lblBattleList.Font.FontFamily, lblBattleList.Font.Size, FontStyle.Regular);
                 artifactSearch.BaseList = world.Artifacts;
+                cbmArtTypeFilter.SelectedIndex = 0;
+                cbmArtMatFilter.SelectedIndex = 0;
                 searchArtifactList(null, null);
             }
         }
+
+        private void cboArtTypeFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+    }
+
+        private void cboArtMatFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+}
     }
 }

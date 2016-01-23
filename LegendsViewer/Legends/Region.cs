@@ -30,6 +30,7 @@ namespace LegendsViewer.Legends
         {
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
+
         public WorldRegion()
         {
             Name = "INVALID REGION"; Type = "INVALID";
@@ -39,25 +40,25 @@ namespace LegendsViewer.Legends
             : base(properties, world)
         {
             Battles = new List<Battle>();
-            Coordinates = new List<Location>();
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
+        {
             foreach (Property property in properties)
                 switch(property.Name)
                 {
-                    case "name": Name = Formatting.InitCaps(property.Value); break;
-                    case "type": Type = string.Intern(property.Value); break;
-                    case "coords":
-                        string[] coordinateStrings = property.Value.Split(new char[] { '|' },
-                            StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var coordinateString in coordinateStrings)
-                        {
-                            string[] xYCoordinates = coordinateString.Split(',');
-                            int x = Convert.ToInt32(xYCoordinates[0]);
-                            int y = Convert.ToInt32(xYCoordinates[1]);
-                            Coordinates.Add(new Location(x, y));
-                        }
-                        break;
+                    case "name": Name = Formatting.InitCaps(property.Value); property.Known = true; break;
+                    case "type": Type = String.Intern(property.Value); property.Known = true; break;
+                    case "coords": Coordinates = property.Value.Split(new[] {"|"}, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(Formatting.ConvertToLocation).ToList(); property.Known = true; break;
                 }
         }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+
         public override string ToString() { return this.Name; }
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
