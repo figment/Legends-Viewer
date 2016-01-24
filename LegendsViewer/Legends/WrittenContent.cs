@@ -26,6 +26,13 @@ namespace LegendsViewer.Legends
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
+        public WrittenContent()
+        {
+            Name = "Untitled";
+            Styles = new List<string>();
+            References = new List<Reference>();
+        }
+
         public override void Merge(List<Property> properties, World world)
         {
             base.Merge(properties, world);
@@ -33,10 +40,6 @@ namespace LegendsViewer.Legends
         }
         private void InternalMerge(List<Property> properties, World world)
         {
-            Name = "Untitled";
-            Styles = new List<string>();
-            References = new List<Reference>();
-
             foreach (Property property in properties)
             {
                 switch (property.Name)
@@ -61,10 +64,14 @@ namespace LegendsViewer.Legends
                             case "Poem": Type = WrittenContentType.Poem; break;
                             case "ShortStory": Type = WrittenContentType.ShortStory; break;
                             default:
-                                Type = WrittenContentType.Unknown;
                                 int typeID;
-                                if (!int.TryParse(property.Value, out typeID))
+                                if (int.TryParse(property.Value, out typeID))
                                 {
+                                    Type = (WrittenContentType) typeID;
+                                }
+                                else
+                                {
+                                    Type = WrittenContentType.Unknown;
                                     world.ParsingErrors.Report("Unknown WrittenContent WrittenContentType: " + property.Value);
                                 }
                                 break;

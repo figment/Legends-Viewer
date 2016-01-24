@@ -10,7 +10,7 @@ namespace LegendsViewer.Legends.Events
         public Site Site { get; set; }
         public WorldRegion Region { get; set; }
         public HistoricalFigure HistoricalFigure { get; set; }
-        public string FormId { get; set; }
+        public int FormId { get; set; }
         public string Reason { get; set; }
         public int ReasonId { get; set; }
         public HistoricalFigure GlorifiedHF { get; set; }
@@ -18,6 +18,7 @@ namespace LegendsViewer.Legends.Events
         public string Circumstance { get; set; }
         public int CircumstanceId { get; set; }
         public FormType FormType { get; set; }
+        public ArtForm ArtForm { get; set; }
 
         private void InternalMerge(List<Property> properties, World world)
         {
@@ -25,13 +26,14 @@ namespace LegendsViewer.Legends.Events
                 switch (property.Name)
                 {
                     case "hist_figure_id":
-                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt());
+                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this);
                         break;
                     case "site_id":
-                        Site = world.GetSite(property.ValueAsInt());
+                        Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this);
                         break;
                     case "form_id":
-                        FormId = property.Value;
+                        ArtForm = world.GetOrCreateArtForm(FormId = property.ValueAsInt(), FormType);
+                        ArtForm.AddEvent(this);
                         break;
                     case "reason":
                         Reason = property.Value;
@@ -46,12 +48,12 @@ namespace LegendsViewer.Legends.Events
                         CircumstanceId = property.ValueAsInt();
                         break;
                     case "subregion_id":
-                        Region = world.GetRegion(property.ValueAsInt());
+                        Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this);
                         break;
                 }
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            HistoricalFigure.AddEvent(this);
+            
+            
+            
             if (Reason == "glorify hf")
             {
                 GlorifiedHF = world.GetHistoricalFigure(ReasonId);
@@ -71,22 +73,7 @@ namespace LegendsViewer.Legends.Events
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
-            eventString += "UNKNOWN";
-            switch (FormType)
-            {
-                case FormType.Musical:
-                    eventString += " MUSICAL FORM ";
-                    break;
-                case FormType.Poetic:
-                    eventString += " POETIC FORM ";
-                    break;
-                case FormType.Dance:
-                    eventString += " DANCE FORM ";
-                    break;
-                default:
-                    eventString += " FORM ";
-                    break;
-            }
+            eventString += ArtForm.ToSafeLink(link, pov, FormType.ToString().ToUpper() + " FORM");
             eventString += " was created by ";
             eventString += HistoricalFigure.ToSafeLink(link, pov);
             if (Site != null)

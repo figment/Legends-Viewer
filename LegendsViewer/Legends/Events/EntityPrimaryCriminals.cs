@@ -40,7 +40,7 @@ namespace LegendsViewer.Legends.Events
         {
             string eventString = GetYearTime() + Entity.ToSafeLink(link, pov) + " became the primary criminal organization in " + Site.ToSafeLink(link, pov);
             eventString += " at ";
-            eventString += Structure != null ? Structure.Name : $" at ({StructureID})";
+            eventString += Structure.ToSafeLink(link,pov);
             eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;

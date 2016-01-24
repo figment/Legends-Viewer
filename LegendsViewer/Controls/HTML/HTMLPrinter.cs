@@ -24,6 +24,8 @@ namespace LegendsViewer.Controls
         public static string ChartJS;
         public static string CytoscapeJS;
         public static string FamilyGraphJS;
+        public static string FontCSS;
+        public static string BootstrapCSS;
 
         public static HTMLPrinter GetPrinter(object printObject, World world)
         {
@@ -75,15 +77,10 @@ namespace LegendsViewer.Controls
             htmlPage.Append("<!DOCTYPE html><html><head>");
             htmlPage.Append("<title>" + GetTitle() + "</title>");
             htmlPage.Append("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">");
-            if (System.IO.File.Exists("bootstrap.min.css"))
-                htmlPage.Append("<link rel=\"stylesheet\" href=\"" + new Uri(System.IO.Path.GetFullPath("bootstrap.min.css")).ToString() + "\">");
-            else
-                htmlPage.Append(
-                    "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\">");
-            if (System.IO.File.Exists("font-awesome.min.css"))
-                htmlPage.Append("<link rel=\"stylesheet\" href=\"" + new Uri(System.IO.Path.GetFullPath("font-awesome.min.css")).ToString() + "\">");
-            else
-                htmlPage.Append("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css\">");
+            htmlPage.Append(GetCSS(BootstrapCSS));
+            htmlPage.Append(GetCSS(FontCSS));
+            //    htmlPage.Append("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\">");
+            //    htmlPage.Append("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css\">");
             htmlPage.Append(GetStyle());
             htmlPage.Append("</head>");
             htmlPage.Append("<body>" + Print() + "</body>");
@@ -91,6 +88,12 @@ namespace LegendsViewer.Controls
             return htmlPage.ToString();
         }
 
+        public string GetCSS(string css)
+        {
+            if (!string.IsNullOrWhiteSpace(css))
+                return "<style type=\"text/css\">" + css + "</style>";
+            return "";
+        }
         public string GetStyle()
         {
             if (string.IsNullOrWhiteSpace(LegendsCSS))

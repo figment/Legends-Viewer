@@ -415,12 +415,8 @@
     <Content Include="7z64.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="bootstrap.min.css">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="font-awesome.min.css">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="Controls\HTML\Styles\bootstrap.min.css" />
+    <EmbeddedResource Include="Controls\HTML\Styles\font-awesome.min.css" />
     <EmbeddedResource Include="Controls\HTML\Scripts\cytoscape.min.js" />
     <EmbeddedResource Include="Controls\HTML\Scripts\familygraph.js" />
     <EmbeddedResource Include="Controls\HTML\Styles\legends.css" />

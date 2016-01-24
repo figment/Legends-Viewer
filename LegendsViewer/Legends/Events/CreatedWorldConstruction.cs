@@ -36,6 +36,17 @@ namespace LegendsViewer.Legends.Events
 
             Site1.AddConnection(Site2);
             Site2.AddConnection(Site1);
+
+            if (WorldConstruction != null)
+            {
+                WorldConstruction.Site1 = Site1;
+                WorldConstruction.Site2 = Site2;
+                if (MasterWorldConstruction != null)
+                {
+                    MasterWorldConstruction.Sections.Add(WorldConstruction);
+                    WorldConstruction.MasterConstruction = MasterWorldConstruction;
+                }
+            }
         }
         public override void Merge(List<Property> properties, World world)
         {

@@ -9,7 +9,7 @@ namespace LegendsViewer.Legends.Events
         public Entity Civ { get; set; }
         public Site Site { get; set; }
         public WorldRegion Region { get; set; }
-        public string WrittenContent { get; set; }
+        public WrittenContent WrittenContent { get; set; }
         public HistoricalFigure HistoricalFigure { get; set; }
         public string Reason { get; set; }
         public int ReasonId { get; set; }
@@ -24,16 +24,16 @@ namespace LegendsViewer.Legends.Events
                 switch (property.Name)
                 {
                     case "civ_id":
-                        Civ = world.GetEntity(property.ValueAsInt());
+                        Civ = world.GetEntity(property.ValueAsInt()); Civ.AddEvent(this);
                         break;
                     case "site_id":
-                        Site = world.GetSite(property.ValueAsInt());
+                        Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this);
                         break;
                     case "hist_figure_id":
-                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt());
+                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this);
                         break;
                     case "wc_id":
-                        WrittenContent = property.Value;
+                        WrittenContent = World.GetOrCreateWorldObject(world.WrittenContents, property.ValueAsInt());
                         break;
                     case "reason":
                         Reason = property.Value;
@@ -48,13 +48,10 @@ namespace LegendsViewer.Legends.Events
                         CircumstanceId = property.ValueAsInt();
                         break;
                     case "subregion_id":
-                        Region = world.GetRegion(property.ValueAsInt());
+                        Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this);
                         break;
                 }
-            Civ.AddEvent(this);
-            Site.AddEvent(this);
-            Region.AddEvent(this);
-            HistoricalFigure.AddEvent(this);
+           
             if (Reason == "glorify hf")
             {
                 GlorifiedHF = world.GetHistoricalFigure(ReasonId);
@@ -74,7 +71,7 @@ namespace LegendsViewer.Legends.Events
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
-            eventString += "UNKNOWN WRITTEN CONTENT";
+            eventString += WrittenContent.ToSafeLink(link, pov);
             eventString += " was authored by ";
             eventString += HistoricalFigure.ToSafeLink(link, pov);
             if (Site != null)

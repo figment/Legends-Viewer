@@ -337,88 +337,33 @@ namespace LegendsViewer.Legends
             return null;
         }
 
+        public static T GetOrCreateWorldObject<T>(List<T> ownerList, int id) where T : WorldObject, new()
+        {
+            int index = ownerList.SearchWorldObject(id);
+            if (index >= 0) return ownerList[index];
+
+            var item = new T() { ID = id };
+            ownerList.Insert(~index, item);
+            return item;
+        }
+
         #region GetWorldItemsFunctions
 
         public WorldRegion GetRegion(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = Regions.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > Regions[mid].ID)
-                        min = mid + 1;
-                    else if (id < Regions[mid].ID)
-                        max = mid - 1;
-                    else
-                        return Regions[mid];
-                }
-                return null;
-            }
+            return Regions.GetWorldObject(id);
         }
         public UndergroundRegion GetUndergroundRegion(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = UndergroundRegions.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > UndergroundRegions[mid].ID)
-                        min = mid + 1;
-                    else if (id < UndergroundRegions[mid].ID)
-                        max = mid - 1;
-                    else
-                        return UndergroundRegions[mid];
-                }
-                return null;
-            }
+            return UndergroundRegions.GetWorldObject(id);
         }
         public Site GetSite(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = Sites.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > Sites[mid].ID)
-                        min = mid + 1;
-                    else if (id < Sites[mid].ID)
-                        max = mid - 1;
-                    else
-                        return Sites[mid];
-                }
-                return null;
-            }
+            return Sites.GetWorldObject(id);
         }
         public HistoricalFigure GetHistoricalFigure(int id)
         {
-            //TODO: Make general binary search for WorldObjects?
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = HistoricalFigures.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > HistoricalFigures[mid].ID)
-                        min = mid + 1;
-                    else if (id < HistoricalFigures[mid].ID)
-                        max = mid - 1;
-                    else
-                        return HistoricalFigures[mid];
-                }
-                return HistoricalFigure.Unknown;
-            }
+            return HistoricalFigures.GetWorldObject(id);
         }
         public HistoricalFigure GetHistoricalFigure(string name)
         {
@@ -444,23 +389,7 @@ namespace LegendsViewer.Legends
         }
         public Entity GetEntity(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = Entities.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > Entities[mid].ID)
-                        min = mid + 1;
-                    else if (id < Entities[mid].ID)
-                        max = mid - 1;
-                    else
-                        return Entities[mid];
-                }
-                return null;
-            }
+            return Entities.GetWorldObject(id);
         }
         public Entity GetEntity(string name)
         {
@@ -483,145 +412,54 @@ namespace LegendsViewer.Legends
             throw new Exception("Couldn't Find Entity: " + name);
 
         }
+
         public Artifact GetArtifact(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = Artifacts.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > Artifacts[mid].ID)
-                        min = mid + 1;
-                    else if (id < Artifacts[mid].ID)
-                        max = mid - 1;
-                    else
-                        return Artifacts[mid];
-                }
-                return null;
-            }
+            return Artifacts.GetWorldObject(id);
         }
         public WorldConstruction GetWorldConstruction(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = WorldContructions.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > WorldContructions[mid].ID)
-                        min = mid + 1;
-                    else if (id < WorldContructions[mid].ID)
-                        max = mid - 1;
-                    else
-                        return WorldContructions[mid];
-                }
-                return null;
-            }
+            return WorldContructions.GetWorldObject(id);
         }
         public PoeticForm GetPoeticForm(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = PoeticForms.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > PoeticForms[mid].ID)
-                        min = mid + 1;
-                    else if (id < PoeticForms[mid].ID)
-                        max = mid - 1;
-                    else
-                        return PoeticForms[mid];
-                }
-                return null;
-            }
+            return PoeticForms.GetWorldObject(id);
         }
         public MusicalForm GetMusicalForm(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = MusicalForms.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > MusicalForms[mid].ID)
-                        min = mid + 1;
-                    else if (id < MusicalForms[mid].ID)
-                        max = mid - 1;
-                    else
-                        return MusicalForms[mid];
-                }
-                return null;
-            }
+            return MusicalForms.GetWorldObject(id);
         }
         public DanceForm GetDanceForm(int id)
         {
-            if (id == -1) return null;
-            else
+            return DanceForms.GetWorldObject(id);
+        }
+        public ArtForm GetArtForm(int id, FormType type)
+        {
+            switch (type)
             {
-                int min = 0;
-                int max = DanceForms.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > DanceForms[mid].ID)
-                        min = mid + 1;
-                    else if (id < DanceForms[mid].ID)
-                        max = mid - 1;
-                    else
-                        return DanceForms[mid];
-                }
-                return null;
+                case FormType.Dance: return DanceForms.GetWorldObject(id);
+                case FormType.Musical: return MusicalForms.GetWorldObject(id);
+                case FormType.Poetic: return PoeticForms.GetWorldObject(id);
             }
+            return null;
+        }
+        public ArtForm GetOrCreateArtForm(int id, FormType type)
+        {
+            switch (type)
+            {
+                case FormType.Dance: return GetOrCreateWorldObject(DanceForms, id);
+                case FormType.Musical: return GetOrCreateWorldObject(MusicalForms, id);
+                case FormType.Poetic: return GetOrCreateWorldObject(PoeticForms, id);
+            }
+            return null;
         }
         public WrittenContent GetWrittenContent(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = WrittenContents.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > WrittenContents[mid].ID)
-                        min = mid + 1;
-                    else if (id < WrittenContents[mid].ID)
-                        max = mid - 1;
-                    else
-                        return WrittenContents[mid];
-                }
-                return null;
-            }
+            return WrittenContents.GetWorldObject(id);
         }
         public Structure GetStructure(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = Structures.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > Structures[mid].GlobalID)
-                        min = mid + 1;
-                    else if (id < Structures[mid].GlobalID)
-                        max = mid - 1;
-                    else
-                        return Structures[mid];
-                }
-                return null;
-            }
+            return Structures.GetWorldObject(id);
         }
 
         public EventCollection GetEventCollection(int id)
@@ -639,24 +477,10 @@ namespace LegendsViewer.Legends
                     return EventCollections[mid];
             }
             return null;
-
         }
         public WorldEvent GetEvent(int id)
         {
-            int min = 0;
-            int max = Events.Count - 1;
-            while (min <= max)
-            {
-                int mid = min + (max - min) / 2;
-                if (id > Events[mid].ID)
-                    min = mid + 1;
-                else if (id < Events[mid].ID)
-                    max = mid - 1;
-                else
-                    return Events[mid];
-            }
-
-            return null;
+            return Events.GetEvent(id);
         }
 
         public Era GetEra(int id)
@@ -667,30 +491,12 @@ namespace LegendsViewer.Legends
 
         public EntityPopulation GetEntityPopulation(int id)
         {
-            if (id == -1) return null;
-            else
-            {
-                int min = 0;
-                int max = EntityPopulations.Count - 1;
-                while (min <= max)
-                {
-                    int mid = min + (max - min) / 2;
-                    if (id > EntityPopulations[mid].ID)
-                        min = mid + 1;
-                    else if (id < EntityPopulations[mid].ID)
-                        max = mid - 1;
-                    else
-                        return EntityPopulations[mid];
-                }
-                return null;
-            }
+            return EntityPopulations.GetWorldObject(id);
         }
 
         public WorldConstruction GetConstruction(int id)
         {
-            var key = new WorldConstruction() {ID = id};
-            int idx = WorldContructions.BinarySearch(key, _comparers[typeof (WorldConstruction)] as IComparer<WorldConstruction>);
-            return (idx < 0) ? null : WorldContructions[idx];
+            return WorldContructions.GetWorldObject(id);
         }
         #endregion
 

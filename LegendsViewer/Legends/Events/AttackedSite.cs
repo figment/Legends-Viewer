@@ -35,7 +35,7 @@ namespace LegendsViewer.Legends.Events
             else eventString += Defender.PrintEntity(true, pov);
             eventString += " at " + Site.ToSafeLink(link, pov) + ". ";
             if (AttackerGeneral != null)
-                eventString += AttackerGeneral.ToSafeLink(link, pov) + " led the attack";
+                eventString += "Leader of the attack was " + AttackerGeneral.ToSafeLink(link, pov);
             if (DefenderGeneral != null)
                 eventString += ", and the defenders were led by " + DefenderGeneral.ToSafeLink(link, pov);
             else eventString += ". ";

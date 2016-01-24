@@ -22,7 +22,7 @@ namespace LegendsViewer.Controls
             HTML = new StringBuilder();
             HTML.AppendLine("<h1>" + WrittenContent.Name + "</h1>");
             string type = null;
-            if (WrittenContent.Type != WrittenContentType.Unknown)
+            //if (WrittenContent.Type != WrittenContentType.Unknown)
             {
                 type = WrittenContent.Type.GetDescription();
                 string firstWord = WrittenContent.Styles.Count > 0 ? WrittenContent.Styles.First() : type;

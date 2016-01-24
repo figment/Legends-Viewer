@@ -30,9 +30,9 @@ namespace LegendsViewer.Controls
             else if (!string.IsNullOrEmpty(Artifact.Type))
                 HTML.AppendFormat("<b>{0}</b> is a {1}<br /><br />", Artifact.ToLink(false), Artifact.Type);
             HTML.AppendFormat("<br/>");
-            if (!string.IsNullOrEmpty(Artifact.Type)) HTML.AppendFormat("<b>Type: </b> {1}<br/>", Artifact.Type);
-            if (!string.IsNullOrEmpty(Artifact.SubType)) HTML.AppendFormat("<b>SubType: </b> {1}<br/>", Artifact.SubType);
-            if (!string.IsNullOrEmpty(Artifact.Material)) HTML.AppendFormat("<b>Material: </b> {1}<br/>", Artifact.Material);
+            if (!string.IsNullOrEmpty(Artifact.Type)) HTML.AppendFormat("<b>Type: </b> {0}<br/>", Artifact.Type);
+            if (!string.IsNullOrEmpty(Artifact.SubType)) HTML.AppendFormat("<b>SubType: </b> {0}<br/>", Artifact.SubType);
+            if (!string.IsNullOrEmpty(Artifact.Material)) HTML.AppendFormat("<b>Material: </b> {0}<br/>", Artifact.Material);
             if (!string.IsNullOrEmpty(Artifact.Description))
             {
                 HTML.AppendLine("<b>Description</b><br/>");

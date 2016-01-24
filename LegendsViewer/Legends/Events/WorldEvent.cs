@@ -71,7 +71,7 @@ namespace LegendsViewer.Legends.Events
             string monthName = monthNames[monthIndex];
             int dayIndex = 1 + (this.Seconds72 % (28 * 1200)) / 1200;
 
-            return yearTime + " (" + monthName + ", " + dayIndex.ToString() + ") ";
+            return yearTime + " (" + Formatting.AddOrdinal(dayIndex) + " of " + monthName + ") ";
         }
         public string PrintParentCollection(bool link = true, DwarfObject pov = null)
         {

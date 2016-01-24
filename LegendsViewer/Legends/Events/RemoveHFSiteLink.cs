@@ -68,6 +68,9 @@ namespace LegendsViewer.Legends.Events
                 case SiteLinkType.Hangout:
                     eventString += " stopped ruling from ";
                     break;
+                case SiteLinkType.SeatOfPower:
+                    eventString += " stopped working at ";
+                    break;
                 default:
                     eventString += " UNKNOWN LINKTYPE (" + LinkType + ") ";
                     break;

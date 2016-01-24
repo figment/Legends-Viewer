@@ -42,21 +42,8 @@ namespace LegendsViewer.Legends.Events
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eater = Eater != null ? Eater.ToSafeLink(link, pov) : Race ?? "UNKNOWN HISTORICAL FIGURE";
-            string victim = Victim != null ? Victim.ToSafeLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
             string eventString = this.GetYearTime();
-            eventString += $"{eater} devoured {victim} in ";
-            if (Site != null) eventString += Site.ToSafeLink(link, pov);
-            else if (Region != null) eventString += Region.ToSafeLink(link, pov);
-            else if (UndergroundRegion != null) eventString += UndergroundRegion.ToSafeLink(link, pov);
-            if (Eater != null)
-            {
-                eventString += Eater.ToSafeLink(link, pov);
-            }
-            else
-            {
-                eventString += "UNKNOWN HISTORICAL FIGURE";
-            }
+            eventString += Eater.ToSafeLink(link, pov);
             eventString += " devoured ";
             if (Victim != null)
             {

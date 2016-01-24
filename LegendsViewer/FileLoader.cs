@@ -216,6 +216,19 @@ namespace LegendsViewer
                 {
                     Controls.HTMLPrinter.FamilyGraphJS = reader.ReadToEnd();
                 }
+                var fontResourceName = "LegendsViewer.Controls.HTML.Styles.font-awesome.min.css";
+                using (Stream stream = assembly.GetManifestResourceStream(fontResourceName))
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    Controls.HTMLPrinter.FontCSS = reader.ReadToEnd();
+                }
+                var bootstrapResourceName = "LegendsViewer.Controls.HTML.Styles.bootstrap.min.css";
+                using (Stream stream = assembly.GetManifestResourceStream(bootstrapResourceName))
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    Controls.HTMLPrinter.BootstrapCSS = reader.ReadToEnd();
+                }
+                
             }
             catch (Exception ex)
             {

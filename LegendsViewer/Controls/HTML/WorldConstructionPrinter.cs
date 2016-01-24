@@ -35,8 +35,8 @@ namespace LegendsViewer.Controls.HTML
 
             HTML.AppendLine("<b>Connects</b><br />");
             HTML.AppendLine("<ul>");
-            HTML.AppendLine("<li>" + (WorldConstruction.Site1 != null ? WorldConstruction.Site1.ToLink() : "UNKNOWN SITE") + "</li>");
-            HTML.AppendLine("<li>" + (WorldConstruction.Site2 != null ? WorldConstruction.Site2.ToLink() : "UNKNOWN SITE") + "</li>");
+            HTML.AppendLine("<li>" + WorldConstruction.Site1.ToSafeLink() + "</li>");
+            HTML.AppendLine("<li>" + WorldConstruction.Site2.ToSafeLink() + "</li>");
             HTML.AppendLine("</ul>");
             HTML.AppendLine("</br>");
 

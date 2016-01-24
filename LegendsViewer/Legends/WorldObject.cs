@@ -46,6 +46,9 @@ namespace LegendsViewer.Legends
             return "";
         }
         public abstract List<WorldEvent> FilteredEvents { get; }
-
+        public override string ToString()
+        {
+            return ToLink(false);
+        }
     }
 }

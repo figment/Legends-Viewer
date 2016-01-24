@@ -56,15 +56,8 @@ namespace LegendsViewer.Legends.Events
 
             eventString += $" a {itemType} was stolen from {site} by {thief}";
             if (Entity != null) eventString += " from " + Entity.ToSafeLink(path, pov);
-
-            eventString += " a ";
-            eventString += Material + " " + ItemType;
-            eventString += " was stolen from ";
-
             if (ReturnSite != null)
-            {
                 eventString += " and brought to " + ReturnSite.ToSafeLink();
-            }
             eventString += ". ";
             eventString += PrintParentCollection(path, pov);
             return eventString;

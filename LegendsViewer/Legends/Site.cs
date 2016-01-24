@@ -235,6 +235,7 @@ namespace LegendsViewer.Legends
                 else
                     Structures.Insert(~index, value);
                 value.Merge(properties, world);
+                value.Site = this;
             }
         }
 
