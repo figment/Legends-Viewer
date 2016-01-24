@@ -2,15 +2,21 @@ namespace LegendsViewer.Legends.Enums
 {
     public enum HFState : byte
     {
-        Unknown,
-        None,
-        Settled,
+        Unknown = 255,
+        None = 254,
+        Visiting = 0,
+        Settled = 1,
         Wandering,
+        Refugee,
         Scouting,
         Snatcher,
-        Refugee,
         Thief,
         Hunting,
-        Visiting,
+    }
+    public enum HFSubState : byte
+    {
+        Unknown = 255,
+        Wandering = 0,
+        Fled = 1,
     }
 }

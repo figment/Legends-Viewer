@@ -231,7 +231,7 @@ namespace LegendsViewer.Legends
                             }
                         }
                         break;
-                    case "sex": Convert.ToInt32(property.Value); break;
+                    case "sex": Sex = property.ValueAsInt(); break;
                 }
             if (Name == "") Name = "(Unnamed)";
         }

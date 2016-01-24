@@ -37,9 +37,16 @@ namespace LegendsViewer.Controls
                 HTMLBrowser.DocumentCompleted += AfterPageLoad;
                 HTMLBrowser.Navigating += BrowserNavigating;
                 HTMLBrowser.Document.MouseMove += MouseOver;
+                HTMLBrowser.FileDownload += FileDownload;
+
                 return HTMLBrowser;
             }
             return HTMLBrowser;
+        }
+
+        private void FileDownload(object sender, EventArgs eventArgs)
+        {
+
         }
 
         public override void Dispose()

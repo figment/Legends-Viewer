@@ -18,7 +18,9 @@ namespace LegendsViewer.Legends.Events
                     case "old_caste": OldCaste = property.Value; break;
                     case "new_race": NewRace = Formatting.FormatRace(property.Value); break;
                     case "new_caste": NewCaste = property.Value; break;
+                    case "changee":
                     case "changee_hfid": Changee = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "changer":
                     case "changer_hfid": Changer = world.GetHistoricalFigure(property.ValueAsInt()); break;
                 }
             Changee.PreviousRace = OldRace;

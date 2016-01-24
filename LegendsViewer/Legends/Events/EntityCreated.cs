@@ -20,7 +20,11 @@ namespace LegendsViewer.Legends.Events
                     case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
 
                     //Unhandled Events
-                    case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this); break;
+                    case "structure_id":
+                        Structure = Site?.GetStructure(StructureID = property.ValueAsInt());
+                        Structure.AddEvent(this);
+                        property.Known = true;
+                        break;
                 }
             Entity.AddEvent(this);
             Site.AddEvent(this);

@@ -280,6 +280,7 @@ namespace LegendsViewer.Legends.Parser
                 case "body abused": World.UpsertEvent<BodyAbused>(World.Events, properties, World); break;
                 case "change hf job": World.UpsertEvent<ChangeHFJob>(World.Events, properties, World); break;
                 case "change hf state": World.UpsertEvent<ChangeHFState>(World.Events, properties, World); break;
+                case "change creature type":
                 case "changed creature type": World.UpsertEvent<ChangedCreatureType>(World.Events, properties, World); break;
                 case "create entity position": World.UpsertEvent<CreateEntityPosition>(World.Events, properties, World); break;
                 case "created site": World.UpsertEvent<CreatedSite>(World.Events, properties, World); break;

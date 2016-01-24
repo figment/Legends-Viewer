@@ -51,10 +51,12 @@ namespace LegendsViewer.Legends.Events
                     case "slayer_shooter_item_id": SlayerShooterItemID = property.ValueAsInt(); break;
                     case "death_cause":
                     case "cause":
-                        switch (property.Value)
+                        switch (property.Value.Replace("_"," "))
                         {
                             case "hunger": Cause = DeathCause.Starved; break;
                             case "struck": Cause = DeathCause.Struck; break;
+                            case "struck down": Cause = DeathCause.Struck; break;
+                            case "murder":
                             case "murdered": Cause = DeathCause.Murdered; break;
                             case "old age": Cause = DeathCause.OldAge; break;
                             case "dragonfire": Cause = DeathCause.DragonsFire; break;
@@ -74,12 +76,18 @@ namespace LegendsViewer.Legends.Events
                             case "crushed": Cause = DeathCause.CaveIn; break;
                             case "cage blasted": Cause = DeathCause.InACage; break;
                             case "freezing water": Cause = DeathCause.FrozenInWater; break;
+                            case "feed to beasts":
                             case "exec fed to beasts": Cause = DeathCause.ExecutedFedToBeasts; break;
+                            case "burn alive":
                             case "exec burned alive": Cause = DeathCause.ExecutedBurnedAlive; break;
                             case "exec crucified": Cause = DeathCause.ExecutedCrucified; break;
+                            case "drown alt":
                             case "exec drowned": Cause = DeathCause.ExecutedDrowned; break;
+                            case "hack to pieces":
                             case "exec hacked to pieces": Cause = DeathCause.ExecutedHackedToPieces; break;
+                            case "bury alive":
                             case "exec buried alive": Cause = DeathCause.ExecutedBuriedAlive; break;
+                            case "behead":
                             case "exec beheaded": Cause = DeathCause.ExecutedBeheaded; break;
                             case "blood drained": Cause = DeathCause.DrainedBlood; break;
                             case "collapsed": Cause = DeathCause.Collapsed; break;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LegendsViewer.Legends.Enums;
 using LegendsViewer.Legends.Parser;
 
 namespace LegendsViewer.Legends.Events
@@ -13,7 +14,7 @@ namespace LegendsViewer.Legends.Events
         public int PileTypeID { get; set; } // legends_plus.xml
         public int MaterialTypeID { get; set; } // legends_plus.xml
         public int MaterialIndex { get; set; } // legends_plus.xml
-        public int AbuseTypeID { get; set; } // legends_plus.xml
+        public AbuseType AbuseType { get; set; } // legends_plus.xml
 
         public Entity Abuser { get; set; } // legends_plus.xml
         public HistoricalFigure Body { get; set; } // legends_plus.xml
@@ -22,9 +23,12 @@ namespace LegendsViewer.Legends.Events
         public WorldRegion Region { get; set; }
         public UndergroundRegion UndergroundRegion { get; set; }
         public Location Coordinates { get; set; }
-        public string PropItemSubItem;
 
-        public BodyAbused() { }
+        public BodyAbused()
+        {
+            AbuseType = AbuseType.Unknown;
+        }
+
         private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
@@ -38,9 +42,10 @@ namespace LegendsViewer.Legends.Events
                     case "civ": Abuser = world.GetEntity(property.ValueAsInt()); Abuser.AddEvent(this); break;
                     case "bodies": Body = world.GetHistoricalFigure(property.ValueAsInt()); Body.AddEvent(this); break;
                     case "histfig": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
-                    case "abuse_type": AbuseTypeID = property.ValueAsInt(); break;
+                    case "abuse_type": AbuseType = (AbuseType)property.ValueAsInt(); break;
                     case "props_pile_type": PileTypeID = property.ValueAsInt(); break;
-                    case "props_item_subtype": PropItemSubItem = string.Intern(property.Value); break;
+                    case "props_item_type": ItemType = string.Intern(property.Value); break;
+                    case "props_item_subtype": ItemSubType = string.Intern(property.Value); break;
                     case "props_item_mat": property.Known = true; break;
                     case "props_item_mat_type": MaterialTypeID = property.ValueAsInt(); break;
                     case "props_item_mat_index": MaterialIndex = property.ValueAsInt(); break;
@@ -55,8 +60,14 @@ namespace LegendsViewer.Legends.Events
         {
             string eventString = GetYearTime();
             eventString += Body.ToSafeLink(link, pov);
-            eventString += "'s body was abused by ";
+
+            if (AbuseType == AbuseType.Unknown)
+                eventString += "'s body was abused by ";
+            else
+                eventString += "'s body was "+ AbuseType +" by ";
             eventString += Abuser.ToSafeLink(link, pov);
+            if (ItemType != null)
+                eventString += " with a " + ItemType;
             if (Site != null)
                 eventString += " in " + Site.ToSafeLink(link, pov);
             eventString += ". ";

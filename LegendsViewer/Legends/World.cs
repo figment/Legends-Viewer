@@ -287,14 +287,18 @@ namespace LegendsViewer.Legends
             if (id.HasValue && id.Value > -1)
             {
 
-                var item = new T() { ID = id.Value };
-                int index = ownerList.BinarySearch(0, ownerList.Count, item, _comparers[typeof(T)] as IComparer<T>);
+                var item = new T() {ID = id.Value};
+                int index = ownerList.BinarySearch(0, ownerList.Count, item, _comparers[typeof (T)] as IComparer<T>);
                 if (index >= 0)
                     item = ownerList[index];
                 else
                     ownerList.Insert(~index, item);
                 item.Merge(properties, world);
                 return item;
+            }
+            else
+            {
+                properties.ForEach(x=>x.MarkAllKnown()); // TOD: illegal item mark as read???
             }
             return null;
         }
@@ -767,7 +771,7 @@ namespace LegendsViewer.Legends
                 Entity entity = EntityEntityLinkEntities[i];
                 Property entityLink = EntityEntityLinks[i];
                 entityLink.Known = true;
-                //entity.EntityLinks.Add(new EntityEntityLink(entityLink.SubProperties, this));
+                entity.EntityLinks.Add(new EntityEntityLink(entityLink.SubProperties, this));
             }
         }
 

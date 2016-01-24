@@ -23,6 +23,7 @@ namespace LegendsViewer.Legends
             {
                 switch (property.Name)
                 {
+                    case "target":
                     case "entity_id":
                         int id = Convert.ToInt32(property.Value);
                         Entity = world.GetEntity(id);
@@ -36,6 +37,7 @@ namespace LegendsViewer.Legends
                         EndYear = Convert.ToInt32(property.Value);
                         Type = EntityLinkType.FormerPosition;
                         break;
+                    case "strength":
                     case "link_strength": Strength = Convert.ToInt32(property.Value); break;
                     case "link_type":
                         EntityLinkType linkType;

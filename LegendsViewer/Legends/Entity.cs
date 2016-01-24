@@ -44,8 +44,8 @@ namespace LegendsViewer.Legends
 
         public EntityType Type { get; set; } // legends_plus.xml
         public List<EntitySiteLink> SiteLinks { get; set; } // legends_plus.xml
-        //public List<EntityEntityLink> EntityLinks { get; set; } // legends_plus.xml
-        public List<EntityLink> EntityLinks { get; set; }
+        public List<EntityEntityLink> EntityLinks { get; set; } // legends_plus.xml
+        //public List<EntityLink> EntityLinks { get; set; }
         public List<EntityPosition> EntityPositions { get; set; } // legends_plus.xml
         public List<EntityPositionAssignment> EntityPositionAssignments { get; set; } // legends_plus.xml
         public List<Location> Claims { get; set; } // legends_plus.xml
@@ -153,8 +153,7 @@ namespace LegendsViewer.Legends
             EntityPositions = new List<EntityPosition>();
             EntityPositionAssignments = new List<EntityPositionAssignment>();
             Claims = new List<Location>();
-
-            EntityLinks = new List<EntityLink>();
+            EntityLinks = new List<EntityEntityLink>();
         }
 
         private void InternalMerge(List<Property> properties, World world)
@@ -167,7 +166,7 @@ namespace LegendsViewer.Legends
                     case "race": Race = Formatting.MakePopulationPlural(Formatting.FormatRace(property.Value)); RaceSet = true; break;
                     case "child": property.Known = true; break;
                     case "entity_link":
-                        EntityLinks.Add(new EntityLink(property.SubProperties, world)); property.Known = true;
+                        EntityLinks.Add(new EntityEntityLink(property.SubProperties, world)); property.Known = true;
                         world.AddEntityEntityLink(this, property);
                         break;
                     case "type":

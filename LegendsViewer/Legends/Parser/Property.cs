@@ -11,6 +11,11 @@ namespace LegendsViewer.Legends.Parser
         public List<Property> SubProperties = new List<Property>();
         public string Value { get { Known = true; return _value; } set { _value = value; } }
 
+        public void MarkAllKnown()
+        {
+            Known = true;
+            SubProperties.ForEach(x=>x.MarkAllKnown());
+        }
         public int ValueAsInt()
         {
             return Convert.ToInt32(Value);

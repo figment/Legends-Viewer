@@ -16,6 +16,7 @@ namespace LegendsViewer
         new string[] {"body abused",                  "Historical Figure Body Abused",            "(Incomplete) Mutilation / Impalement / Hanging"},
         new string[] {"change hf job",                "Historical Figure Change Job",             "(Incomplete)"},
         new string[] {"change hf state",              "Historical Figure Change State",           "Scouting / Wandering / Snatcher / Thief / Refugee"},
+        new string[] {"change creature type",         "Historical Figure Tranformed",             "Tranformed into race / caste of abducter"},
         new string[] {"changed creature type",        "Historical Figure Tranformed",             "Tranformed into race / caste of abducter"},
         new string[] {"create entity position",       "Entity Position Created",                  "(Incomplete)"},
         new string[] {"created site",                 "Site Founded",                             ""},

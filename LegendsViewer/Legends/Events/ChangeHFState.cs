@@ -14,9 +14,10 @@ namespace LegendsViewer.Legends.Events
         public UndergroundRegion UndergroundRegion;
         public Location Coordinates;
         public HFState State;
-        private string UnknownState;
+        //public HFSubState SubState;
+        public int SubState;
+        public string UnknownState;
 
-        public ChangeHFState() { }
         private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
@@ -25,16 +26,26 @@ namespace LegendsViewer.Legends.Events
                     case "state":
                         switch (property.Value)
                         {
-                            case "settled": State = HFState.Settled; break;
-                            case "wandering": State = HFState.Wandering; break;
+                            case "0": case "wandering": State = HFState.Wandering; break;
+                            case "1": case "settled": State = HFState.Settled; break;
+                            case "2": case "refugee": State = HFState.Refugee; break;
+                            case "5": case "visiting": State = HFState.Visiting; break;
                             case "scouting": State = HFState.Scouting; break;
                             case "snatcher": State = HFState.Snatcher; break;
-                            case "refugee": State = HFState.Refugee; break;
                             case "thief": State = HFState.Thief; break;
                             case "hunting": State = HFState.Hunting; break;
-                            case "visiting": State = HFState.Visiting; break;
-                            default: State = HFState.Unknown; UnknownState = property.Value; world.ParsingErrors.Report("Unknown HF State: " + UnknownState); break;
+                            default: State = HFState.Unknown; UnknownState = property.Value; world.ParsingErrors.Report("Unknown HF State: " + property.Value); break;
                         }
+                        break;
+                    case "substate":
+                        SubState = property.ValueAsInt(); // 45,46, 47
+                        //switch (property.ValueAsInt())
+                        //{
+                        //    case -1: SubState = HFSubState.Unknown; break;
+                        //    case 0: SubState = HFSubState.Wandering; break;
+                        //    case 1: SubState = HFSubState.Fled; break;
+                        //    default: SubState = HFSubState.Unknown; world.ParsingErrors.Report("Unknown HF SubState: " + property.Value); break;
+                        //}
                         break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
                     case "hfid":
@@ -42,6 +53,7 @@ namespace LegendsViewer.Legends.Events
                         if (HistoricalFigure != null && HistoricalFigure.AddEvent(this))
                             HistoricalFigure.States.Add(new HistoricalFigure.State(State, Year));
                         break;
+                    case "site":
                     case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
                     case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;

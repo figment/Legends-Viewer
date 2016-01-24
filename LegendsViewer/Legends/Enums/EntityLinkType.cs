@@ -21,5 +21,7 @@ namespace LegendsViewer.Legends.Enums
         Slave,
         [Description("Respected for heroic acts")]
         Hero,
+        Child,
+        Parent,
     }
 }
