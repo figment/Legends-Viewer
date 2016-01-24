@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using LegendsViewer.Controls.Map;
 using LegendsViewer.Legends;
+using LegendsViewer.Legends.EventCollections;
 
 namespace LegendsViewer.Controls
 {
@@ -22,11 +24,11 @@ namespace LegendsViewer.Controls
 
         public override string Print()
         {
-            StringBuilder HTML = new StringBuilder();
+            HTML = new StringBuilder();
 
             HTML.AppendLine("<h1>" + GetTitle() + "</h1></br>");
 
-            HTML.AppendLine(Conquering.GetYearTime() + "The " + Conquering.GetOrdinal(Conquering.Ordinal) + Conquering.ConquerType + " of " + Conquering.Site.ToLink() + " ocurred as a result of " + Conquering.Battle.ToLink() 
+            HTML.AppendLine(Conquering.GetYearTime() + "The " + Conquering.GetOrdinal(Conquering.Ordinal) + Conquering.ConquerType + " of " + Conquering.Site.ToLink() + " occurred as a result of " + Conquering.Battle.ToLink() 
                 + (Conquering.ParentCollection == null ? "" : " in " + Conquering.ParentCollection.ToLink() + " waged by " + (Conquering.ParentCollection as War).Attacker.PrintEntity() + " on " + (Conquering.ParentCollection as War).Defender.PrintEntity() )
                 + ".</br></br>");
 

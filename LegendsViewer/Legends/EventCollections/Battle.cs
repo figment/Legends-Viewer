@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.ComponentModel;
-using LegendsViewer.Controls;
+using LegendsViewer.Legends.Enums;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Parser;
+using LegendsViewer.Controls.HTML.Utilities;
 
-namespace LegendsViewer.Legends
+namespace LegendsViewer.Legends.EventCollections
 {
-    public enum BattleOutcome
-    {
-        [Description("Attacker Won")]
-        AttackerWon,
-        [Description("Defender Won")]
-        DefenderWon,
-        Unknown
-    }
     public class Battle : EventCollection
     {
+        public string Icon = "<i class=\"glyphicon fa-fw glyphicon-bishop\"></i>";
+
         public string Name { get; set; }
         public BattleOutcome Outcome { get; set; }
         public Location Coordinates { get; set; }
@@ -93,14 +88,6 @@ namespace LegendsViewer.Legends
         }
 
         public Battle() { Initialize(); }
-        public Battle(List<Property> properties, World world)
-            : base(properties, world)
-        {
-
-            Initialize();
-            InternalMerge(properties, world);
-        }
-
         private void InternalMerge(List<Property> properties, World world)
         {
             List<string> attackerSquadRace, defenderSquadRace;
@@ -276,28 +263,34 @@ namespace LegendsViewer.Legends
         {
             if (link)
             {
+                string title = Type;
+                title += "&#13";
+                title += Attacker.PrintEntity(false) + " (Attacker)";
+                if (Victor == Attacker) title += "(V)";
+                title += "&#13";
+                title += "Kills: " + DefenderDeathCount;
+                title += "&#13";
+                title += Defender != null ? Defender.PrintEntity(false) : "UNKNOWN";
+                title += " (Defender)";
+                if (Victor == Defender) title += "(V)";
+                title += "&#13";
+                title += "Kills: " + AttackerDeathCount;
+
                 string linkedString = "";
                 if (pov != this)
                 {
-                    string title = Attacker.PrintEntity(false) + " (Attacker)";
-                    if (Victor == Attacker) title += "(V)";
-                    title += "&#13";
-                    title += "Kills: " + DefenderDeathCount;
-                    title += "&#13";
-                    title += Defender != null ? Defender.PrintEntity(false) : "UNKNOWN";
-                    title += " (Defender)";
-                    if (Victor == Defender) title += "(V)";
-                    title += "&#13";
-                    title += "Kills: " + AttackerDeathCount;
-
-                    linkedString = "<a href = \"collection#" + this.ID + "\" title=\"" + title + "\"><font color=\"#6E5007\">" + Name + "</font></a>";
+                    linkedString = Icon + "<a href = \"collection#" + ID + "\" title=\"" + title + "\"><font color=\"#6E5007\">" + Name + "</font></a>";
                 }
                 else
-                    linkedString = "<font color=\"Blue\">" + Name + "</font>";
+                {
+                    linkedString = Icon + "<a title=\"" + title + "\">" + HTMLStyleUtil.CurrentDwarfObject(Name) + "</a>";
+                }
                 return linkedString;
             }
             else
+            {
                 return Name;
+            }
         }
         public override string ToString()
         {

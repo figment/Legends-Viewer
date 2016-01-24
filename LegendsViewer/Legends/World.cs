@@ -8,10 +8,13 @@ using System.Text;
 using Docuverse.Identicon;
 using IComparer = System.Collections.IComparer;
 using LegendsViewer.Controls;
+using LegendsViewer.Legends.Enums;
+using LegendsViewer.Legends.EventCollections;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Parser;
 
 namespace LegendsViewer.Legends
 {
-
     public class World
     {
         private static Dictionary<Type, object> _comparers = new Dictionary<Type, object>();
@@ -23,6 +26,8 @@ namespace LegendsViewer.Legends
         public StringBuilder Log;
         public List<WorldRegion> Regions = new List<WorldRegion>();
         public List<UndergroundRegion> UndergroundRegions = new List<UndergroundRegion>();
+        public List<Landmass> Landmasses = new List<Landmass>();
+        public List<MountainPeak> MountainPeaks = new List<MountainPeak>();
         public List<Site> Sites = new List<Site>();
         public List<HistoricalFigure> HistoricalFigures = new List<HistoricalFigure>();
         public List<HistoricalFigure> HistoricalFiguresByName;
@@ -35,6 +40,11 @@ namespace LegendsViewer.Legends
         public List<Era> Eras = new List<Era>();
         public List<Artifact> Artifacts = new List<Artifact>();
         public List<WorldConstruction> WorldContructions = new List<WorldConstruction>();
+        public List<PoeticForm> PoeticForms = new List<PoeticForm>();
+        public List<MusicalForm> MusicalForms = new List<MusicalForm>();
+        public List<DanceForm> DanceForms = new List<DanceForm>();
+        public List<WrittenContent> WrittenContents = new List<WrittenContent>();
+        public List<Structure> Structures = new List<Structure>();
         public List<WorldEvent> Events = new List<WorldEvent>();
         public List<EventCollection> EventCollections = new List<EventCollection>();
         public List<Population> CivilizedPopulations = new List<Population>();
@@ -122,9 +132,17 @@ namespace LegendsViewer.Legends
             War.Filters = new List<string>();
             Battle.Filters = new List<string>();
             SiteConquered.Filters = new List<string>();
-            Era.Filters = new List<string>();
+            List<string> eraFilters = new List<string>();
+            foreach (var eventInfo in AppHelpers.EventInfo)
+            {
+                eraFilters.Add(eventInfo[0]);
+            }
+            Era.Filters = eraFilters;
             BeastAttack.Filters = new List<string>();
             Artifact.Filters = new List<string>();
+            WrittenContent.Filters = new List<string>();
+            WorldConstruction.Filters = new List<string>();
+            Structure.Filters = new List<string>();
 
             GenerateCivIdenticons();
 
@@ -501,6 +519,107 @@ namespace LegendsViewer.Legends
                 return null;
             }
         }
+        public PoeticForm GetPoeticForm(int id)
+        {
+            if (id == -1) return null;
+            else
+            {
+                int min = 0;
+                int max = PoeticForms.Count - 1;
+                while (min <= max)
+                {
+                    int mid = min + (max - min) / 2;
+                    if (id > PoeticForms[mid].ID)
+                        min = mid + 1;
+                    else if (id < PoeticForms[mid].ID)
+                        max = mid - 1;
+                    else
+                        return PoeticForms[mid];
+                }
+                return null;
+            }
+        }
+        public MusicalForm GetMusicalForm(int id)
+        {
+            if (id == -1) return null;
+            else
+            {
+                int min = 0;
+                int max = MusicalForms.Count - 1;
+                while (min <= max)
+                {
+                    int mid = min + (max - min) / 2;
+                    if (id > MusicalForms[mid].ID)
+                        min = mid + 1;
+                    else if (id < MusicalForms[mid].ID)
+                        max = mid - 1;
+                    else
+                        return MusicalForms[mid];
+                }
+                return null;
+            }
+        }
+        public DanceForm GetDanceForm(int id)
+        {
+            if (id == -1) return null;
+            else
+            {
+                int min = 0;
+                int max = DanceForms.Count - 1;
+                while (min <= max)
+                {
+                    int mid = min + (max - min) / 2;
+                    if (id > DanceForms[mid].ID)
+                        min = mid + 1;
+                    else if (id < DanceForms[mid].ID)
+                        max = mid - 1;
+                    else
+                        return DanceForms[mid];
+                }
+                return null;
+            }
+        }
+        public WrittenContent GetWrittenContent(int id)
+        {
+            if (id == -1) return null;
+            else
+            {
+                int min = 0;
+                int max = WrittenContents.Count - 1;
+                while (min <= max)
+                {
+                    int mid = min + (max - min) / 2;
+                    if (id > WrittenContents[mid].ID)
+                        min = mid + 1;
+                    else if (id < WrittenContents[mid].ID)
+                        max = mid - 1;
+                    else
+                        return WrittenContents[mid];
+                }
+                return null;
+            }
+        }
+        public Structure GetStructure(int id)
+        {
+            if (id == -1) return null;
+            else
+            {
+                int min = 0;
+                int max = Structures.Count - 1;
+                while (min <= max)
+                {
+                    int mid = min + (max - min) / 2;
+                    if (id > Structures[mid].GlobalID)
+                        min = mid + 1;
+                    else if (id < Structures[mid].GlobalID)
+                        max = mid - 1;
+                    else
+                        return Structures[mid];
+                }
+                return null;
+            }
+        }
+
         public EventCollection GetEventCollection(int id)
         {
             int min = 0;

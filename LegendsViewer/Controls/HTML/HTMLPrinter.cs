@@ -5,7 +5,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Linq;
+using LegendsViewer.Controls.HTML;
 using LegendsViewer.Controls.HTML.Utilities;
+using LegendsViewer.Legends.EventCollections;
+using LegendsViewer.Legends.Events;
 
 namespace LegendsViewer.Controls
 {
@@ -19,6 +22,8 @@ namespace LegendsViewer.Controls
 
         public static string LegendsCSS;
         public static string ChartJS;
+        public static string CytoscapeJS;
+        public static string FamilyGraphJS;
 
         public static HTMLPrinter GetPrinter(object printObject, World world)
         {
@@ -48,7 +53,15 @@ namespace LegendsViewer.Controls
             if (printType == typeof(Artifact))
                 return new ArtifactPrinter(printObject as Artifact);
             if (printType == typeof(WorldConstruction))
-                return new WorldConstructionPrinter(printObject as WorldConstruction);
+                return new WorldConstructionPrinter(printObject as WorldConstruction, world);
+            if (printType == typeof(WrittenContent))
+                return new WrittenContentPrinter(printObject as WrittenContent, world);
+            if (printType == typeof(Structure))
+                return new StructurePrinter(printObject as Structure, world);
+            if (printType == typeof(Landmass))
+                return new LandmassPrinter(printObject as Landmass, world);
+            if (printType == typeof(MountainPeak))
+                return new MountainPeakPrinter(printObject as MountainPeak, world);
 
             if (printType == typeof(string))
                 return new StringPrinter(printObject as string);
@@ -62,6 +75,8 @@ namespace LegendsViewer.Controls
             htmlPage.Append("<!DOCTYPE html><html><head>");
             htmlPage.Append("<title>" + GetTitle() + "</title>");
             htmlPage.Append("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">");
+            htmlPage.Append("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\">");
+            htmlPage.Append("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css\">");
             htmlPage.Append(GetStyle());
             htmlPage.Append("</head>");
             htmlPage.Append("<body>" + Print() + "</body>");

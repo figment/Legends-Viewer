@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Parser;
 
 namespace LegendsViewer.Legends.EventCollections
 {
@@ -18,11 +19,6 @@ namespace LegendsViewer.Legends.EventCollections
         }
 
         public Insurrection() { Ordinal = -1; }
-        public Insurrection(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            InternalMerge(properties, world);
-        }
 
         private void InternalMerge(List<Property> properties, World world)
         {

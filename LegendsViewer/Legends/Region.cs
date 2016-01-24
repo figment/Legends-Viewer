@@ -2,11 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LegendsViewer.Legends.EventCollections;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Interfaces;
+using LegendsViewer.Legends.Parser;
 
 namespace LegendsViewer.Legends
 {
-    public class WorldRegion : WorldObject
+    public class WorldRegion : WorldObject, IHasCoordinates
     {
+        public string Icon = "<i class=\"fa fa-fw fa-map-o\"></i>";
+
         public string Name { get; set; }
         public string Type { get; set; }
         public List<string> Deaths
@@ -33,19 +39,14 @@ namespace LegendsViewer.Legends
 
         public WorldRegion()
         {
-            Name = "INVALID REGION"; Type = "INVALID";
+            Name = "INVALID REGION";
+            Type = "INVALID";
             Battles = new List<Battle>();
-        }
-        public WorldRegion(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            Battles = new List<Battle>();
-            InternalMerge(properties, world);
         }
         private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
-                switch(property.Name)
+                switch (property.Name)
                 {
                     case "name": Name = Formatting.InitCaps(property.Value); property.Known = true; break;
                     case "type": Type = String.Intern(property.Value); property.Known = true; break;
@@ -64,16 +65,23 @@ namespace LegendsViewer.Legends
         {
             if (link)
             {
+                string title = Type;
+                title += "&#13";
+                title += "Events: " + Events.Count;
+
                 if (pov != this)
                 {
-                    string title = Type + " | Events: " + Events.Count;
-                    return "<a href = \"region#" + this.ID + "\" title=\"" + title + "\">" + this.Name + "</a>";
+                    return Icon + "<a href = \"region#" + ID + "\" title=\"" + title + "\">" + Name + "</a>";
                 }
                 else
-                    return HTMLStyleUtil.CurrentDwarfObject(Name);
+                {
+                    return Icon + "<a title=\"" + title + "\">" + HTMLStyleUtil.CurrentDwarfObject(Name) + "</a>";
+                }
             }
             else
-                return this.Name;
+            {
+                return Name;
+            }
         }
     }
 }

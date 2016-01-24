@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Parser;
 
 namespace LegendsViewer.Legends.EventCollections
 {
@@ -17,12 +19,10 @@ namespace LegendsViewer.Legends.EventCollections
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
-        public PurgeCollection() { Ordinal = -1; }
-        public PurgeCollection(List<Property> properties, World world)
-            : base(properties, world)
+        public PurgeCollection()
         {
+            Ordinal = -1; 
             Adjective = "";
-            InternalMerge(properties, world);
         }
 
         private void InternalMerge(List<Property> properties, World world)

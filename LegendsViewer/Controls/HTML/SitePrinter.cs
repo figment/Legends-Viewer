@@ -1,8 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using LegendsViewer.Controls.Map;
 using LegendsViewer.Legends;
+using LegendsViewer.Legends.Enums;
+using LegendsViewer.Legends.EventCollections;
+using LegendsViewer.Legends.Events;
 
 namespace LegendsViewer.Controls
 {
@@ -30,12 +33,23 @@ namespace LegendsViewer.Controls
             HTML.AppendLine("<b>" + Site.ToLink(false) + " is a " + Site.Type + "</b><br /><br />");
 
             List<System.Drawing.Bitmap> maps = MapPanel.CreateBitmaps(World, Site);
-            //HTML.AppendLine("<table border=\"0\" width=\"" + (maps[0].Width + maps[1].Width + 10) + "\">");
+
             HTML.AppendLine("<table>");
             HTML.AppendLine("<tr>");
             HTML.AppendLine("<td>" + MakeLink(BitmapToHTML(maps[0]), LinkOption.LoadMap) + "</td>");
             HTML.AppendLine("<td>" + MakeLink(BitmapToHTML(maps[1]), LinkOption.LoadMap) + "</td>");
             HTML.AppendLine("</tr></table></br>");
+
+            if (Site.Structures.Any())
+            {
+                HTML.AppendLine("<b>Structures</b><br/>");
+                HTML.AppendLine("<ul>");
+                foreach (Structure structure in Site.Structures)
+                {
+                    HTML.AppendLine("<li>" + structure.ToLink() + ", " + structure.Type.GetDescription() + "</li>");
+                }
+                HTML.AppendLine("</ul>");
+            }
 
             if (Site.Warfare.Count(battle => !World.FilterBattles || battle.Notable) > 0)
             {
@@ -99,7 +113,7 @@ namespace LegendsViewer.Controls
                     }
                     HTML.AppendLine("<li>" + ownerString + ", " + owner.StartCause + " " + Site.ToLink(true, Site) + " in " + owner.StartYear);
                     if (owner.EndYear >= 0)
-                        HTML.Append(" and <font color=\"Red\">" + owner.EndCause + "</font> in " + owner.EndYear);
+                        HTML.Append(" and it was " + owner.EndCause + " in " + owner.EndYear);
                     if (owner.Ender != null)
                     {
                         if (owner.Ender is Entity)
@@ -111,6 +125,7 @@ namespace LegendsViewer.Controls
                             HTML.Append(" by " + owner.Ender.ToLink(true, Site));
                         }
                     }
+                    HTML.AppendLine(".");
                 }
                 HTML.AppendLine("</ol>");
             }

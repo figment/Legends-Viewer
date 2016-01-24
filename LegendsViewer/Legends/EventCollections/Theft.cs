@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Parser;
 
-namespace LegendsViewer.Legends
+namespace LegendsViewer.Legends.EventCollections
 {
     public class Theft : EventCollection
     {
@@ -19,26 +20,6 @@ namespace LegendsViewer.Legends
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
-        public Theft() {  }
-        public Theft(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            InternalMerge(properties, world);
-            foreach (ItemStolen theft in Collection.OfType<ItemStolen>())
-            {
-                theft.Site = Site;
-                Site.AddEvent(theft);
-                Site.Events = Site.Events.OrderBy(ev => ev.ID).ToList();
-                if (Attacker.SiteHistory.Count == 1)
-                {
-                    theft.ReturnSite = Attacker.SiteHistory.First().Site;
-                    theft.ReturnSite.AddEvent(theft);
-                    theft.ReturnSite.Events = theft.ReturnSite.Events.OrderBy(ev => ev.ID).ToList();
-                }
-            }
-        }
-
-
         private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
@@ -53,6 +34,18 @@ namespace LegendsViewer.Legends
                     case "attacking_enid": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
                     case "defending_enid": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
                 }
+            foreach (ItemStolen theft in Collection.OfType<ItemStolen>())
+            {
+                theft.Site = Site;
+                Site.AddEvent(theft);
+                Site.Events = Site.Events.OrderBy(ev => ev.ID).ToList();
+                if (Attacker.SiteHistory.Count == 1)
+                {
+                    theft.ReturnSite = Attacker.SiteHistory.First().Site;
+                    theft.ReturnSite.AddEvent(theft);
+                    theft.ReturnSite.Events = theft.ReturnSite.Events.OrderBy(ev => ev.ID).ToList();
+                }
+            }
         }
 
         public override void Merge(List<Property> properties, World world)

@@ -6,6 +6,8 @@ using LegendsViewer.Legends;
 using System.Drawing;
 using LegendsViewer.Controls.HTML.Utilities;
 using System.Windows.Forms;
+using LegendsViewer.Legends.EventCollections;
+using LegendsViewer.Legends.Events;
 
 namespace LegendsViewer.Controls
 {
@@ -135,7 +137,7 @@ namespace LegendsViewer.Controls
             HTML.AppendLine("</table>");
 
             HTML.AppendLine("</br>");
-            HTML.AppendLine("<h1>Eras</h2>");
+            HTML.AppendLine("<h1>Eras</h1>");
             HTML.AppendLine("<ol>");
             foreach (Era era in World.Eras)
                 HTML.AppendLine("<li>" + era.Name + " (" + (era.StartYear < 0 ? 0 : era.StartYear) + " - " + era.EndYear + ")</li>");

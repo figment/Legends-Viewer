@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using LegendsViewer.Controls;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Parser;
+using LegendsViewer.Controls.HTML.Utilities;
 
-namespace LegendsViewer.Legends
+namespace LegendsViewer.Legends.EventCollections
 {
     public class BeastAttack : EventCollection
     {
+        public string Icon = "<i class=\"glyphicon fa-fw glyphicon-knight\"></i>";
+
         public int Ordinal { get; set; }
         public Location Coordinates { get; set; }
         public WorldRegion Region { get; set; }
@@ -33,20 +36,6 @@ namespace LegendsViewer.Legends
         {
             Initialize();
         }
-        public BeastAttack(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            Initialize();
-            InternalMerge(properties, world);
-            Site.BeastAttacks.Add(this);
-
-            //--------Attacking Beast is calculated after parsing event collections in ParseXML()
-            //--------So that it can also look at eventsList from duel sub collections to calculate the Beast
-
-            //-------Fill in some missing event details with details from collection
-            //-------Filled in after parsing event collections in ParseXML()
-        }
-
         private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
@@ -60,6 +49,14 @@ namespace LegendsViewer.Legends
                     case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
                     case "defending_enid": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
                 }
+
+
+            //--------Attacking Beast is calculated after parsing event collections in ParseXML()
+            //--------So that it can also look at eventsList from duel sub collections to calculate the Beast
+
+            //-------Fill in some missing event details with details from collection
+            //-------Filled in after parsing event collections in ParseXML()
+            Site?.BeastAttacks.Add(this);
         }
 
         public override void Merge(List<Property> properties, World world)
@@ -83,28 +80,35 @@ namespace LegendsViewer.Legends
             else if (Beast != null) name += Beast.Name;
             else name += "UNKNOWN BEAST";
             if (pov != Site) name += " in " + Site.ToLink(false);
+
             if (link)
             {
+                string title = "Beast Attack";
+                title += "&#13";
+                title += "Events: " + GetSubEvents().Count;
+
                 string linkedString = "";
                 if (pov != this)
                 {
-                    string title = "Events: " + GetSubEvents().Count;
-
-                    linkedString = "<a href = \"collection#" + this.ID + "\" title=\"" + title + "\"><font color=\"#336600\">" + name + "</font></a>";
+                    linkedString = Icon + "<a href = \"collection#" + ID + "\" title=\"" + title + "\"><font color=\"#6E5007\">" + name + "</font></a>";
                 }
                 else
-                    linkedString = "<font color=\"Blue\">" + name + "</font>";
+                    linkedString = Icon + "<a title=\"" + title + "\">" + HTMLStyleUtil.CurrentDwarfObject(name) + "</a>";
                 return linkedString;
             }
             else
-                if (pov == this) return "Rampage of " + Beast.ToLink(false, Beast);
-            return name;
+            {
+                if (pov == this)
+                {
+                    return "Rampage of " + Beast.ToLink(false, Beast);
+                }
+                return name;
+            }
         }
 
         public override string ToString()
         {
             return ToLink(false);
         }
-
     }
 }

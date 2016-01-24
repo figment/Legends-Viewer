@@ -6,6 +6,8 @@ using System.Windows.Forms;
 using LegendsViewer.Legends;
 using LegendsViewer.Controls;
 using System.Diagnostics;
+using LegendsViewer.Controls.Map;
+using LegendsViewer.Legends.EventCollections;
 
 namespace LegendsViewer
 {
@@ -21,7 +23,12 @@ namespace LegendsViewer
         private EntitiesList entitySearch;
         private WarsList warSearch;
         private BattlesList battleSearch;
-        private ArtifactList artifactSearch;
+        private ArtifactsList artifactSearch;
+        private WrittenContentList writtenContentSearch;
+        private WorldConstructionsList worldConstructionSearch;
+        private StructuresList structureSearch;
+        private LandmassesList landmassSearch;
+        private MountainPeaksList mountainPeaksSearch;
         private ConqueringsList conqueringsSearch;
         private BeastAttackList beastAttackSearch;
 
@@ -30,7 +37,9 @@ namespace LegendsViewer
         Type[] EventTabTypes = new Type[]{typeof(HistoricalFigure), typeof(Site), typeof(Region),
                                             typeof(UndergroundRegion), typeof(Entity), typeof(War),
                                             typeof(Battle), typeof(SiteConquered), typeof(Era), typeof(BeastAttack),
-                                            typeof(Artifact)};                         
+                                            typeof(Artifact), typeof(WrittenContent), typeof(WorldConstruction), typeof(Structure),
+                                            typeof(Landmass), typeof(MountainPeak),
+        };                         
         private List<List<String>> TabEvents;
         DwarfTabControl Browser;
         private bool DontRefreshBrowserPages = true;
@@ -52,7 +61,7 @@ namespace LegendsViewer
 
             Text = "Legends Viewer";
             lblVersion.Text = "v" + version;
-            EventTabs = new TabPage[] { tpHFEvents, tpSiteEvents, tpRegionEvents, tpURegionEvents, tpCivEvents, tpWarEvents, tpBattlesEvents, tpConqueringsEvents, tpEraEvents, tpBeastAttackEvents, tpArtifactsEvents };
+            EventTabs = new TabPage[] { tpHFEvents, tpSiteEvents, tpRegionEvents, tpURegionEvents, tpCivEvents, tpWarEvents, tpBattlesEvents, tpConqueringsEvents, tpEraEvents, tpBeastAttackEvents, tpArtifactsEvents, tpWrittenContentEvents, tpWorldConstructionEvents, tpStructureEvents, tpLandmassEvents, tpMountainPeakEvents };
             tcWorld.Height = ClientSize.Height;
             btnBack.Location = new Point(tcWorld.Right + 3, 3);
             btnForward.Location = new Point(btnBack.Right + 3, 3);
@@ -109,7 +118,14 @@ namespace LegendsViewer
                     EventTabs[eventTab].Controls.Add(eventCheck);
                     string[] eventInfo = AppHelpers.EventInfo.Where(a => a[0] == eventType).Single();
                     eventCheck.Text = eventInfo[1];
+                    if (EventTabs[eventTab].Parent.Name == "tcEras")
+                    {
+                        eventCheck.Checked = false;
+                    }
+                    else
+                    {
                     eventCheck.Checked = true;
+                    }
                     eventCheck.CheckedChanged += OnEventFilterCheck;
                     hint.SetToolTip(eventCheck, eventInfo[2]);
                     eventCheck.Location = new Point(10, 23 * count);
@@ -177,7 +193,6 @@ namespace LegendsViewer
 
         private void listSearch_SelectedIndexChanged(object sender, EventArgs e)
         {
-            //Browser.LoadPageControl(((sender as ListBox).SelectedItem as DwarfObject));
             Browser.Navigate(ControlOption.HTML, (sender as ListBox).SelectedItem);
         }
 
@@ -507,7 +522,12 @@ namespace LegendsViewer
             battleSearch = new BattlesList(world);
             conqueringsSearch = new ConqueringsList(world);
             beastAttackSearch = new BeastAttackList(world);
-            artifactSearch = new ArtifactList(world);
+            artifactSearch = new ArtifactsList(world);
+            writtenContentSearch = new WrittenContentList(world);
+            worldConstructionSearch = new WorldConstructionsList(world);
+            structureSearch = new StructuresList(world);
+            landmassSearch = new LandmassesList(world);
+            mountainPeaksSearch = new MountainPeaksList(world);
 
             dlgOpen.FileName = "";
 
@@ -550,6 +570,20 @@ namespace LegendsViewer
             var civPopulationTypes = from civPopulation in populationTypes
                                      where world.Entities.Count(entity => entity.Populations.Count(population => population.Race == civPopulation.Key) > 0) > 0
                                      select civPopulation;
+            var structures = from structure in world.Structures
+                             orderby structure.Type.GetDescription()
+                             group structure by structure.Type.GetDescription() into structuretype
+                             select structuretype;
+            var worldconstructions = from construction in world.WorldContructions
+                                     orderby construction.Type.GetDescription()
+                                     group construction by construction.Type.GetDescription() into constructiontype
+                                     select constructiontype;
+            var writtencontents = from writtenContent in world.WrittenContents
+                                     orderby writtenContent.Type.GetDescription()
+                                     group writtenContent by writtenContent.Type.GetDescription() into writtenContentType
+                                     select writtenContentType;
+
+
             var historicalFigureEvents = from eventType in world.HistoricalFigures.SelectMany(hf => hf.Events)
                                          group eventType by eventType.Type into type
                                          select type.Key;
@@ -582,6 +616,26 @@ namespace LegendsViewer
                                  group eventType by eventType.Type into type
                                  select type.Key;
 
+            var writtenContentEvents = from eventType in world.WrittenContents.SelectMany(element => element.Events)
+                                 group eventType by eventType.Type into type
+                                 select type.Key;
+
+            var worldConstructionEvents = from eventType in world.WorldContructions.SelectMany(element => element.Events)
+                                       group eventType by eventType.Type into type
+                                       select type.Key;
+
+            var structureEvents = from eventType in world.Structures.SelectMany(element => element.Events)
+                                  group eventType by eventType.Type into type
+                                  select type.Key;
+
+            var landmassEvents = from eventType in world.Landmasses.SelectMany(element => element.Events)
+                                  group eventType by eventType.Type into type
+                                  select type.Key;
+
+            var mountainPeakEvents = from eventType in world.MountainPeaks.SelectMany(element => element.Events)
+                                  group eventType by eventType.Type into type
+                                  select type.Key;
+
             var eventTypes = from eventType in world.Events
                              group eventType by eventType.Type into type
                              select type.Key;
@@ -613,6 +667,16 @@ namespace LegendsViewer
                     TabEvents.Add(eventTypes.ToList());
                 else if (eventTabType == typeof(Artifact))
                     TabEvents.Add(artifactEvents.ToList());
+                else if (eventTabType == typeof(WrittenContent))
+                    TabEvents.Add(writtenContentEvents.ToList());
+                else if (eventTabType == typeof(WorldConstruction))
+                    TabEvents.Add(worldConstructionEvents.ToList());
+                else if (eventTabType == typeof(Structure))
+                    TabEvents.Add(structureEvents.ToList());
+                else if (eventTabType == typeof(Landmass))
+                    TabEvents.Add(landmassEvents.ToList());
+                else if (eventTabType == typeof(MountainPeak))
+                    TabEvents.Add(mountainPeakEvents.ToList());
                 else if (eventTabType == typeof(BeastAttack))
                     TabEvents.Add(beastAttackEvents.ToList());
             }
@@ -652,6 +716,15 @@ namespace LegendsViewer
             cmbEntityPopulation.Items.Add("All"); cmbEntityPopulation.SelectedIndex = 0;
             foreach(var civPopulation in civPopulationTypes)
                 cmbEntityPopulation.Items.Add(civPopulation.Key);
+            cmbStructureType.Items.Add("All"); cmbStructureType.SelectedIndex = 0;
+            foreach (var structure in structures)
+                cmbStructureType.Items.Add(structure.Key);
+            cmbConstructionType.Items.Add("All"); cmbConstructionType.SelectedIndex = 0;
+            foreach (var construction in worldconstructions)
+                cmbConstructionType.Items.Add(construction.Key);
+            cmbWrittenContentType.Items.Add("All"); cmbWrittenContentType.SelectedIndex = 0;
+            foreach (var writtencontent in writtencontents)
+                cmbWrittenContentType.Items.Add(writtencontent.Key);
 
             cbmArtTypeFilter.Items.Add("All");cbmArtTypeFilter.SelectedIndex = 0;
             cbmArtTypeFilter.Items.AddRange(artifactTypes.ToArray());
@@ -748,6 +821,21 @@ namespace LegendsViewer
 
             cbmArtMatFilter.Items.Clear();
             cbmArtTypeFilter.Items.Clear();
+
+            txtWrittenContentSearch.Clear();
+            cmbWrittenContentType.Items.Clear();
+            listWrittenContentSearch.Items.Clear();
+            radWrittenContentSortNone.Checked = true;
+
+            txtWorldConstructionsSearch.Clear();
+            cmbConstructionType.Items.Clear();
+            listWorldConstructionsSearch.Items.Clear();
+            radWorldConstructionsSortNone.Checked = true;
+
+            txtStructuresSearch.Clear();
+            cmbStructureType.Items.Clear();
+            listStructuresSearch.Items.Clear();
+            radStructuresSortNone.Checked = true;
 
             listEras.Items.Clear();
             numStart.Value = -1;
@@ -850,13 +938,72 @@ namespace LegendsViewer
             }
         }
 
-        private void cboArtTypeFilter_SelectedIndexChanged(object sender, EventArgs e)
+        private void searchWrittenContentList(object sender, EventArgs e)
         {
-    }
+            if (!FileLoader.Working && world != null)
+            {
+                writtenContentSearch.Name = txtWrittenContentSearch.Text;
+                writtenContentSearch.Type = cmbWrittenContentType.SelectedItem.ToString();
+                writtenContentSearch.SortEvents = radWrittenContentSortEvents.Checked;
+                writtenContentSearch.SortFiltered = radWrittenContentSortFiltered.Checked;
+                IEnumerable<WrittenContent> list = writtenContentSearch.GetList();
+                listWrittenContentSearch.Items.Clear();
+                listWrittenContentSearch.Items.AddRange(list.ToArray());
+            }
+        }
 
-        private void cboArtMatFilter_SelectedIndexChanged(object sender, EventArgs e)
+        private void searchWorldConstructionList(object sender, EventArgs e)
         {
+            if (!FileLoader.Working && world != null)
+            {
+                worldConstructionSearch.Name = txtWorldConstructionsSearch.Text;
+                worldConstructionSearch.Type = cmbConstructionType.SelectedItem.ToString();
+                worldConstructionSearch.SortEvents = radWorldConstructionsSortEvents.Checked;
+                worldConstructionSearch.SortFiltered = radWorldConstructionsSortFiltered.Checked;
+                IEnumerable<WorldConstruction> list = worldConstructionSearch.GetList();
+                listWorldConstructionsSearch.Items.Clear();
+                listWorldConstructionsSearch.Items.AddRange(list.ToArray());
+            }
+        }
 
-}
+        private void searchStructureList(object sender, EventArgs e)
+        {
+            if (!FileLoader.Working && world != null)
+            {
+                structureSearch.Name = txtStructuresSearch.Text;
+                structureSearch.Type = cmbStructureType.SelectedItem.ToString();
+                structureSearch.SortEvents = radStructuresSortEvents.Checked;
+                structureSearch.SortFiltered = radStructuresSortFiltered.Checked;
+                IEnumerable<Structure> list = structureSearch.GetList();
+                listStructuresSearch.Items.Clear();
+                listStructuresSearch.Items.AddRange(list.ToArray());
+            }
+        }
+
+        private void searchLandmassList(object sender, EventArgs e)
+        {
+            if (!FileLoader.Working && world != null)
+            {
+                landmassSearch.Name = txtLandmassSearch.Text;
+                landmassSearch.sortEvents = radLandmassEvents.Checked;
+                landmassSearch.sortFiltered = radLandmassFiltered.Checked;
+                IEnumerable<Landmass> list = landmassSearch.getList();
+                listLandmassSearch.Items.Clear();
+                listLandmassSearch.Items.AddRange(list.ToArray());
+            }
+        }
+
+        private void searchMountainPeakList(object sender, EventArgs e)
+        {
+            if (!FileLoader.Working && world != null)
+            {
+                mountainPeaksSearch.Name = txtMountainPeakSearch.Text;
+                mountainPeaksSearch.sortEvents = radMountainPeakEvents.Checked;
+                mountainPeaksSearch.sortFiltered = radMountainPeakFiltered.Checked;
+                IEnumerable<MountainPeak> list = mountainPeaksSearch.getList();
+                listMountainPeakSearch.Items.Clear();
+                listMountainPeakSearch.Items.AddRange(list.ToArray());
+            }
+        }
     }
 }

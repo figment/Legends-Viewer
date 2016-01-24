@@ -1,14 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml;
-using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Xml;
 using LegendsViewer.Legends.EventCollections;
+using LegendsViewer.Legends.Events;
 
-namespace LegendsViewer.Legends
+namespace LegendsViewer.Legends.Parser
 {
     class XMLParser
     {
@@ -80,7 +81,7 @@ namespace LegendsViewer.Legends
                 {
                     XML.Read();
                 }
-                else if (CurrentSection == Section.Unknown)
+                else if (CurrentSection == Section.Unknown || CurrentSection == Section.Landmasses || CurrentSection == Section.MountainPeaks)
                     SkipSection();
                 else
                     ParseSection();
@@ -111,6 +112,12 @@ namespace LegendsViewer.Legends
                 case "sites": return Section.Sites;
                 case "underground_regions": return Section.UndergroundRegions;
                 case "world_constructions": return Section.WorldConstructions;
+                case "poetic_forms": return Section.PoeticForms;
+                case "musical_forms": return Section.MusicalForms;
+                case "dance_forms": return Section.DanceForms;
+                case "written_contents": return Section.WrittenContent;
+                case "landmasses": return Section.Landmasses;
+                case "mountain_peaks": return Section.MountainPeaks;
                 case "xml":
                 case "":
                 case "df_world": return Section.Junk;
@@ -253,6 +260,12 @@ namespace LegendsViewer.Legends
                 case Section.Eras: World.Eras.Add(new Era(properties, World)); break;
                 case Section.Artifacts: World.UpsertWorldObject(World.Artifacts, properties, World); break;
                 case Section.WorldConstructions: World.UpsertWorldObject(World.WorldContructions, properties, World); break;
+                case Section.PoeticForms: World.UpsertWorldObject(World.PoeticForms,properties, World); break;
+                case Section.MusicalForms: World.UpsertWorldObject(World.MusicalForms,properties, World); break;
+                case Section.DanceForms: World.UpsertWorldObject(World.DanceForms, properties, World); break;
+                case Section.WrittenContent: World.UpsertWorldObject(World.WrittenContents, properties, World); break;
+                case Section.Landmasses: World.UpsertWorldObject(World.Landmasses, properties, World); break;
+                case Section.MountainPeaks: World.UpsertWorldObject(World.MountainPeaks, properties, World); break;
                 default: World.ParsingErrors.Report("Unknown XML Section: " + section.ToString()); break;
             }
         }
@@ -461,14 +474,25 @@ namespace LegendsViewer.Legends
             //Calculated here so it can look in Duel collections contained in beast attacks
             foreach (BeastAttack beastAttack in World.EventCollections.OfType<BeastAttack>())
             {
+                if (beastAttack.Beast == null && beastAttack.GetSubEvents().OfType<HfAttackedSite>().Any())
+                {
+                    beastAttack.Beast = beastAttack.GetSubEvents().OfType<HfAttackedSite>().First().Attacker;
+                }
+                if (beastAttack.Beast == null && beastAttack.GetSubEvents().OfType<HfDestroyedSite>().Any())
+                {
+                    beastAttack.Beast = beastAttack.GetSubEvents().OfType<HfDestroyedSite>().First().Attacker;
+                }
+
                 //Find Beast by looking at fights, Beast always engages the first fight in a Beast Attack?
-                if (beastAttack.GetSubEvents().OfType<HFSimpleBattleEvent>().Any())
+                if (beastAttack.Beast == null && beastAttack.GetSubEvents().OfType<HFSimpleBattleEvent>().Any())
                 {
                     beastAttack.Beast = beastAttack.GetSubEvents().OfType<HFSimpleBattleEvent>().First().HistoricalFigure1;
-                    if (beastAttack.Beast.BeastAttacks == null) beastAttack.Beast.BeastAttacks = new List<BeastAttack>();
-                    beastAttack.Beast.BeastAttacks.Add(beastAttack);
                 }
-                if (beastAttack.GetSubEvents().OfType<HFDied>().Count() > 1)
+                if (beastAttack.Beast == null && beastAttack.GetSubEvents().OfType<AddHFEntityLink>().Any())
+                {
+                    beastAttack.Beast = beastAttack.GetSubEvents().OfType<AddHFEntityLink>().First().HistoricalFigure;
+                }
+                if (beastAttack.Beast == null && beastAttack.GetSubEvents().OfType<HFDied>().Any())
                 {
                     var slayers = beastAttack.GetSubEvents().OfType<HFDied>().GroupBy(death => death.Slayer).Select(hf => new { HF = hf.Key, Count = hf.Count() });
                     if (slayers.Count(slayer => slayer.Count > 1) == 1)
@@ -477,6 +501,7 @@ namespace LegendsViewer.Legends
                         beastAttack.Beast = beast;
                     }
                 }
+
 
                 //Fill in some various event info from collections.
 
@@ -536,6 +561,14 @@ namespace LegendsViewer.Legends
                 }
 
                 }
+                if (beastAttack.Beast != null)
+                {
+                    if (beastAttack.Beast.BeastAttacks == null)
+                    {
+                        beastAttack.Beast.BeastAttacks = new List<BeastAttack>();
+            }
+                    beastAttack.Beast.BeastAttacks.Add(beastAttack);
+                }
             }
 
             //Assign a Conquering Event its corresponding battle
@@ -558,39 +591,5 @@ namespace LegendsViewer.Legends
                 }
             } 
         }
-    }
-
-    public class Property
-    {
-        public string Name = "";
-        private string _value = "";
-        public bool Known = false;
-        public List<Property> SubProperties = new List<Property>();
-        public string Value { get { Known = true; return _value; } set { _value = value; } }
-
-        public int ValueAsInt()
-        {
-            return Convert.ToInt32(Value);
-        }
-    }
-
-    //In order as they appear in the XML.
-    public enum Section
-    {
-        Unknown,
-        Junk,
-        Regions,
-        UndergroundRegions,
-        Sites,
-        WorldConstructions,
-        Artifacts,
-        HistoricalFigures,
-        EntityPopulations,
-        Entities,
-        Events,
-        EventCollections,
-        Eras,
-        Name,
-        AltName,
     }
 }

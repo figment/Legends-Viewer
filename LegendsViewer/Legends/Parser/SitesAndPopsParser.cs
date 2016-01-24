@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.IO;
+using LegendsViewer.Legends.Events;
 
-namespace LegendsViewer.Legends
+namespace LegendsViewer.Legends.Parser
 {
     class SitesAndPopulationsParser
     {
@@ -230,9 +231,9 @@ namespace LegendsViewer.Legends
                             new OwnerPeriod(Site, Owner, lastKnownOwner.DeathYear, "after death of last owner (" + lastKnownOwner.DeathCause + ") took over");
                             found = true;
                         }
-                        else if (lastKnownOwner.Race == "Demon" && Site.Type == "Vault" && Owner is Entity)
+                        else if (Site.Type == "Vault" && Owner is Entity)
                         {
-                            // SPOILER Devil owns the place, Entity is a group of angles
+                            Site.OwnerHistory.Last().Owner = Owner;
                             found = true;
                         }
                     }
@@ -246,7 +247,7 @@ namespace LegendsViewer.Legends
                         ChangeHFState lastSettledEvent = Site.Events.OfType<ChangeHFState>().LastOrDefault();
                         if (lastSettledEvent != null)
                         {
-                            new OwnerPeriod(Site, Owner, lastSettledEvent.Year, "settled in ");
+                            new OwnerPeriod(Site, Owner, lastSettledEvent.Year, "settled in");
                         }
                         else
                         {
@@ -259,7 +260,7 @@ namespace LegendsViewer.Legends
             if (Owner == null && Site.OwnerHistory.Count > 0 && Site.OwnerHistory.Last().EndYear == -1)
             {
                 Site.OwnerHistory.Last().EndYear = World.Events.Last().Year - 1;
-                Site.OwnerHistory.Last().EndCause = "UNKNOWN";
+                Site.OwnerHistory.Last().EndCause = "abandoned";
             }
         }
 

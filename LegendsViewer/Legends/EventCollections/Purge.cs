@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Parser;
 
-namespace LegendsViewer.Legends
+namespace LegendsViewer.Legends.EventCollections
 {
     public class Purge : EventCollection
     {
@@ -15,8 +17,13 @@ namespace LegendsViewer.Legends
         {
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
-        public Purge(List<Property> properties, World world)
-            : base(properties, world)
+
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world);
+        }
+        private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
             {

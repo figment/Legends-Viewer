@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using LegendsViewer.Legends;
 using System.Linq;
-using System.Text;
+using LegendsViewer.Legends.Enums;
+using LegendsViewer.Legends.EventCollections;
+using LegendsViewer.Legends.Events;
 
 namespace LegendsViewer
 {
@@ -100,6 +102,40 @@ namespace LegendsViewer
             }
         }
 
+    public class LandmassesList
+    {
+        private World world;
+        public string Name;
+        public bool sortEvents, sortFiltered;
+        public List<Landmass> BaseList;
+        public LandmassesList(World setWorld) { world = setWorld; BaseList = world.Landmasses; }
+        public IEnumerable<Landmass> getList()
+        {
+            IEnumerable<Landmass> filtered = BaseList;
+            if (Name != "") filtered = filtered.Where(element => element.Name.ToLower().Contains(Name.ToLower()));
+            if (sortEvents) filtered = filtered.OrderByDescending(element => element.Events.Count);
+            if (sortFiltered) filtered = filtered.OrderByDescending(element => element.Events.Count(ev => !Landmass.Filters.Contains(ev.Type)));
+            return filtered;
+        }
+    }
+
+    public class MountainPeaksList
+    {
+        private World world;
+        public string Name;
+        public bool sortEvents, sortFiltered;
+        public List<MountainPeak> BaseList;
+        public MountainPeaksList(World setWorld) { world = setWorld; BaseList = world.MountainPeaks; }
+        public IEnumerable<MountainPeak> getList()
+        {
+            IEnumerable<MountainPeak> filtered = BaseList;
+            if (Name != "") filtered = filtered.Where(element => element.Name.ToLower().Contains(Name.ToLower()));
+            if (sortEvents) filtered = filtered.OrderByDescending(element => element.Events.Count);
+            if (sortFiltered) filtered = filtered.OrderByDescending(element => element.Events.Count(ev => !MountainPeak.Filters.Contains(ev.Type)));
+            return filtered;
+        }
+    }
+
         public class EntitiesList
         {
             private World world;
@@ -165,13 +201,13 @@ namespace LegendsViewer
             }
         }
 
-    public class ArtifactList
+    public class ArtifactsList
     {
         private World World;
         public string Name, Type, Material;
         public bool SortEvents, SortFiltered;
         public List<Artifact> BaseList;
-        public ArtifactList(World world) { World = world; BaseList = world.Artifacts; }
+        public ArtifactsList(World world) { World = world; BaseList = world.Artifacts; }
         public IEnumerable<Artifact> GetList()
         {
             IEnumerable<Artifact> filtered = BaseList;
@@ -180,6 +216,60 @@ namespace LegendsViewer
             if (!string.IsNullOrEmpty(Material)) filtered = filtered.Where(artifact => artifact.Material.ToLower().Contains(Material.ToLower()));
             if (SortEvents) filtered = filtered.OrderByDescending(artifact => artifact.Events.Count);
             if (SortFiltered) filtered = filtered.OrderByDescending(artifact => artifact.FilteredEvents.Count(ev => !Artifact.Filters.Contains(ev.Type)));
+            return filtered;
+        }
+    }
+
+    public class WrittenContentList
+    {
+        private World World;
+        public string Name, Type;
+        public bool SortEvents, SortFiltered;
+        public List<WrittenContent> BaseList;
+        public WrittenContentList(World world) { World = world; BaseList = world.WrittenContents; }
+        public IEnumerable<WrittenContent> GetList()
+        {
+            IEnumerable<WrittenContent> filtered = BaseList;
+            if (Name != "") filtered = filtered.Where(element => element.Name.ToLower().Contains(Name.ToLower()));
+            if (Type != "All") filtered = filtered.Where(element => element.Type.GetDescription() == Type);
+            if (SortEvents) filtered = filtered.OrderByDescending(element => element.Events.Count);
+            if (SortFiltered) filtered = filtered.OrderByDescending(element => element.FilteredEvents.Count(ev => !WrittenContent.Filters.Contains(ev.Type)));
+            return filtered;
+        }
+    }
+
+    public class WorldConstructionsList
+    {
+        private World World;
+        public string Name, Type;
+        public bool SortEvents, SortFiltered;
+        public List<WorldConstruction> BaseList;
+        public WorldConstructionsList(World world) { World = world; BaseList = world.WorldContructions; }
+        public IEnumerable<WorldConstruction> GetList()
+        {
+            IEnumerable<WorldConstruction> filtered = BaseList;
+            if (Name != "") filtered = filtered.Where(element => element.Name.ToLower().Contains(Name.ToLower()));
+            if (Type != "All") filtered = filtered.Where(element => element.Type.GetDescription() == Type);
+            if (SortEvents) filtered = filtered.OrderByDescending(element => element.Events.Count);
+            if (SortFiltered) filtered = filtered.OrderByDescending(element => element.FilteredEvents.Count(ev => !WorldConstruction.Filters.Contains(ev.Type)));
+            return filtered;
+        }
+    }
+
+    public class StructuresList
+    {
+        private World World;
+        public string Name, Type;
+        public bool SortEvents, SortFiltered;
+        public List<Structure> BaseList;
+        public StructuresList(World world) { World = world; BaseList = world.Structures; }
+        public IEnumerable<Structure> GetList()
+        {
+            IEnumerable<Structure> filtered = BaseList;
+            if (Name != "") filtered = filtered.Where(element => element.Name.ToLower().Contains(Name.ToLower()));
+            if (Type != "All") filtered = filtered.Where(element => element.Type.GetDescription() == Type);
+            if (SortEvents) filtered = filtered.OrderByDescending(element => element.Events.Count);
+            if (SortFiltered) filtered = filtered.OrderByDescending(element => element.FilteredEvents.Count(ev => !Structure.Filters.Contains(ev.Type)));
             return filtered;
         }
     }
@@ -220,5 +310,4 @@ namespace LegendsViewer
                 return filtered;
             }
         }
-    
 }

@@ -2,13 +2,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using LegendsViewer.Legends.Enums;
+using LegendsViewer.Legends.EventCollections;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Parser;
 using LegendsViewer.Controls;
 
 namespace LegendsViewer.Legends
 {
     public class HistoricalFigure : WorldObject
     {
+        public static string ForceNatureIcon = "<i class=\"glyphicon fa-fw glyphicon-leaf\"></i>";
+        public static string DeityIcon = "<i class=\"fa fa-fw fa-sun-o\"></i>";
+        public static string NeuterIcon = "<i class=\"fa fa-fw fa-neuter\"></i>";
+        public static string FemaleIcon = "<i class=\"fa fa-fw fa-venus\"></i>";
+        public static string MaleIcon = "<i class=\"fa fa-fw fa-mars\"></i>";
+
         public static HistoricalFigure Unknown;
         public string Name { get; set; }
         public string Race { get; set; }
@@ -36,6 +45,11 @@ namespace LegendsViewer.Legends
         public List<string> ActiveInteractions { get; set; }
         public List<string> InteractionKnowledge { get; set; }
         public string Goal { get; set; }
+        public string Interaction { get; set; }
+
+        public HistoricalFigure LineageCurseParent { get; set; }
+        public List<HistoricalFigure> LineageCurseChilds { get; set; }
+
         public List<string> JourneyPets { get; set; }
         public string DeathCollectionType
         {
@@ -74,6 +88,8 @@ namespace LegendsViewer.Legends
         public string AnimatedType { get; set; }
         public bool Adventurer { get; set; }
         public string BreedID { get; set; }
+        public int Sex { get; set; }
+
         public static List<string> Filters;
         public override List<WorldEvent> FilteredEvents
         {
@@ -88,13 +104,7 @@ namespace LegendsViewer.Legends
             AssociatedType = "UNKNOWN";
         }
         public override string ToString() { return this.Name; }
-        public HistoricalFigure(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            Initialize();
-            InternalMerge(properties, world);               
-            if (Name == "") Name = "(Unnamed)";
-        }
+        
         private void InternalMerge(List<Property> properties, World world)
         {
             List<string> knownEntitySubProperties = new List<string>() { "entity_id", "link_strength", "link_type", "position_profile_id", "start_year", "end_year", "type", "target", "strength", "child" };
@@ -221,6 +231,7 @@ namespace LegendsViewer.Legends
                             }
                         }
                         break;
+                    case "sex": Convert.ToInt32(property.Value); break;
                 }
             if (Name == "") Name = "(Unnamed)";
         }
@@ -254,32 +265,87 @@ namespace LegendsViewer.Legends
             InteractionKnowledge = new List<string>();
             JourneyPets = new List<string>();
             HoldingArtifacts = new List<Artifact>();
+            LineageCurseChilds = new List<HistoricalFigure>();
         }
 
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
-            if (this == HistoricalFigure.Unknown)
-                return this.Name;
+            if (this == Unknown)
+                return Name;
             if (link)
+            {
+                string icon = getIcon();
+                string title = getAnchorTitle();
                 if ((pov == null || pov != this))
                 {
-                    string title = Caste + ", " + AssociatedType + " (" + BirthYear + " - ";
-                    if (DeathYear == -1) title += "Present)";
-                    else title += DeathYear + ")";
-                    title += "&#13Events: " + Events.Count;
                     if (pov != null && pov.GetType() == typeof(BeastAttack) && (pov as BeastAttack).Beast == this) //Highlight Beast when printing Beast Attack Log
-                        if (this.Name.IndexOf(" ") > 0)
-                            return "<a href=\"hf#" + this.ID + "\" title=\"" + title + "\"><font color=#339900>" + this.Name.Substring(0, this.Name.IndexOf(" ")) + "</font></a>";
-                        else return "<a href=\"hf#" + this.ID + "\" title=\"" + title + "\"><font color=#339900>" + this.Name + "</font></a>";
+                        return icon + "<a href=\"hf#" + ID + "\" title=\"" + title + "\"><font color=#339900>" + (Name.IndexOf(" ") > 0 ? Name.Substring(0, Name.IndexOf(" ")) : Name) + "</font></a>";
                     else
-                        return "the " + GetRaceString() + " " + "<a href = \"hf#" + this.ID + "\" title=\"" + title + "\">" + this.Name + "</a>";
+                        return "the " + GetRaceString() + " " + icon + "<a href=\"hf#" + ID + "\" title=\"" + title + "\">" + Name + "</a>";
                 }
                 else
-                    return HTMLStyleUtil.CurrentDwarfObject(Name.IndexOf(" ") > 0 ? Name.Substring(0, Name.IndexOf(" ")) : Name);
+                {
+                    return "<a href=\"hf#" + ID + "\" title=\"" + title + "\">" + HTMLStyleUtil.CurrentDwarfObject(Name.IndexOf(" ") > 0 ? Name.Substring(0, Name.IndexOf(" ")) : Name) + "</a>";
+                }
+            }
             else if ((pov == null || pov != this))
+            {
                 return GetRaceString() + " " + Name;
+            }
             else
+            {
                 return Name.IndexOf(" ") > 0 ? Name.Substring(0, Name.IndexOf(" ")) : Name;
+        }
+        }
+
+        private string getIcon()
+        {
+            if (Force)
+            {
+                return ForceNatureIcon;
+            }
+            if (Deity)
+            {
+                return DeityIcon;
+            }
+            if (Caste == "Female")
+            {
+                return FemaleIcon;
+            }
+            if (Caste == "Male")
+            {
+                return MaleIcon;
+            }
+            if (Caste == "Default")
+            {
+                return NeuterIcon;
+            }
+            return "";
+        }
+
+        private string getAnchorTitle()
+        {
+            string title = Caste + " " + GetRaceString() + " " + (AssociatedType != "Standard" ? AssociatedType : "") + " ";
+            if (!Deity)
+            {
+                title += "(" + BirthYear + " - " + (DeathYear == -1 ? "Present" : DeathYear.ToString()) + ")";
+            }
+            title += "&#13";
+            title += "Events: " + Events.Count;
+            return title;
+        }
+
+        public string ToTreeLeafLink(DwarfObject pov = null)
+        {
+            string dead = DeathYear != -1 ? "<br/>" + HTMLStyleUtil.SYMBOL_DEAD : "";
+            if ((pov == null || pov != this))
+            {
+                return "<a " + (Deity ? "class=\"hf_deity\"" : "") + " href=\"hf#" + ID + "\" title=\"" + getAnchorTitle() + "\">" + Race + (Deity ? " Deity" : "") + "<br/>" + Name + dead + "</a>";
+            }
+            else
+            {
+                return "<a " + (Deity ? "class=\"hf_deity\"" : "") + " title=\"" + getAnchorTitle() + "\">" + Race + (Deity ? " Deity" : "") + "<br/>" + HTMLStyleUtil.CurrentDwarfObject(Name) + dead + "</a>";
+            }
         }
 
         public class Position
@@ -355,41 +421,4 @@ namespace LegendsViewer.Legends
             return Race.ToLower();
         }
     }
-
-    public class Skill
-    {
-        public string Name { get; set; }
-        public int Points { get; set; }
-        public string Rank
-        {
-            get
-            {
-                int[] pointCutoffs = { 29000, 26600, 24300, 22100, 20000, 18000, 16100, 14300, 12600, 11000, 9500, 8100,
-                                         6800, 5600, 4500, 3500, 2600, 1800, 1100, 500, 1 };
-                string[] titles = { "Legendary+5", "Legendary+4", "Legendary+3", "Legendary+2", "Legendary+1", "Legendary",
-                                      "Grand Master", "High Master", "Master", "Great", "Accomplished", "Professional",
-                                      "Expert", "Adept", "Talented", "Proficient", "Skilled", "Competent", "Adequate", "Novice", "Dabbling" };
-                for (int i = 0; i < pointCutoffs.Length; i++)
-                    if (Points >= pointCutoffs[i])
-                        return titles[i];
-                return "Unknown";
             }
-            set { }
-        }
-        public Skill(List<Property> properties)
-        {
-            foreach (Property property in properties)
-            {
-                switch (property.Name)
-                {
-                    case "skill":
-                        Name = Formatting.InitCaps(property.Value.Replace('_', ' ').ToLower());
-                        break;
-                    case "total_ip":
-                        Points = Convert.ToInt32(property.Value);
-                        break;
-                }
-            }
-        }
-    }
-}

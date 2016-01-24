@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using LegendsViewer.Legends.Events;
+using LegendsViewer.Legends.Parser;
 
-namespace LegendsViewer.Legends
+namespace LegendsViewer.Legends.EventCollections
 {
     public class Duel : EventCollection
     {
@@ -19,11 +20,6 @@ namespace LegendsViewer.Legends
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
         public Duel() { Ordinal = -1; }
-        public Duel(List<Property> properties, World world)
-            : base(properties, world)
-        {
-            InternalMerge(properties,world); 
-        }
 
         private void InternalMerge(List<Property> properties, World world)
         {
