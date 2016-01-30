@@ -48,7 +48,7 @@ namespace LegendsViewer.Legends
                             Coordinates.Add(new Location(x, y));
                         }
                         break;
-                    case "height": Height = Convert.ToInt32(property.Value); break;
+                    case "height": Height = property.ValueAsInt(); break;
                 }
             }
         }

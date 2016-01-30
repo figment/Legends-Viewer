@@ -22,7 +22,7 @@ namespace LegendsViewer.Legends.EventCollections
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "ordinal": Ordinal = Convert.ToInt32(property.Value); break;
+                    case "ordinal": Ordinal = property.ValueAsInt(); break;
                 }
         }
 

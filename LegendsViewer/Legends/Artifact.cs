@@ -31,6 +31,7 @@ namespace LegendsViewer.Legends
         public Artifact()
         {
             Name = "Untitled";
+            Type = "Artifact";
             WrittenContents = new List<int>();
         }
         private void InternalMerge(List<Property> properties, World world)
@@ -46,8 +47,8 @@ namespace LegendsViewer.Legends
                     case "item_description": Description = Formatting.InitCaps(property.Value); break;
                     case "mat": Material = string.Intern(Formatting.InitCaps(property.Value)); break;
 
-                    case "page_count": PageCount = Convert.ToInt32(property.Value); break;
-                    case "writing": if (!WrittenContents.Contains(Convert.ToInt32(property.Value))) WrittenContents.Add(Convert.ToInt32(property.Value)); break;
+                    case "page_count": PageCount = property.ValueAsInt(); break;
+                    case "writing": if (!WrittenContents.Contains(property.ValueAsInt())) WrittenContents.Add(property.ValueAsInt()); break;
                 }
             }
         }
@@ -70,11 +71,9 @@ namespace LegendsViewer.Legends
                 {
                     return Icon + "<a href = \"artifact#" + ID + "\" title=\"" + title + "\">" + Name + "</a>";
                 }
-                else
-                    return Icon + "<a title=\"" + title + "\">" + HTMLStyleUtil.CurrentDwarfObject(Name) + "</a>";
+                return Icon + "<a title=\"" + title + "\">" + HTMLStyleUtil.CurrentDwarfObject(Name) + "</a>";
             }
-            else
-                return Name;
+            return Name;
         }
     }
 }

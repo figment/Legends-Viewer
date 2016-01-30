@@ -11,6 +11,7 @@ namespace LegendsViewer.Legends.Events
         public Entity MakerEntity { get; set; }
         public Site Site { get; set; }
         public int ItemID { get; set; }
+        public string ItemType { get; set; }
         public string ItemSubType { get; set; }
 
         private void InternalMerge(List<Property> properties, World world)
@@ -26,6 +27,7 @@ namespace LegendsViewer.Legends.Events
                     case "entity_id": MakerEntity = world.GetEntity(property.ValueAsInt()); MakerEntity.AddEvent(this); break;
                     case "site":
                     case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
+                    case "item_type": ItemType = property.Value; break;
                     case "item_subtype": ItemSubType = property.Value; break;
                     case "item_id": ItemID = property.ValueAsInt(); break;
                 }

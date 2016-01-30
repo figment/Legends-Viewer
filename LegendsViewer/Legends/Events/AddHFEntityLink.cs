@@ -59,6 +59,9 @@ namespace LegendsViewer.Legends.Events
                 case HfEntityLinkType.Slave: eventString += " was enslaved by "; break;
                 case HfEntityLinkType.Enemy: eventString += " became an enemy of "; break;
                 case HfEntityLinkType.Member: eventString += " became a member of "; break;
+                case HfEntityLinkType.FormerMember:
+                    eventString += " became a former member of ";
+                    break;
                 case HfEntityLinkType.Squad:
                 case HfEntityLinkType.Position: eventString += " became the " + Position + " of "; break;
                 default: eventString += " linked to "; break;

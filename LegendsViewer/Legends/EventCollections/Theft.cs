@@ -27,12 +27,12 @@ namespace LegendsViewer.Legends.EventCollections
                 {
                     case "ordinal": Ordinal = String.Intern(property.Value); break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
-                    case "parent_eventcol": ParentCollection = world.GetEventCollection(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "attacking_enid": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defending_enid": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "parent_eventcol": ParentCollection = world.GetEventCollection(property.ValueAsInt()); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "attacking_enid": Attacker = world.GetEntity(property.ValueAsInt()); break;
+                    case "defending_enid": Defender = world.GetEntity(property.ValueAsInt()); break;
                 }
             foreach (ItemStolen theft in Collection.OfType<ItemStolen>())
             {

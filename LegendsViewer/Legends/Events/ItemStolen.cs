@@ -9,10 +9,11 @@ namespace LegendsViewer.Legends.Events
     {
         public int StructureID { get; set; }
         public Structure Structure { get; set; }
+        public int Item { get; set; }
         public string ItemType { get; set; }
-        public int ItemSubType { get; set; }
+        public string ItemSubType { get; set; }
         public string Material { get; set; }
-        public int MaterialTypeID { get; set; }
+        public int MaterialType { get; set; }
         public int MaterialIndex { get; set; }
         public HistoricalFigure Thief { get; set; }
         public Entity Entity { get; set; }
@@ -37,9 +38,9 @@ namespace LegendsViewer.Legends.Events
                     case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "structure":
                     case "structure_id": Structure = Site?.GetStructure(StructureID = property.ValueAsInt()); Structure.AddEvent(this); break;
-                    case "item_subtype": ItemSubType = property.ValueAsInt(); break;
+                    case "item_subtype": ItemSubType = property.Value; break;
                     case "mattype": MaterialIndex = property.ValueAsInt(); break;
-                    case "matindex": ItemSubType = property.ValueAsInt(); break;
+                    case "matindex": MaterialIndex = property.ValueAsInt(); break;
                 }
         }
         public override void Merge(List<Property> properties, World world)

@@ -25,20 +25,20 @@ namespace LegendsViewer.Legends
                 {
                     case "target":
                     case "entity_id":
-                        int id = Convert.ToInt32(property.Value);
+                        int id = property.ValueAsInt();
                         Entity = world.GetEntity(id);
                         break;
-                    case "position_profile_id": PositionID = Convert.ToInt32(property.Value); break;
+                    case "position_profile_id": PositionID = property.ValueAsInt(); break;
                     case "start_year": 
-                        StartYear = Convert.ToInt32(property.Value);
+                        StartYear = property.ValueAsInt();
                         Type = EntityLinkType.Position;
                         break;
                     case "end_year": 
-                        EndYear = Convert.ToInt32(property.Value);
+                        EndYear = property.ValueAsInt();
                         Type = EntityLinkType.FormerPosition;
                         break;
                     case "strength":
-                    case "link_strength": Strength = Convert.ToInt32(property.Value); break;
+                    case "link_strength": Strength = property.ValueAsInt(); break;
                     case "link_type":
                         EntityLinkType linkType;
                         if (!Enum.TryParse(Formatting.InitCaps(property.Value), out linkType))

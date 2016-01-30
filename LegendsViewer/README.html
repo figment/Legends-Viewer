@@ -1,0 +1,236 @@
+<h1>
+    <a id="user-content-legends-viewer" class="anchor" href="#legends-viewer" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Legends Viewer
+</h1>
+
+<p>Recreates Legends Mode from exported data. Browser like navigation, including tabs, allows to easily view other people/places/entities by just clicking names in the event logs or search lists, CTRL+Click opens a new tab. </p>
+
+<h2>
+    <a id="user-content-getting-the-data-from-dwarf-fortress" class="anchor" href="#getting-the-data-from-dwarf-fortress" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Getting the data from Dwarf Fortress:
+</h2>
+
+<blockquote>
+    <p><img class="emoji" title=":high_brightness:" alt=":high_brightness:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f506.png" height="20" width="20" align="absmiddle"> If you are already playing a fort or adventure on the save you want to use, you need to:</p>
+
+    <ul>
+        <li>Make a <strong>copy</strong> of your save!!!</li>
+        <li>Abandon or retire your fortress/adventure on the copy</li>
+        <li>Enter DF legends mode on the copy</li>
+    </ul>
+</blockquote>
+
+<p><strong>Recommended:</strong> (requires <a href="https://github.com/DFHack/dfhack/releases">DFHack</a> which is usually included in <a href="http://lazynewbpack.com/">Lazy Newb Pack</a>)</p>
+
+<ol>
+    <li>Enter DF legends mode on the save you want to export </li>
+    <li>Switch to the DFHack window</li>
+    <li>
+        Enter the command <code>exportlegends info</code> and press enter
+
+        <ul>
+            <li>this command generates all files you need and an additional file with the ending legends_plus.xml</li>
+            <li>the legends_plus.xml file contains a lot of information that is missing if you export via the old way</li>
+        </ul>
+    </li>
+</ol>
+
+<p><strong>Or use the old way:</strong></p>
+
+<ol>
+    <li>Enter Legends Mode. </li>
+    <li>
+        Export the XML <code>(x)</code>
+    </li>
+    <li>
+        Export Map/Gen Information <code>(p)</code>
+    </li>
+    <li><p>(Optional) Export Additional Detailed Maps <code>(d)</code> </p></li>
+</ol>
+
+<ul>
+    <li>(Optional) Archive/Compress files</li>
+</ul>
+
+<h2>
+    <a id="user-content-opening-the-data-with-legends-viewer" class="anchor" href="#opening-the-data-with-legends-viewer" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Opening the data with Legends Viewer.
+</h2>
+
+<p>
+    Select the XML or Archive first by pressing the "..." button next to the XML / Archive text box.
+    Legends Viewer will attempt to automatically find the remaining files.
+    If the viewer was unable to locate a file it will indicate which files by turning the text box red.
+    You will then have to manually select those files by pressing the "..." button for each file.
+</p>
+
+<p>The files needed are (which will be dumped in the root Dwarf Fortress directory)</p>
+
+<ul>
+    <li>
+        <code>savename-datestamp</code>-legends.xml
+    </li>
+    <li>
+        <code>savename-datestamp</code>-legends_plus.xml (Optional)
+    </li>
+    <li>
+        <code>savename-datestamp</code>-world_history.txt
+    </li>
+    <li>
+        <code>savename-datestamp</code>-world_sites_and_pops.txt
+    </li>
+    <li>
+        <code>savename-datestamp</code>-world_map.bmp (or any other Map Image file)
+    </li>
+</ul>
+
+<h2>
+    <a id="user-content-using-legends-viewer" class="anchor" href="#using-legends-viewer" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using Legends Viewer
+</h2>
+
+<h3>
+    <a id="user-content-general" class="anchor" href="#general" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>General
+</h3>
+
+<p>CTRL+Click on any links, lists, or buttons opens pages in a new tab.</p>
+
+<h3>
+    <a id="user-content-searching" class="anchor" href="#searching" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Searching
+</h3>
+
+<ul>
+    <li>Each tab has various options for sorting and filtering.</li>
+    <li>Every tab has the sub tab "Events" letting you filter events from event logs.</li>
+    <li>The "Filtered Events" Sort is used in conjunction with the Events Tab which allows for some custom sorting.</li>
+    <li>"Filter All Unimportant Warfare" in the Wars Tab removes unnotable battles and pillagings from battle lists in all pages.</li>
+    <li>Some lists in pages can be loaded for searching by clicking "[Load]" next to the list heading.</li>
+</ul>
+
+<h3>
+    <a id="user-content-map" class="anchor" href="#map" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Map
+</h3>
+
+<ul>
+    <li>Click &amp; Drag moves the map.</li>
+    <li>
+        <code>Mouse Wheel</code> to zoom in / out.
+    </li>
+    <li>Civs &amp; Sites can be toggled with options above the minimap.</li>
+    <li>
+        <code>CTRL + Mouse Wheel</code> changes year of the map by 1 year.
+    </li>
+    <li>
+        <code>SHIFT + Mouse Wheel</code> changes year of the map by 10 years.
+    </li>
+    <li>
+        <code>CTRL + SHIFT + Mouse Wheel</code> changes year of the map by 100 years.
+    </li>
+</ul>
+
+<h3>
+    <a id="user-content-advanced-search" class="anchor" href="#advanced-search" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Advanced Search
+</h3>
+
+<ul>
+    <li>
+        Searching Sub Lists
+
+        <ul>
+            <li>Example: Searching historical figure's kills. </li>
+            <li>If you want to see historical figures with kills &gt; 10 just leave the sub options blank. </li>
+            <li>If you want to see historical figures that killed an elf then you can select Kills &gt; Race &gt; Equals &gt; Elf. </li>
+            <li>If you want to see who killed the most elves you do the same with Order Criteria.</li>
+        </ul>
+    </li>
+    <li>
+        Selecting
+
+        <ul>
+            <li>Selecting is used to search and return results from sub lists. </li>
+            <li>
+                So if you want to search through a specific historical figure's kills, you Historical Figures &gt; Kills,
+                then in the Select Criteria select Name &gt; Equals &gt; "Urist McDwarf".
+            </li>
+            <li>That will return all of Urist McDwarf's kills, then you can add Search/Order Criteria to look through them more.</li>
+        </ul>
+    </li>
+    <li>
+        Guided Searches
+
+        <ul>
+            <li>When selecting values to search by it will generate all the available options. </li>
+            <li>
+                So if you search for Dwarves and then add a criteria for caste it will show you all the castes of dwarves in the
+                drop down box.
+            </li>
+        </ul>
+    </li>
+    <li>
+        Order (Min/Max/Sum/Avg)
+
+        <ul>
+            <li>You can do Min/Max/Sum/Avg when ordering by sub sub options.</li>
+            <li>
+                So if you want to find historical figures that participated in the most bloody battles you can order by
+                Battles &gt; Deaths &gt; Sum &gt; Descending.
+            </li>
+            <li>These options can be a little slow sometimes, limiting the results to sort can speed it up.</li>
+        </ul>
+    </li>
+</ul>
+
+<h2>
+    <a id="user-content-things-to-note-blue_book" class="anchor" href="#things-to-note-blue_book" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Things to note: <img class="emoji" title=":blue_book:" alt=":blue_book:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f4d8.png" height="20" width="20" align="absmiddle">
+</h2>
+
+<ul>
+    <li>
+        <strong>XML dump is incomplete!</strong> Anywhere that there are details left out I noted with "UNKNOWN" however if you see any<br>
+        "INVALID" then its a bug that needs to be fixed. If you export the data with DFHacks' <code>exportlegends info</code> a lot of
+        additional data is available and you will get less "UNKNOWN" information.
+    </li>
+    <li>
+        Duplicate Historical Figures / Entities in summary log indicate that relations for duplicates may not be setup
+        properly you will have to check History/Site files to view these relations.
+    </li>
+    <li>
+        Bigger worlds will perform slower. Some pages with a lot of activity can take a few seconds to load. Be careful in
+        the Era tab with events and era length, all events are filtered out by default. Selecting too many events and a
+        lengthy era can result in GBs of memory being used and can take some time to generate the page.
+    </li>
+    <li>
+        Requires <a href="http://www.microsoft.com/downloads/en/details.aspx?FamilyID=9cfb2d51-5ff4-4491-b0e5-b386f32c0992&amp;displaylang=en">.NET 4</a>    and <a href="http://windows.microsoft.com/en-us/internet-explorer/download-ie">IE9+</a>
+    </li>
+</ul>
+
+<h2>
+    <a id="user-content-archive-support" class="anchor" href="#archive-support" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Archive Support
+</h2>
+
+<ul>
+    <li>Tested with (zip/7zip/rar)</li>
+    <li>
+        Must have these files in the archive
+
+        <ul>
+            <li>XML file "-legends.xml"</li>
+            <li>history file ending with "-world_history.txt"</li>
+            <li>sites and populations file ending with "-world_sites_and_pops.txt"</li>
+            <li>Map Image files (bmp/png/jpg/jpeg)</li>
+            <li>(Optional) DFHack exported XML-Plus file "-legends_plus.xml"</li>
+        </ul>
+    </li>
+    <li>Any other files in the archive will be ignored without error. </li>
+</ul>
+
+<h2>
+    <a id="user-content-troubleshooting" class="anchor" href="#troubleshooting" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Troubleshooting
+</h2>
+
+<ul>
+    <li>
+        If images or charts aren't showing up in pages or navigating pages doesn't work try updating Internet Explorer to a newer
+        version. IE9 and up should work.
+    </li>
+    <li>
+        If you encouter errors while loading files, first try restarting Dwarf Fortress and re-export all the files.
+        If it still happens after that you can send me your files or world gen parameters and I will look into it.
+    </li>
+</ul>

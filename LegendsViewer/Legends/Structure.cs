@@ -34,7 +34,7 @@ namespace LegendsViewer.Legends
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "id": ID = Convert.ToInt32(property.Value);  break;
+                    case "id": ID = property.ValueAsInt();  break;
                     case "name": Name = Formatting.InitCaps(property.Value);  break;
                     case "name2": AltName = Formatting.InitCaps(property.Value);  break;
                     case "type":

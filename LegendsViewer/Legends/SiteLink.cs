@@ -35,16 +35,16 @@ namespace LegendsViewer.Legends
                         }
                         break;
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value)); 
+                        Site = world.GetSite(property.ValueAsInt()); 
                         break;
                     case "sub_id":
-                        SubID = Convert.ToInt32(property.Value);
+                        SubID = property.ValueAsInt();
                         break;
                     case "entity_id":
-                        Entity = world.GetEntity(Convert.ToInt32(property.Value));
+                        Entity = world.GetEntity(property.ValueAsInt());
                         break;
                     case "occupation_id":
-                        OccupationID = Convert.ToInt32(property.Value);
+                        OccupationID = property.ValueAsInt();
                         break;
                 }
             }

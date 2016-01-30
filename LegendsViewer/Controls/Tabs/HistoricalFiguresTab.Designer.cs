@@ -179,7 +179,7 @@
             this.listHFSearch.HeaderWordWrap = true;
             this.listHFSearch.HighlightBackgroundColor = System.Drawing.Color.Empty;
             this.listHFSearch.HighlightForegroundColor = System.Drawing.Color.Empty;
-            this.listHFSearch.Location = new System.Drawing.Point(3, 32);
+            this.listHFSearch.Location = new System.Drawing.Point(3, 30);
             this.listHFSearch.Name = "listHFSearch";
             this.listHFSearch.SelectColumnsOnRightClickBehaviour = BrightIdeasSoftware.ObjectListView.ColumnSelectBehaviour.Submenu;
             this.listHFSearch.ShowCommandMenuOnRightClick = true;
@@ -226,7 +226,7 @@
             // btnHFListReset
             // 
             this.btnHFListReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnHFListReset.Location = new System.Drawing.Point(0, 208);
+            this.btnHFListReset.Location = new System.Drawing.Point(3, 212);
             this.btnHFListReset.Name = "btnHFListReset";
             this.btnHFListReset.Size = new System.Drawing.Size(50, 20);
             this.btnHFListReset.TabIndex = 41;

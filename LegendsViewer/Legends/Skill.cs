@@ -34,7 +34,7 @@ namespace LegendsViewer.Legends
                         Name = Formatting.InitCaps(property.Value.Replace('_', ' ').ToLower());
                         break;
                     case "total_ip":
-                        Points = Convert.ToInt32(property.Value);
+                        Points = property.ValueAsInt();
                         break;
                 }
             }

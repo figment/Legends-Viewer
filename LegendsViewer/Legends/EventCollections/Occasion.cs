@@ -25,9 +25,9 @@ namespace LegendsViewer.Legends.EventCollections
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "civ_id": Civ = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "ordinal": Ordinal = Convert.ToInt32(property.Value); break;
-                    case "occasion_id": OccasionId = Convert.ToInt32(property.Value); break;
+                    case "civ_id": Civ = world.GetEntity(property.ValueAsInt()); break;
+                    case "ordinal": Ordinal = property.ValueAsInt(); break;
+                    case "occasion_id": OccasionId = property.ValueAsInt(); break;
                 }
         }
 

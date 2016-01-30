@@ -36,10 +36,7 @@ namespace LegendsViewer.Legends.Events
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();
-            if (Snatcher != null)
-                eventString += Snatcher.ToSafeLink(link, pov);
-            else
-                eventString += "(UNKNOWN HISTORICAL FIGURE)";
+            eventString += Snatcher.ToSafeLink(link, pov);
             eventString += " abducted " + Target.ToSafeLink(link, pov) + " from " + Site.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;

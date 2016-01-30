@@ -18,10 +18,10 @@ namespace LegendsViewer.Legends
             {
                 switch (property.Name)
                 {
-                    case "id": ID = Convert.ToInt32(property.Value); break;
-                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "position_id": PositionID = Convert.ToInt32(property.Value); break;
-                    case "squad_id": SquadID = Convert.ToInt32(property.Value); break;
+                    case "id": ID = property.ValueAsInt(); break;
+                    case "histfig": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "position_id": PositionID = property.ValueAsInt(); break;
+                    case "squad_id": SquadID = property.ValueAsInt(); break;
                 }
             }
 

@@ -77,10 +77,9 @@ namespace LegendsViewer.Controls
             htmlPage.Append("<!DOCTYPE html><html><head>");
             htmlPage.Append("<title>" + GetTitle() + "</title>");
             htmlPage.Append("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">");
-            htmlPage.Append(GetCSS(BootstrapCSS));
-            htmlPage.Append(GetCSS(FontCSS));
-            //    htmlPage.Append("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\">");
-            //    htmlPage.Append("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css\">");
+            //htmlPage.Append(GetCSS(BootstrapCSS, FontCSS, LegendsCSS));
+            htmlPage.Append("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\">");
+            htmlPage.Append("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css\">");
             htmlPage.Append(GetStyle());
             htmlPage.Append("</head>");
             htmlPage.Append("<body>" + Print() + "</body>");
@@ -88,11 +87,15 @@ namespace LegendsViewer.Controls
             return htmlPage.ToString();
         }
 
-        public string GetCSS(string css)
+        public string GetCSS(params string[] csslist)
         {
-            if (!string.IsNullOrWhiteSpace(css))
-                return "<style type=\"text/css\">" + css + "</style>";
-            return "";
+            if (csslist.Length <= 0) return "";
+            var sb = new StringBuilder();
+            sb.Append("<style type=\"text/css\">");
+            foreach (var css in csslist.SkipWhile(string.IsNullOrWhiteSpace))
+                sb.AppendLine(css);
+            sb.Append("</style>");
+            return sb.ToString();
         }
         public string GetStyle()
         {
@@ -404,7 +407,8 @@ namespace LegendsViewer.Controls
         HTML,
         Map,
         Chart,
-        Search
+        Search,
+        ReadMe
     }
 
     public class TableMaker

@@ -35,10 +35,10 @@ namespace LegendsViewer.Legends
                         }
                         break;
                     case "target":
-                        Target = world.GetEntity(Convert.ToInt32(property.Value));
+                        Target = world.GetEntity(property.ValueAsInt());
                         break;
                     case "strength":
-                        Strength = Convert.ToInt32(property.Value);
+                        Strength = property.ValueAsInt();
                         break;
                 }
             }

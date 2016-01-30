@@ -53,7 +53,7 @@ namespace LegendsViewer.Legends.Events
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Improver != null ? Improver.ToSafeLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += Improver.ToSafeLink(link, pov);
             switch (ImprovementType)
             {
                 case "art image":

@@ -116,23 +116,23 @@ namespace LegendsViewer.Legends.EventCollections
                         break;
                     case "name": Name = Formatting.InitCaps(property.Value); break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
-                    case "war_eventcol": ParentCollection = world.GetEventCollection(Convert.ToInt32(property.Value)); break;
-                    case "subregion_id": Region = world.GetRegion(Convert.ToInt32(property.Value)); break;
-                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(Convert.ToInt32(property.Value)); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "attacking_hfid": NotableAttackers.Add(world.GetHistoricalFigure(Convert.ToInt32(property.Value))); break;
-                    case "defending_hfid": NotableDefenders.Add(world.GetHistoricalFigure(Convert.ToInt32(property.Value))); break;
+                    case "war_eventcol": ParentCollection = world.GetEventCollection(property.ValueAsInt()); break;
+                    case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); break;
+                    case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "attacking_hfid": NotableAttackers.Add(world.GetHistoricalFigure(property.ValueAsInt())); break;
+                    case "defending_hfid": NotableDefenders.Add(world.GetHistoricalFigure(property.ValueAsInt())); break;
                     case "attacking_squad_race": attackerSquadRace.Add(Formatting.FormatRace(property.Value)); break;
-                    case "attacking_squad_entity_pop": attackerSquadEntityPopulation.Add(Convert.ToInt32(property.Value)); break;
-                    case "attacking_squad_number": attackerSquadNumbers.Add(Convert.ToInt32(property.Value)); break;
-                    case "attacking_squad_deaths": attackerSquadDeaths.Add(Convert.ToInt32(property.Value)); break;
-                    case "attacking_squad_site": attackerSquadSite.Add(Convert.ToInt32(property.Value)); break;
+                    case "attacking_squad_entity_pop": attackerSquadEntityPopulation.Add(property.ValueAsInt()); break;
+                    case "attacking_squad_number": attackerSquadNumbers.Add(property.ValueAsInt()); break;
+                    case "attacking_squad_deaths": attackerSquadDeaths.Add(property.ValueAsInt()); break;
+                    case "attacking_squad_site": attackerSquadSite.Add(property.ValueAsInt()); break;
                     case "defending_squad_race": defenderSquadRace.Add(Formatting.FormatRace(property.Value)); break;
-                    case "defending_squad_entity_pop": defenderSquadEntityPopulation.Add(Convert.ToInt32(property.Value)); break;
-                    case "defending_squad_number": defenderSquadNumbers.Add(Convert.ToInt32(property.Value)); break;
-                    case "defending_squad_deaths": defenderSquadDeaths.Add(Convert.ToInt32(property.Value)); break;
-                    case "defending_squad_site": defenderSquadSite.Add(Convert.ToInt32(property.Value)); break;
-                    case "noncom_hfid": NonCombatants.Add(world.GetHistoricalFigure(Convert.ToInt32(property.Value))); break;
+                    case "defending_squad_entity_pop": defenderSquadEntityPopulation.Add(property.ValueAsInt()); break;
+                    case "defending_squad_number": defenderSquadNumbers.Add(property.ValueAsInt()); break;
+                    case "defending_squad_deaths": defenderSquadDeaths.Add(property.ValueAsInt()); break;
+                    case "defending_squad_site": defenderSquadSite.Add(property.ValueAsInt()); break;
+                    case "noncom_hfid": NonCombatants.Add(world.GetHistoricalFigure(property.ValueAsInt())); break;
                 }
 
             if (Collection.OfType<AttackedSite>().Any())

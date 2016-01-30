@@ -18,8 +18,8 @@ namespace LegendsViewer.Legends
             {
                 switch (property.Name)
                 {
-                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
-                    case "link_strength": Strength = Convert.ToInt32(property.Value); break;
+                    case "hfid": HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                    case "link_strength": Strength = property.ValueAsInt(); break;
                     case "link_type":
                         HistoricalFigureLinkType linkType;
                         if (Enum.TryParse(Formatting.InitCaps(property.Value).Replace(" ", ""), out linkType))

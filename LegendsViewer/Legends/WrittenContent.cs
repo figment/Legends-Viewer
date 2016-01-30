@@ -45,8 +45,8 @@ namespace LegendsViewer.Legends
                 switch (property.Name)
                 {
                     case "title": Name = Formatting.InitCaps(property.Value); break;
-                    case "page_start": PageStart = Convert.ToInt32(property.Value); break;
-                    case "page_end": PageEnd = Convert.ToInt32(property.Value); break;
+                    case "page_start": PageStart = property.ValueAsInt(); break;
+                    case "page_end": PageEnd = property.ValueAsInt(); break;
                     case "reference": References.Add(new Reference(property.SubProperties, world)); break;
                     case "type":
                         switch (property.Value)
@@ -77,7 +77,7 @@ namespace LegendsViewer.Legends
                                 break;
                         }
                         break;
-                    case "author": Author = world.GetHistoricalFigure(Convert.ToInt32(property.Value)); break;
+                    case "author": Author = world.GetHistoricalFigure(property.ValueAsInt()); break;
                     case "style": Styles.Add(property.Value); break;
                 }
             }

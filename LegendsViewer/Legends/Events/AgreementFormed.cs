@@ -46,7 +46,7 @@ namespace LegendsViewer.Legends.Events
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
-            eventString += Concluder != null ? Concluder.ToSafeLink(link, pov) : "UNKNOWN HISTORICAL FIGURE";
+            eventString += Concluder.ToSafeLink(link, pov);
             eventString += " formed an agreement";
             switch (Reason)
             {

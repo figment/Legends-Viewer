@@ -28,13 +28,13 @@ namespace LegendsViewer.Legends.EventCollections
                 switch (property.Name)
                 {
                     case "site_id":
-                        Site = world.GetSite(Convert.ToInt32(property.Value));
+                        Site = world.GetSite(property.ValueAsInt());
                         break;
                     case "target_enid":
-                        TargetEntity = world.GetEntity(Convert.ToInt32(property.Value));
+                        TargetEntity = world.GetEntity(property.ValueAsInt());
                         break;
                     case "ordinal":
-                        Ordinal = Convert.ToInt32(property.Value);
+                        Ordinal = property.ValueAsInt();
                         break;
                 }
             }

@@ -35,14 +35,14 @@ namespace LegendsViewer.Legends.EventCollections
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "id": this.ID = Convert.ToInt32(property.Value); property.Known = true; break;
-                    case "start_year": this.StartYear = Convert.ToInt32(property.Value); property.Known = true; break;
-                    case "start_seconds72": this.StartSeconds72 = Convert.ToInt32(property.Value); property.Known = true; break;
-                    case "end_year": this.EndYear = Convert.ToInt32(property.Value); property.Known = true; break;
-                    case "end_seconds72": this.EndSeconds72 = Convert.ToInt32(property.Value); property.Known = true; break;
+                    case "id": this.ID = property.ValueAsInt(); property.Known = true; break;
+                    case "start_year": this.StartYear = property.ValueAsInt(); property.Known = true; break;
+                    case "start_seconds72": this.StartSeconds72 = property.ValueAsInt(); property.Known = true; break;
+                    case "end_year": this.EndYear = property.ValueAsInt(); property.Known = true; break;
+                    case "end_seconds72": this.EndSeconds72 = property.ValueAsInt(); property.Known = true; break;
                     case "type": this.Type = Formatting.InitCaps(String.Intern(property.Value)); property.Known = true; break;
                     case "event":
-                        WorldEvent collectionEvent = world.GetEvent(Convert.ToInt32(property.Value));
+                        WorldEvent collectionEvent = world.GetEvent(property.ValueAsInt());
                         //Some Events don't exist in the XML now with 34.01? 
                         ///TODO: Investigate EventCollection Events that don't exist in the XML, check if they exist in game or if this is just errors.
                         if (collectionEvent != null)
@@ -51,7 +51,7 @@ namespace LegendsViewer.Legends.EventCollections
                             this.Collection.Add(collectionEvent); property.Known = true;
                         }
                         break;
-                    case "eventcol": this.CollectionIDs.Add(Convert.ToInt32(property.Value)); property.Known = true; break;
+                    case "eventcol": this.CollectionIDs.Add(property.ValueAsInt()); property.Known = true; break;
                     default: break;
                 }
         }

@@ -34,9 +34,9 @@ namespace LegendsViewer.Legends.EventCollections
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "ordinal": Ordinal = Convert.ToInt32(property.Value); break;
+                    case "ordinal": Ordinal = property.ValueAsInt(); break;
                     case "war_eventcol":
-                        ParentCollection = world.GetEventCollection(Convert.ToInt32(property.Value));
+                        ParentCollection = world.GetEventCollection(property.ValueAsInt());
                         if (ParentCollection != null)
                         {
                             (ParentCollection as War).DeathCount += Collection.OfType<HFDied>().Count();
@@ -46,9 +46,9 @@ namespace LegendsViewer.Legends.EventCollections
                                 (ParentCollection as War).DefenderVictories.Add(this);
                         }
                         break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); Site.Warfare.Add(this); break;
-                    case "attacking_enid": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defending_enid": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.Warfare.Add(this); break;
+                    case "attacking_enid": Attacker = world.GetEntity(property.ValueAsInt()); break;
+                    case "defending_enid": Defender = world.GetEntity(property.ValueAsInt()); break;
                 }
 
             if (Collection.OfType<PlunderedSite>().Any()) ConquerType = SiteConqueredType.Pillaging;

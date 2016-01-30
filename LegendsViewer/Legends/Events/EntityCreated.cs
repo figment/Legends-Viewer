@@ -1,19 +1,21 @@
 using System;
 using System.Collections.Generic;
 using LegendsViewer.Legends.Parser;
+using System.Linq;
 
 namespace LegendsViewer.Legends.Events
 {
     public class EntityCreated : WorldEvent
     {
-        public Entity Entity;
-        public Site Site;
-        public int StructureID;
-        public Structure Structure;
+        public Entity Entity { get; set; }
+        public Site Site { get; set; }
+        public int StructureID { get; set; }
+        public Structure Structure { get; set; }
 
         private void InternalMerge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
+            {
                 switch (property.Name)
                 {
                     case "entity_id": Entity = world.GetEntity(property.ValueAsInt()); break;
@@ -26,8 +28,14 @@ namespace LegendsViewer.Legends.Events
                         property.Known = true;
                         break;
                 }
+            }
+            if (Site != null)
+            {
+                Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
+            }
             Entity.AddEvent(this);
             Site.AddEvent(this);
+            Structure.AddEvent(this);
         }
         public override void Merge(List<Property> properties, World world)
         {
@@ -36,9 +44,19 @@ namespace LegendsViewer.Legends.Events
         }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime();
-            eventString += Entity.ToSafeLink(link, pov) + " formed in ";
-            eventString += (Site.ToSafeLink(link, pov)) + ". ";
+            string eventString = GetYearTime();
+            eventString += Entity.ToSafeLink(link, pov) + " formed";
+            if (Structure != null)
+            {
+                eventString += " in ";
+                eventString += Structure.ToSafeLink(link, pov);
+            }
+            if (Site != null)
+            {
+                eventString += " in ";
+                eventString += Site.ToSafeLink(link, pov);
+            }
+            eventString += ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }

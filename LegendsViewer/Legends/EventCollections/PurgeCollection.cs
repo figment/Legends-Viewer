@@ -31,8 +31,8 @@ namespace LegendsViewer.Legends.EventCollections
                 switch (property.Name)
                 {
                     case "adjective": Adjective = String.Intern(property.Value); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
-                    case "ordinal": Ordinal = Convert.ToInt32(property.Value); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "ordinal": Ordinal = property.ValueAsInt(); break;
                 }
             Name = string.Format("The {0} {1} Purge in {2}", GetOrdinal(Ordinal), Adjective, Site.ToString());
         }

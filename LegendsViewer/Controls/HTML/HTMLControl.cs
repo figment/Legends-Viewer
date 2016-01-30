@@ -53,7 +53,7 @@ namespace LegendsViewer.Controls
         {
             if (HTMLBrowser != null)
             {
-                BrowserScrollPosition = HTMLBrowser.Document.Body.ScrollTop;
+                BrowserScrollPosition = HTMLBrowser.Document?.Body?.ScrollTop ?? 0;
                 HTMLBrowser.Dispose();
                 HTMLBrowser = null;
             }

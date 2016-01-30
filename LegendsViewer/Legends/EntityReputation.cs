@@ -19,17 +19,17 @@ namespace LegendsViewer.Legends
             {
                 switch (property.Name)
                 {
-                    case "entity_id": Entity = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "unsolved_murders": UnsolvedMurders = Convert.ToInt32(property.Value); break;
-                    case "first_ageless_year": FirstSuspectedAgelessYear = Convert.ToInt32(property.Value); break;
-                    case "first_ageless_season_count": FirstSuspectedAgelessSeason = Formatting.TimeCountToSeason(Convert.ToInt32(property.Value)); break;
-                    case "rep_enemy_fighter": Reputations.Add(ReputationType.EnemyFighter, Convert.ToInt32(property.Value)); break;
-                    case "rep_trade_partner": Reputations.Add(ReputationType.TradePartner, Convert.ToInt32(property.Value)); break;
-                    case "rep_killer": Reputations.Add(ReputationType.Killer, Convert.ToInt32(property.Value)); break;
-                    case "rep_poet": Reputations.Add(ReputationType.Poet, Convert.ToInt32(property.Value)); break;
-                    case "rep_bard": Reputations.Add(ReputationType.Bard, Convert.ToInt32(property.Value)); break;
-                    case "rep_storyteller": Reputations.Add(ReputationType.Storyteller, Convert.ToInt32(property.Value)); break;
-                    case "rep_dancer": Reputations.Add(ReputationType.Dancer, Convert.ToInt32(property.Value)); break;
+                    case "entity_id": Entity = world.GetEntity(property.ValueAsInt()); break;
+                    case "unsolved_murders": UnsolvedMurders = property.ValueAsInt(); break;
+                    case "first_ageless_year": FirstSuspectedAgelessYear = property.ValueAsInt(); break;
+                    case "first_ageless_season_count": FirstSuspectedAgelessSeason = Formatting.TimeCountToSeason(property.ValueAsInt()); break;
+                    case "rep_enemy_fighter": Reputations.Add(ReputationType.EnemyFighter, property.ValueAsInt()); break;
+                    case "rep_trade_partner": Reputations.Add(ReputationType.TradePartner, property.ValueAsInt()); break;
+                    case "rep_killer": Reputations.Add(ReputationType.Killer, property.ValueAsInt()); break;
+                    case "rep_poet": Reputations.Add(ReputationType.Poet, property.ValueAsInt()); break;
+                    case "rep_bard": Reputations.Add(ReputationType.Bard, property.ValueAsInt()); break;
+                    case "rep_storyteller": Reputations.Add(ReputationType.Storyteller, property.ValueAsInt()); break;
+                    case "rep_dancer": Reputations.Add(ReputationType.Dancer, property.ValueAsInt()); break;
                 }
             }
         }

@@ -162,7 +162,6 @@
             this.tpWarSearch.Controls.Add(this.listWarSearch);
             this.tpWarSearch.Location = new System.Drawing.Point(4, 22);
             this.tpWarSearch.Name = "tpWarSearch";
-            this.tpWarSearch.Padding = new System.Windows.Forms.Padding(3);
             this.tpWarSearch.Size = new System.Drawing.Size(253, 466);
             this.tpWarSearch.TabIndex = 0;
             this.tpWarSearch.Text = "Search";
@@ -171,7 +170,7 @@
             // btnWarListReset
             // 
             this.btnWarListReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnWarListReset.Location = new System.Drawing.Point(5, 252);
+            this.btnWarListReset.Location = new System.Drawing.Point(3, 255);
             this.btnWarListReset.Name = "btnWarListReset";
             this.btnWarListReset.Size = new System.Drawing.Size(50, 20);
             this.btnWarListReset.TabIndex = 48;
@@ -182,7 +181,7 @@
             // lblWarList
             // 
             this.lblWarList.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblWarList.Location = new System.Drawing.Point(61, 257);
+            this.lblWarList.Location = new System.Drawing.Point(56, 257);
             this.lblWarList.Name = "lblWarList";
             this.lblWarList.Size = new System.Drawing.Size(189, 36);
             this.lblWarList.TabIndex = 47;
@@ -205,9 +204,9 @@
             this.groupBox10.Controls.Add(this.chkFilterWarfare);
             this.groupBox10.Controls.Add(this.chkWarOngoing);
             this.groupBox10.Controls.Add(this.groupBox11);
-            this.groupBox10.Location = new System.Drawing.Point(3, 296);
+            this.groupBox10.Location = new System.Drawing.Point(0, 299);
             this.groupBox10.Name = "groupBox10";
-            this.groupBox10.Size = new System.Drawing.Size(247, 164);
+            this.groupBox10.Size = new System.Drawing.Size(252, 164);
             this.groupBox10.TabIndex = 45;
             this.groupBox10.TabStop = false;
             this.groupBox10.Text = "Filter / Sort";
@@ -248,7 +247,7 @@
             this.groupBox11.Controls.Add(this.radWarSortEvents);
             this.groupBox11.Location = new System.Drawing.Point(6, 19);
             this.groupBox11.Name = "groupBox11";
-            this.groupBox11.Size = new System.Drawing.Size(235, 115);
+            this.groupBox11.Size = new System.Drawing.Size(240, 115);
             this.groupBox11.TabIndex = 15;
             this.groupBox11.TabStop = false;
             this.groupBox11.Text = "Sort By";
@@ -344,7 +343,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtWarSearch.Location = new System.Drawing.Point(81, 5);
             this.txtWarSearch.Name = "txtWarSearch";
-            this.txtWarSearch.Size = new System.Drawing.Size(169, 20);
+            this.txtWarSearch.Size = new System.Drawing.Size(170, 20);
             this.txtWarSearch.TabIndex = 44;
             this.txtWarSearch.TextChanged += new System.EventHandler(this.searchWarList);
             // 
@@ -354,7 +353,7 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.listWarSearch.FormattingEnabled = true;
-            this.listWarSearch.Location = new System.Drawing.Point(3, 31);
+            this.listWarSearch.Location = new System.Drawing.Point(3, 30);
             this.listWarSearch.Name = "listWarSearch";
             this.listWarSearch.Size = new System.Drawing.Size(247, 212);
             this.listWarSearch.TabIndex = 43;
@@ -410,7 +409,7 @@
             // btnBattleListReset
             // 
             this.btnBattleListReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnBattleListReset.Location = new System.Drawing.Point(5, 252);
+            this.btnBattleListReset.Location = new System.Drawing.Point(3, 255);
             this.btnBattleListReset.Name = "btnBattleListReset";
             this.btnBattleListReset.Size = new System.Drawing.Size(50, 20);
             this.btnBattleListReset.TabIndex = 48;
@@ -421,7 +420,7 @@
             // lblBattleList
             // 
             this.lblBattleList.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblBattleList.Location = new System.Drawing.Point(61, 257);
+            this.lblBattleList.Location = new System.Drawing.Point(56, 257);
             this.lblBattleList.Name = "lblBattleList";
             this.lblBattleList.Size = new System.Drawing.Size(189, 36);
             this.lblBattleList.TabIndex = 47;
@@ -442,9 +441,9 @@
             this.groupBox12.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox12.Controls.Add(this.groupBox13);
-            this.groupBox12.Location = new System.Drawing.Point(3, 296);
+            this.groupBox12.Location = new System.Drawing.Point(0, 299);
             this.groupBox12.Name = "groupBox12";
-            this.groupBox12.Size = new System.Drawing.Size(247, 164);
+            this.groupBox12.Size = new System.Drawing.Size(252, 164);
             this.groupBox12.TabIndex = 45;
             this.groupBox12.TabStop = false;
             this.groupBox12.Text = "Filter / Sort";
@@ -459,7 +458,7 @@
             this.groupBox13.Controls.Add(this.radBattleSortEvents);
             this.groupBox13.Location = new System.Drawing.Point(133, 19);
             this.groupBox13.Name = "groupBox13";
-            this.groupBox13.Size = new System.Drawing.Size(108, 126);
+            this.groupBox13.Size = new System.Drawing.Size(113, 126);
             this.groupBox13.TabIndex = 15;
             this.groupBox13.TabStop = false;
             this.groupBox13.Text = "Sort By";
@@ -528,7 +527,7 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.listBattleSearch.FormattingEnabled = true;
-            this.listBattleSearch.Location = new System.Drawing.Point(3, 31);
+            this.listBattleSearch.Location = new System.Drawing.Point(3, 30);
             this.listBattleSearch.Name = "listBattleSearch";
             this.listBattleSearch.Size = new System.Drawing.Size(247, 212);
             this.listBattleSearch.TabIndex = 43;
@@ -596,9 +595,9 @@
             this.groupBox14.Controls.Add(this.label2);
             this.groupBox14.Controls.Add(this.cmbConqueringType);
             this.groupBox14.Controls.Add(this.groupBox15);
-            this.groupBox14.Location = new System.Drawing.Point(3, 296);
+            this.groupBox14.Location = new System.Drawing.Point(0, 299);
             this.groupBox14.Name = "groupBox14";
-            this.groupBox14.Size = new System.Drawing.Size(247, 164);
+            this.groupBox14.Size = new System.Drawing.Size(252, 164);
             this.groupBox14.TabIndex = 45;
             this.groupBox14.TabStop = false;
             this.groupBox14.Text = "Filter / Sort";
@@ -631,7 +630,7 @@
             this.groupBox15.Controls.Add(this.radConqueringSortEvents);
             this.groupBox15.Location = new System.Drawing.Point(133, 19);
             this.groupBox15.Name = "groupBox15";
-            this.groupBox15.Size = new System.Drawing.Size(108, 116);
+            this.groupBox15.Size = new System.Drawing.Size(113, 116);
             this.groupBox15.TabIndex = 15;
             this.groupBox15.TabStop = false;
             this.groupBox15.Text = "Sort By";
@@ -766,9 +765,9 @@
             this.groupBox18.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox18.Controls.Add(this.groupBox17);
-            this.groupBox18.Location = new System.Drawing.Point(3, 296);
+            this.groupBox18.Location = new System.Drawing.Point(0, 299);
             this.groupBox18.Name = "groupBox18";
-            this.groupBox18.Size = new System.Drawing.Size(247, 164);
+            this.groupBox18.Size = new System.Drawing.Size(252, 164);
             this.groupBox18.TabIndex = 49;
             this.groupBox18.TabStop = false;
             this.groupBox18.Text = "Filter / Sort";
@@ -783,7 +782,7 @@
             this.groupBox17.Controls.Add(this.radBeastAttacksEvents);
             this.groupBox17.Location = new System.Drawing.Point(133, 19);
             this.groupBox17.Name = "groupBox17";
-            this.groupBox17.Size = new System.Drawing.Size(108, 126);
+            this.groupBox17.Size = new System.Drawing.Size(113, 126);
             this.groupBox17.TabIndex = 15;
             this.groupBox17.TabStop = false;
             this.groupBox17.Text = "Sort By";

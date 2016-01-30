@@ -19,6 +19,8 @@ namespace LegendsViewer.Legends.Events
                     case "trickster_hfid": Trickster = world.GetHistoricalFigure(property.ValueAsInt()); Trickster.AddEvent(this); break;
                     case "identity_id": Identity = HistoricalFigure.Unknown; Identity.AddEvent(this); break; //Bad ID, so unknown for now.
                     case "target_enid": Target = world.GetEntity(property.ValueAsInt()); Target.AddEvent(this); break;
+                    case "trickster": if (Trickster == null) { Trickster = world.GetHistoricalFigure(property.ValueAsInt()); } else property.Known = true; break;
+                    case "target": if (Target == null) { Target = world.GetEntity(property.ValueAsInt()); } else property.Known = true; break;
                 }
             }
         }

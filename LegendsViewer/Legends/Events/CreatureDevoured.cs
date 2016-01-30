@@ -60,7 +60,7 @@ namespace LegendsViewer.Legends.Events
             }
             else
             {
-                eventString += "UNKNOWN HISTORICAL FIGURE";
+                eventString += Victim.ToSafeLink(link, pov);
             }
             eventString += " in ";
             if (Site != null)

@@ -6,7 +6,7 @@ using System.Windows.Forms;
 using LegendsViewer.Legends;
 using LegendsViewer.Controls;
 using System.Diagnostics;
-using LegendsViewer.Controls.Map;
+using LegendsViewer.Controls.HTML.Utilities;
 using LegendsViewer.Controls.Tabs;
 using LegendsViewer.Legends.EventCollections;
 
@@ -40,7 +40,8 @@ namespace LegendsViewer
             version = fvi.FileVersion;
 
             Text = "Legends Viewer";
-            lblVersion.Text = "v" + version;
+            lblVersion.Text = "v" + version + " (figment)";
+            lblVersion.Left = scWorld.Panel2.ClientSize.Width - lblVersion.Width - 3;
             tcWorld.Height = scWorld.Panel2.ClientSize.Height;
             btnBack.Location = new Point(3, 3);
             btnForward.Location = new Point(btnBack.Right + 3, 3);
@@ -57,6 +58,9 @@ namespace LegendsViewer
 
             foreach (var v in tcWorld.TabPages.OfType<TabPage>().SelectMany(x => x.Controls.OfType<BaseSearchTab>()))
                 v.Coordinator = Coordinator;
+
+            BrowserUtil.SetBrowserEmulationMode();
+            if (!Debugger.IsAttached) Browser.Navigate(ControlOption.ReadMe);
         }
 
         private void frmLegendsViewer_Shown(object sender, EventArgs e)

@@ -81,8 +81,8 @@ namespace LegendsViewer.Legends.EventCollections
                 switch (property.Name)
                 {
                     case "name": Name = Formatting.InitCaps(property.Value); break;
-                    case "aggressor_ent_id": Attacker = world.GetEntity(Convert.ToInt32(property.Value)); break;
-                    case "defender_ent_id": Defender = world.GetEntity(Convert.ToInt32(property.Value)); break;
+                    case "aggressor_ent_id": Attacker = world.GetEntity(property.ValueAsInt()); break;
+                    case "defender_ent_id": Defender = world.GetEntity(property.ValueAsInt()); break;
                 }
 
             Defender.Wars.Add(this);

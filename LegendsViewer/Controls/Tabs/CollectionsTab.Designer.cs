@@ -44,6 +44,9 @@
             this.tpArtifacts = new System.Windows.Forms.TabPage();
             this.tcArtifacts = new System.Windows.Forms.TabControl();
             this.tpArtifactsSearch = new System.Windows.Forms.TabPage();
+            this.listArtifactSearch = new BrightIdeasSoftware.ObjectListView();
+            this.olvName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+            this.olvType = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.btnArtifactListReset = new System.Windows.Forms.Button();
             this.lblArtifactList = new System.Windows.Forms.Label();
             this.btnArtifactSearch = new System.Windows.Forms.Button();
@@ -100,9 +103,6 @@
             this.txtStructuresSearch = new System.Windows.Forms.TextBox();
             this.listStructuresSearch = new System.Windows.Forms.ListBox();
             this.tpStructureEvents = new System.Windows.Forms.TabPage();
-            this.listArtifactSearch = new BrightIdeasSoftware.ObjectListView();
-            this.olvName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
-            this.olvType = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.tcCollections.SuspendLayout();
             this.tpEras.SuspendLayout();
             this.tcEras.SuspendLayout();
@@ -113,6 +113,7 @@
             this.tpArtifacts.SuspendLayout();
             this.tcArtifacts.SuspendLayout();
             this.tpArtifactsSearch.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.listArtifactSearch)).BeginInit();
             this.groupBox19.SuspendLayout();
             this.groupBox20.SuspendLayout();
             this.tpWrittenContent.SuspendLayout();
@@ -130,7 +131,6 @@
             this.tpStructureSearch.SuspendLayout();
             this.groupBox25.SuspendLayout();
             this.groupBox26.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.listArtifactSearch)).BeginInit();
             this.SuspendLayout();
             // 
             // tcCollections
@@ -154,7 +154,6 @@
             this.tpEras.Controls.Add(this.tcEras);
             this.tpEras.Location = new System.Drawing.Point(4, 40);
             this.tpEras.Name = "tpEras";
-            this.tpEras.Padding = new System.Windows.Forms.Padding(3);
             this.tpEras.Size = new System.Drawing.Size(261, 474);
             this.tpEras.TabIndex = 0;
             this.tpEras.Text = "Eras";
@@ -165,10 +164,10 @@
             this.tcEras.Controls.Add(this.tpEraSearch);
             this.tcEras.Controls.Add(this.tpEraEvents);
             this.tcEras.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tcEras.Location = new System.Drawing.Point(3, 3);
+            this.tcEras.Location = new System.Drawing.Point(0, 0);
             this.tcEras.Name = "tcEras";
             this.tcEras.SelectedIndex = 0;
-            this.tcEras.Size = new System.Drawing.Size(255, 468);
+            this.tcEras.Size = new System.Drawing.Size(261, 474);
             this.tcEras.TabIndex = 3;
             // 
             // tpEraSearch
@@ -177,8 +176,7 @@
             this.tpEraSearch.Controls.Add(this.listEras);
             this.tpEraSearch.Location = new System.Drawing.Point(4, 22);
             this.tpEraSearch.Name = "tpEraSearch";
-            this.tpEraSearch.Padding = new System.Windows.Forms.Padding(3);
-            this.tpEraSearch.Size = new System.Drawing.Size(247, 442);
+            this.tpEraSearch.Size = new System.Drawing.Size(253, 448);
             this.tpEraSearch.TabIndex = 0;
             this.tpEraSearch.Text = "Search";
             this.tpEraSearch.UseVisualStyleBackColor = true;
@@ -193,9 +191,9 @@
             this.groupBox16.Controls.Add(this.label3);
             this.groupBox16.Controls.Add(this.numStart);
             this.groupBox16.Controls.Add(this.numEraEnd);
-            this.groupBox16.Location = new System.Drawing.Point(3, 272);
+            this.groupBox16.Location = new System.Drawing.Point(0, 281);
             this.groupBox16.Name = "groupBox16";
-            this.groupBox16.Size = new System.Drawing.Size(241, 164);
+            this.groupBox16.Size = new System.Drawing.Size(253, 164);
             this.groupBox16.TabIndex = 45;
             this.groupBox16.TabStop = false;
             this.groupBox16.Text = "Filter / Sort";
@@ -262,9 +260,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.listEras.FormattingEnabled = true;
-            this.listEras.Location = new System.Drawing.Point(3, 31);
+            this.listEras.Location = new System.Drawing.Point(3, 28);
             this.listEras.Name = "listEras";
-            this.listEras.Size = new System.Drawing.Size(241, 212);
+            this.listEras.Size = new System.Drawing.Size(250, 212);
             this.listEras.TabIndex = 43;
             this.listEras.SelectedIndexChanged += new System.EventHandler(this.listEras_SelectedIndexChanged);
             // 
@@ -284,7 +282,6 @@
             this.tpArtifacts.Controls.Add(this.tcArtifacts);
             this.tpArtifacts.Location = new System.Drawing.Point(4, 40);
             this.tpArtifacts.Name = "tpArtifacts";
-            this.tpArtifacts.Padding = new System.Windows.Forms.Padding(3);
             this.tpArtifacts.Size = new System.Drawing.Size(261, 474);
             this.tpArtifacts.TabIndex = 1;
             this.tpArtifacts.Text = "Artifacts";
@@ -295,10 +292,10 @@
             this.tcArtifacts.Controls.Add(this.tpArtifactsSearch);
             this.tcArtifacts.Controls.Add(this.tpArtifactsEvents);
             this.tcArtifacts.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tcArtifacts.Location = new System.Drawing.Point(3, 3);
+            this.tcArtifacts.Location = new System.Drawing.Point(0, 0);
             this.tcArtifacts.Name = "tcArtifacts";
             this.tcArtifacts.SelectedIndex = 0;
-            this.tcArtifacts.Size = new System.Drawing.Size(255, 468);
+            this.tcArtifacts.Size = new System.Drawing.Size(261, 474);
             this.tcArtifacts.TabIndex = 3;
             // 
             // tpArtifactsSearch
@@ -312,15 +309,66 @@
             this.tpArtifactsSearch.Location = new System.Drawing.Point(4, 22);
             this.tpArtifactsSearch.Name = "tpArtifactsSearch";
             this.tpArtifactsSearch.Padding = new System.Windows.Forms.Padding(3);
-            this.tpArtifactsSearch.Size = new System.Drawing.Size(247, 442);
+            this.tpArtifactsSearch.Size = new System.Drawing.Size(253, 448);
             this.tpArtifactsSearch.TabIndex = 0;
             this.tpArtifactsSearch.Text = "Search";
             this.tpArtifactsSearch.UseVisualStyleBackColor = true;
             // 
+            // listArtifactSearch
+            // 
+            this.listArtifactSearch.AllColumns.Add(this.olvName);
+            this.listArtifactSearch.AllColumns.Add(this.olvType);
+            this.listArtifactSearch.AlternateRowBackColor = System.Drawing.SystemColors.Info;
+            this.listArtifactSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.listArtifactSearch.CellEditUseWholeCell = false;
+            this.listArtifactSearch.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.olvName,
+            this.olvType});
+            this.listArtifactSearch.Cursor = System.Windows.Forms.Cursors.Default;
+            this.listArtifactSearch.FullRowSelect = true;
+            this.listArtifactSearch.GridLines = true;
+            this.listArtifactSearch.HeaderWordWrap = true;
+            this.listArtifactSearch.HighlightBackgroundColor = System.Drawing.Color.Empty;
+            this.listArtifactSearch.HighlightForegroundColor = System.Drawing.Color.Empty;
+            this.listArtifactSearch.Location = new System.Drawing.Point(0, 30);
+            this.listArtifactSearch.Name = "listArtifactSearch";
+            this.listArtifactSearch.SelectColumnsOnRightClickBehaviour = BrightIdeasSoftware.ObjectListView.ColumnSelectBehaviour.Submenu;
+            this.listArtifactSearch.ShowCommandMenuOnRightClick = true;
+            this.listArtifactSearch.ShowImagesOnSubItems = true;
+            this.listArtifactSearch.ShowItemCountOnGroups = true;
+            this.listArtifactSearch.Size = new System.Drawing.Size(253, 267);
+            this.listArtifactSearch.TabIndex = 49;
+            this.listArtifactSearch.UseAlternatingBackColors = true;
+            this.listArtifactSearch.UseCompatibleStateImageBehavior = false;
+            this.listArtifactSearch.UseFiltering = true;
+            this.listArtifactSearch.UseHotItem = true;
+            this.listArtifactSearch.UseHyperlinks = true;
+            this.listArtifactSearch.View = System.Windows.Forms.View.Details;
+            this.listArtifactSearch.SelectedIndexChanged += new System.EventHandler(this.listArtifactSearch_SelectedIndexChanged);
+            // 
+            // olvName
+            // 
+            this.olvName.AspectName = "Name";
+            this.olvName.IsEditable = false;
+            this.olvName.MinimumWidth = 50;
+            this.olvName.Text = "Name";
+            this.olvName.UseInitialLetterForGroup = true;
+            this.olvName.Width = 159;
+            // 
+            // olvType
+            // 
+            this.olvType.AspectName = "Type";
+            this.olvType.IsEditable = false;
+            this.olvType.Text = "Type";
+            this.olvType.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.olvType.Width = 79;
+            // 
             // btnArtifactListReset
             // 
             this.btnArtifactListReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnArtifactListReset.Location = new System.Drawing.Point(3, 297);
+            this.btnArtifactListReset.Location = new System.Drawing.Point(3, 303);
             this.btnArtifactListReset.Name = "btnArtifactListReset";
             this.btnArtifactListReset.Size = new System.Drawing.Size(50, 20);
             this.btnArtifactListReset.TabIndex = 48;
@@ -331,9 +379,9 @@
             // lblArtifactList
             // 
             this.lblArtifactList.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblArtifactList.Location = new System.Drawing.Point(58, 301);
+            this.lblArtifactList.Location = new System.Drawing.Point(58, 305);
             this.lblArtifactList.Name = "lblArtifactList";
-            this.lblArtifactList.Size = new System.Drawing.Size(189, 18);
+            this.lblArtifactList.Size = new System.Drawing.Size(189, 24);
             this.lblArtifactList.TabIndex = 47;
             this.lblArtifactList.Text = "All";
             // 
@@ -356,9 +404,9 @@
             this.groupBox19.Controls.Add(this.lblArtTypeFilter);
             this.groupBox19.Controls.Add(this.cbmArtTypeFilter);
             this.groupBox19.Controls.Add(this.groupBox20);
-            this.groupBox19.Location = new System.Drawing.Point(3, 325);
+            this.groupBox19.Location = new System.Drawing.Point(3, 331);
             this.groupBox19.Name = "groupBox19";
-            this.groupBox19.Size = new System.Drawing.Size(241, 112);
+            this.groupBox19.Size = new System.Drawing.Size(247, 112);
             this.groupBox19.TabIndex = 45;
             this.groupBox19.TabStop = false;
             this.groupBox19.Text = "Filter / Sort";
@@ -410,7 +458,7 @@
             this.groupBox20.Controls.Add(this.radArtifactSortEvents);
             this.groupBox20.Location = new System.Drawing.Point(125, 14);
             this.groupBox20.Name = "groupBox20";
-            this.groupBox20.Size = new System.Drawing.Size(110, 86);
+            this.groupBox20.Size = new System.Drawing.Size(116, 86);
             this.groupBox20.TabIndex = 15;
             this.groupBox20.TabStop = false;
             this.groupBox20.Text = "Sort By";
@@ -457,7 +505,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtArtifactSearch.Location = new System.Drawing.Point(81, 5);
             this.txtArtifactSearch.Name = "txtArtifactSearch";
-            this.txtArtifactSearch.Size = new System.Drawing.Size(163, 20);
+            this.txtArtifactSearch.Size = new System.Drawing.Size(169, 20);
             this.txtArtifactSearch.TabIndex = 44;
             this.txtArtifactSearch.TextChanged += new System.EventHandler(this.searchArtifactList);
             // 
@@ -951,57 +999,6 @@
             this.tpStructureEvents.Text = "Events";
             this.tpStructureEvents.UseVisualStyleBackColor = true;
             // 
-            // listArtifactSearch
-            // 
-            this.listArtifactSearch.AllColumns.Add(this.olvName);
-            this.listArtifactSearch.AllColumns.Add(this.olvType);
-            this.listArtifactSearch.AlternateRowBackColor = System.Drawing.SystemColors.Info;
-            this.listArtifactSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.listArtifactSearch.CellEditUseWholeCell = false;
-            this.listArtifactSearch.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.olvName,
-            this.olvType});
-            this.listArtifactSearch.Cursor = System.Windows.Forms.Cursors.Default;
-            this.listArtifactSearch.FullRowSelect = true;
-            this.listArtifactSearch.GridLines = true;
-            this.listArtifactSearch.HeaderWordWrap = true;
-            this.listArtifactSearch.HighlightBackgroundColor = System.Drawing.Color.Empty;
-            this.listArtifactSearch.HighlightForegroundColor = System.Drawing.Color.Empty;
-            this.listArtifactSearch.Location = new System.Drawing.Point(0, 32);
-            this.listArtifactSearch.Name = "listArtifactSearch";
-            this.listArtifactSearch.SelectColumnsOnRightClickBehaviour = BrightIdeasSoftware.ObjectListView.ColumnSelectBehaviour.Submenu;
-            this.listArtifactSearch.ShowCommandMenuOnRightClick = true;
-            this.listArtifactSearch.ShowImagesOnSubItems = true;
-            this.listArtifactSearch.ShowItemCountOnGroups = true;
-            this.listArtifactSearch.Size = new System.Drawing.Size(247, 259);
-            this.listArtifactSearch.TabIndex = 49;
-            this.listArtifactSearch.UseAlternatingBackColors = true;
-            this.listArtifactSearch.UseCompatibleStateImageBehavior = false;
-            this.listArtifactSearch.UseFiltering = true;
-            this.listArtifactSearch.UseHotItem = true;
-            this.listArtifactSearch.UseHyperlinks = true;
-            this.listArtifactSearch.View = System.Windows.Forms.View.Details;
-            this.listArtifactSearch.SelectedIndexChanged += new System.EventHandler(this.listArtifactSearch_SelectedIndexChanged);
-            // 
-            // olvName
-            // 
-            this.olvName.AspectName = "Name";
-            this.olvName.IsEditable = false;
-            this.olvName.MinimumWidth = 50;
-            this.olvName.Text = "Name";
-            this.olvName.UseInitialLetterForGroup = true;
-            this.olvName.Width = 159;
-            // 
-            // olvType
-            // 
-            this.olvType.AspectName = "Type";
-            this.olvType.IsEditable = false;
-            this.olvType.Text = "Type";
-            this.olvType.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.olvType.Width = 79;
-            // 
             // CollectionsTab
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1020,6 +1017,7 @@
             this.tcArtifacts.ResumeLayout(false);
             this.tpArtifactsSearch.ResumeLayout(false);
             this.tpArtifactsSearch.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.listArtifactSearch)).EndInit();
             this.groupBox19.ResumeLayout(false);
             this.groupBox19.PerformLayout();
             this.groupBox20.ResumeLayout(false);
@@ -1048,7 +1046,6 @@
             this.groupBox25.PerformLayout();
             this.groupBox26.ResumeLayout(false);
             this.groupBox26.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.listArtifactSearch)).EndInit();
             this.ResumeLayout(false);
 
         }

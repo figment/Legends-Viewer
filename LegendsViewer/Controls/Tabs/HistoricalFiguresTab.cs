@@ -31,22 +31,22 @@ namespace LegendsViewer.Controls.Tabs
             lnkMaxResults.Text = HistoricalFigureList.MaxResults.ToString();
             listHFSearch.ShowGroups = false;
 
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Caste", IsVisible = false, Text = "Caste", TextAlign = HorizontalAlignment.Left });
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "PreviousRace", IsVisible = false, Text = "Previous Race", TextAlign = HorizontalAlignment.Left });
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Alive", IsVisible = false, Text = "Alive", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Skeleton", IsVisible = false, Text = "Skeleton", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Force", IsVisible = false, Text = "Force", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Zombie", IsVisible = false, Text = "Zombie", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Ghost", IsVisible = false, Text = "Ghost", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Beast", IsVisible = false, Text = "Beast", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Animated", IsVisible = false, Text = "Animated", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
-            this.listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Adventurer", IsVisible = false, Text = "Adventurer", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
-            this.listHFSearch.AllColumns.Add(new OLVColumn
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Caste", IsVisible = false, Text = "Caste", TextAlign = HorizontalAlignment.Left });
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "PreviousRace", IsVisible = false, Text = "Previous Race", TextAlign = HorizontalAlignment.Left });
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Alive", IsVisible = false, Text = "Alive", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Skeleton", IsVisible = false, Text = "Skeleton", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Force", IsVisible = false, Text = "Force", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Zombie", IsVisible = false, Text = "Zombie", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Ghost", IsVisible = false, Text = "Ghost", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Beast", IsVisible = false, Text = "Beast", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Animated", IsVisible = false, Text = "Animated", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Adventurer", IsVisible = false, Text = "Adventurer", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
+            listHFSearch.AllColumns.Add(new OLVColumn
             {
                 Text = "Kills", TextAlign = HorizontalAlignment.Right, IsVisible = false,
                 AspectGetter = rowObject => ((HistoricalFigure)rowObject).NotableKills.Count
             });
-            this.listHFSearch.AllColumns.Add(new OLVColumn
+            listHFSearch.AllColumns.Add(new OLVColumn
             {
                 Text = "Events", TextAlign = HorizontalAlignment.Right, IsVisible = false,
                 AspectGetter = rowObject => ((HistoricalFigure)rowObject).Events.Count

@@ -9,6 +9,7 @@ using System.Text;
 using System.Windows.Forms;
 using BrightIdeasSoftware;
 using LegendsViewer.Legends;
+using WFC;
 
 namespace LegendsViewer.Controls.Tabs
 {
@@ -26,7 +27,43 @@ namespace LegendsViewer.Controls.Tabs
 
         internal override void InitializeTab()
         {
-
+            listSiteSearch.ShowGroups = false;
+            listSiteSearch.AllColumns.Add(new OLVColumn
+            {
+                Text = "Structures", TextAlign = HorizontalAlignment.Right, IsVisible = false,
+                AspectGetter = item => ((Site)item).Structures.Count
+            });
+            listSiteSearch.AllColumns.Add(new OLVColumn
+            {
+                Text = "Warfare", TextAlign = HorizontalAlignment.Right, IsVisible = false,
+                AspectGetter = item => ((Site)item).Warfare.Count
+            });
+            listSiteSearch.AllColumns.Add(new OLVColumn
+            {
+                Text = "Battles", TextAlign = HorizontalAlignment.Right, IsVisible = false,
+                AspectGetter = item => ((Site)item).Battles.Count
+            });
+            listSiteSearch.AllColumns.Add(new OLVColumn
+            {
+                Text = "Conquerings", TextAlign = HorizontalAlignment.Right, IsVisible = false,
+                AspectGetter = item => ((Site)item).Conquerings.Count
+            });
+            listSiteSearch.AllColumns.Add(new OLVColumn
+            {
+                Text = "Current Owner", TextAlign = HorizontalAlignment.Right, IsVisible = false,
+                AspectGetter = item => ((Site)item).CurrentOwner?.Print(false)
+            });
+            listSiteSearch.AllColumns.Add(new OLVColumn
+            {
+                Text = "Deaths", TextAlign = HorizontalAlignment.Right, IsVisible = false,
+                AspectGetter = item => ((Site)item).Deaths.Count
+            });
+            listSiteSearch.AllColumns.Add(new OLVColumn
+            {
+                Text = "Beast Attacks", TextAlign = HorizontalAlignment.Right, IsVisible = false,
+                AspectGetter = item => ((Site)item).BeastAttacks.Count
+            });
+           
         }
 
         internal override void AfterLoad(World world)
@@ -96,8 +133,8 @@ namespace LegendsViewer.Controls.Tabs
                     siteSearch.SortDeaths = radSiteSortDeaths.Checked;
                     siteSearch.SortBeastAttacks = radSiteBeastAttacks.Checked;
                     IEnumerable<Site> list = siteSearch.getList();
-                    listSiteSearch.Items.Clear();
-                    listSiteSearch.Items.AddRange(list.ToArray());
+                    listSiteSearch.SetObjects(list.ToArray());
+                    listSiteSearch.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
                 }
             }
         }
@@ -134,6 +171,16 @@ namespace LegendsViewer.Controls.Tabs
         private void listSiteSearch_SelectedIndexChanged(object sender, EventArgs e)
         {
             listSearch_SelectedIndexChanged(sender, e);
+        }
+
+        private void filterPanel_OnPanelExpand(object sender, EventArgs e)
+        {
+            var panel = sender as RichPanel;
+            if (panel != null)
+            {
+                foreach (var control in panel.Controls.OfType<Control>())
+                    control.Visible = panel.Expanded;
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ namespace LegendsViewer.Legends
             {
                 switch (property.Name)
                 {
-                    case "id": ID = Convert.ToInt32(property.Value); break;
+                    case "id": ID = property.ValueAsInt(); break;
                     case "name": Name = Formatting.InitCaps(property.Value); break;
                     case "name_female": NameFemale = Formatting.InitCaps(property.Value); break;
                     case "name_male": NameMale = Formatting.InitCaps(property.Value); break;

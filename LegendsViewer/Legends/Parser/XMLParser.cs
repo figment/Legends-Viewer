@@ -81,7 +81,7 @@ namespace LegendsViewer.Legends.Parser
                 {
                     XML.Read();
                 }
-                else if (CurrentSection == Section.Unknown || CurrentSection == Section.Landmasses || CurrentSection == Section.MountainPeaks)
+                else if (CurrentSection == Section.Unknown)
                     SkipSection();
                 else
                     ParseSection();
@@ -249,6 +249,8 @@ namespace LegendsViewer.Legends.Parser
 
         protected virtual void AddFromXMLSection(Section section, List<Property> properties)
         {
+            try
+            {
             switch (section)
             {
                 case Section.Regions: World.UpsertWorldObject(World.Regions, properties, World); break;
@@ -269,9 +271,17 @@ namespace LegendsViewer.Legends.Parser
                 default: World.ParsingErrors.Report("Unknown XML Section: " + section.ToString()); break;
             }
         }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                World.ParsingErrors.Report("ERROR Parsing Section: " + section);
+            }
+        }
 
         protected virtual void AddEvent(string type, List<Property> properties)
         {
+            try
+            {
             switch (type)
             {
                 case "add hf entity link": World.UpsertEvent<AddHFEntityLink>(World.Events, properties, World); break;
@@ -367,14 +377,23 @@ namespace LegendsViewer.Legends.Parser
                 case "artifact destroyed": World.UpsertEvent<ArtifactDestroyed>(World.Events, properties, World); break;
                 case "entity action": EntityAction.DelegateUpsertEvent(World.Events, properties, World); break;
                 case "hf act on building": HFActOnBuilding.DelegateUpsertEvent(World.Events, properties, World); break;
-                case "hf disturbed structure": break;
-                default: World.ParsingErrors.Report("Unknown Event: " + type);
-                    break;
+                case "hf disturbed structure": World.UpsertEvent<HFDisturbedStructure>(World.Events, properties, World); break;
+                default:
+                    World.ParsingErrors.Report("Unknown Event: " + type);
+                break;
+            }
+        }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                World.ParsingErrors.Report("ERROR Parsing Event: " + type);
             }
         }
 
         protected virtual void AddEventCollection(string type, List<Property> properties)
         {
+            try
+            {
             switch (type)
             {
                 case "abduction": World.UpsertEventCol<Abduction>(World.EventCollections, properties, World); break;
@@ -393,6 +412,12 @@ namespace LegendsViewer.Legends.Parser
                 case "competition": World.UpsertEventCol<CompetitionCollection>(World.EventCollections, properties, World); break;
                 case "purge": World.UpsertEventCol<PurgeCollection>(World.EventCollections, properties, World); break;
                 default: World.ParsingErrors.Report("Unknown Event Collection: " + type); break;
+            }
+        }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                World.ParsingErrors.Report("ERROR Parsing Event Collection: " + type);
             }
         }
 

@@ -42,7 +42,7 @@ namespace LegendsViewer.Legends
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "start_year": StartYear = Convert.ToInt32(property.Value); break;
+                    case "start_year": StartYear = property.ValueAsInt(); break;
                     case "name": Name = property.Value; break;
                 }
         }

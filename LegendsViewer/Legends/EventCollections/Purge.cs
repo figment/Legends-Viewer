@@ -30,7 +30,7 @@ namespace LegendsViewer.Legends.EventCollections
                 switch (property.Name)
                 {
                     case "ordinal": Ordinal = String.Intern(property.Value); break;
-                    case "site_id": Site = world.GetSite(Convert.ToInt32(property.Value)); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
                     case "adjective": Adjective = property.Value; break;
                 }
             }

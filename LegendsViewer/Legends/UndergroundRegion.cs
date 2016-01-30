@@ -28,7 +28,7 @@ namespace LegendsViewer.Legends
             foreach (Property property in properties)
                 switch(property.Name)
                 {
-                    case "depth": Depth = Convert.ToInt32(property.Value); property.Known = true; break;
+                    case "depth": Depth = property.ValueAsInt(); property.Known = true; break;
                     case "type": Type = Formatting.InitCaps(property.Value); property.Known = true; break;
                     case "coords": Coordinates = property.Value.Split(new[] { "|" }, StringSplitOptions.RemoveEmptyEntries)
                      .Select(Formatting.ConvertToLocation).ToList(); property.Known = true; break;

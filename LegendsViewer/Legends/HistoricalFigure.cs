@@ -111,15 +111,15 @@ namespace LegendsViewer.Legends
             List<string> knownReputationSubProperties = new List<string>() { "entity_id", "unsolved_murders", "first_ageless_year", "first_ageless_season_count", "rep_enemy_fighter", "rep_trade_partner", "rep_killer", "rep_poet", "rep_bard", "rep_storyteller", "rep_dancer" };
             List<string> knownSiteLinkSubProperties = new List<string>() { "link_type", "site_id", "sub_id", "entity_id", "occupation_id" };
             List<string> knownEntitySquadLinkProperties = new List<string>() { "squad_id", "squad_position", "entity_id", "start_year", "end_year" };
-            List<string> knownRelationshipProfileProperties = new List<string>() { "hf_id", "meet_count", "last_meet_year", "last_meet_seconds72", "rep_friendly", "rep_buddy", "rep_grudge", "rep_bonded", "rep_quarreler", "rep_trade_partner" };
+            List<string> knownRelationshipProfileProperties = new List<string>() { "hf_id", "known_identity_id", "meet_count", "last_meet_year", "last_meet_seconds72", "rep_friendly", "rep_buddy", "rep_grudge", "rep_bonded", "rep_quarreler", "rep_trade_partner", "rep_psychopath", "rep_storyteller" };
             foreach (Property property in properties)
                 switch (property.Name)
                 {
-                    case "appeared": Appeared = Convert.ToInt32(property.Value); break;
-                    case "birth_year": BirthYear = Convert.ToInt32(property.Value); break;
-                    case "birth_seconds72": BirthSeconds72 = Convert.ToInt32(property.Value); break;
-                    case "death_year": DeathYear = Convert.ToInt32(property.Value); break;
-                    case "death_seconds72": DeathSeconds72 = Convert.ToInt32(property.Value); break;
+                    case "appeared": Appeared = property.ValueAsInt(); break;
+                    case "birth_year": BirthYear = property.ValueAsInt(); break;
+                    case "birth_seconds72": BirthSeconds72 = property.ValueAsInt(); break;
+                    case "death_year": DeathYear = property.ValueAsInt(); break;
+                    case "death_seconds72": DeathSeconds72 = property.ValueAsInt(); break;
                     case "name": Name = String.Intern(Formatting.InitCaps(property.Value)); break;
                     case "race": Race = String.Intern(Formatting.FormatRace(property.Value)); break;
                     case "caste": Caste = Formatting.InitCaps(property.Value.ToLower().Replace('_', ' ')); break;
@@ -204,15 +204,15 @@ namespace LegendsViewer.Legends
                     case "sphere":
                         Spheres.Add(property.Value); break;
                     case "current_identity_id":
-                        world.AddHFCurrentIdentity(this, Convert.ToInt32(property.Value));
+                        world.AddHFCurrentIdentity(this, property.ValueAsInt());
                         break;
                     case "used_identity_id":
-                        world.AddHFUsedIdentity(this, Convert.ToInt32(property.Value));
+                        world.AddHFUsedIdentity(this, property.ValueAsInt());
                         break;
                     case "ent_pop_id":
-                        EntityPopulation = world.GetEntityPopulation(Convert.ToInt32(property.Value)); break;
+                        EntityPopulation = world.GetEntityPopulation(property.ValueAsInt()); break;
                     case "holds_artifact":
-                        HoldingArtifacts.Add(world.GetArtifact(Convert.ToInt32(property.Value))); break;
+                        HoldingArtifacts.Add(world.GetArtifact(property.ValueAsInt())); break;
                     case "adventurer":
                         Adventurer = true;
                         property.Known = true;
@@ -404,6 +404,8 @@ namespace LegendsViewer.Legends
                 return hfraceString + " vampire";
             if (ActiveInteractions.Any(it => it.Contains("WEREBEAST")))
                 return hfraceString + " werebeast";
+            if (ActiveInteractions.Any(it => it.Contains("SECRET")))
+                return hfraceString + " necromancer";
 
             return hfraceString;
         }
@@ -418,6 +420,8 @@ namespace LegendsViewer.Legends
                 return Race.ToLower() + " vampire";
             if (ActiveInteractions.Any(it => it.Contains("WEREBEAST")))
                 return Race.ToLower() + " werebeast";
+            if (ActiveInteractions.Any(it => it.Contains("SECRET")))
+                return Race.ToLower() + " necromancer";
             return Race.ToLower();
         }
     }
