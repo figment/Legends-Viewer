@@ -9,6 +9,7 @@ using LegendsViewer.Legends;
 using SevenZip;
 using System.Xml;
 using System.Reflection;
+using LegendsViewer.Controls;
 using LegendsViewer.Legends.Parser;
 
 namespace LegendsViewer
@@ -16,7 +17,6 @@ namespace LegendsViewer
     public class FileLoader
     {
         public bool Working;
-        private frmLegendsViewer Form;
         private Button XMLButton, HistoryButton, SitesButton, MapButton, XMLPlusButton;
         private TextBox XMLText, HistoryText, SitesText, MapText, XMLPlusText;
         private RichTextBox LogText;
@@ -158,15 +158,14 @@ namespace LegendsViewer
         }
         private List<string> ExtractedFiles;
 
-        public FileLoader(frmLegendsViewer form
-            , Button xmlButton, TextBox xmlText
+        public FileLoader(
+              Button xmlButton, TextBox xmlText
             , Button historyButton, TextBox historyText
             , Button sitesButton, TextBox sitesText
             , Button mapButton, TextBox mapText
             , Button xmlPlusButton, TextBox xmlPlusText
             , Label statusLabel, RichTextBox logText)
         {
-            Form = form;
             XMLButton = xmlButton;
             XMLText = xmlText;
             HistoryButton = historyButton;
@@ -427,6 +426,8 @@ namespace LegendsViewer
             }
         }
 
+        public event EventHandler<EventArgs<World>> AfterLoad;
+
         private void load_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             foreach (string delete in ExtractedFiles)
@@ -444,7 +445,9 @@ namespace LegendsViewer
                     StatusLabel.ForeColor = Color.Red;
                 }
                 else
-                    Form.AfterLoad(e.Result as World);
+                {
+                    AfterLoad?.Invoke(this, new EventArgs<World>(e.Result as World));
+                }
             }
             else
             {

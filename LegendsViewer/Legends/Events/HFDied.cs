@@ -64,6 +64,7 @@ namespace LegendsViewer.Legends.Events
                             case "fire": Cause = DeathCause.Burned; break;
                             case "thirst": Cause = DeathCause.Thirst; break;
                             case "air": Cause = DeathCause.Suffocated; break;
+                            case "bleed":
                             case "blood": Cause = DeathCause.Bled; break;
                             case "cold": Cause = DeathCause.Cold; break;
                             case "crushed bridge": Cause = DeathCause.CrushedByABridge; break;

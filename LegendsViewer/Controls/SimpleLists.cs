@@ -11,8 +11,9 @@ namespace LegendsViewer
         public class HistoricalFigureList
         {
             private World World;
-            public bool deity, vampire, force, werebeast, ghost, alive, Leader, sortKills, sortEvents, sortFiltered, sortBattles, sortHFKills, sortMiscKills;
+            public bool deity, vampire, force, werebeast, ghost, alive, Leader, sortKills, sortEvents, sortFiltered, sortBattles, sortMiscKills;
             public string name, race, caste, type;
+            public static int MaxResults = 500;
             public List<HistoricalFigure> BaseList;
             public HistoricalFigureList(World setWorld) { World = setWorld; BaseList = World.HistoricalFigures; }
             public IEnumerable<HistoricalFigure> GetList()
@@ -31,11 +32,10 @@ namespace LegendsViewer
                 if (alive) filtered = filtered.Where(hf => hf.DeathYear == -1);
                 if (sortKills) filtered = filtered.OrderByDescending(hf => hf.NotableKills.Count);
                 if (sortEvents) filtered = filtered.OrderByDescending(hf => hf.Events.Count);
-                if (sortHFKills) filtered = filtered.OrderByDescending(hf => hf.HFKills.Count);
                 if (sortMiscKills) filtered = filtered.OrderByDescending(hf => hf.Reputations.Sum(ev => ev.UnsolvedMurders));
                 if (sortFiltered) filtered = filtered.OrderByDescending(hf => hf.Events.Count(ev => !HistoricalFigure.Filters.Contains(ev.Type)));
                 if (sortBattles) filtered = filtered.OrderByDescending(hf => hf.Battles.Count(battle => !World.FilterBattles || battle.Notable));
-                return filtered.Take(500);
+                return MaxResults > 0 ? filtered.Take(MaxResults) : filtered;
             }
         }
 
