@@ -9,19 +9,15 @@ namespace LegendsViewer.Legends
     public abstract class WorldObject : DwarfObject
     {
         public List<WorldEvent> Events { get; set; }
+        public int EventCount { get { return Events.Count; } set { } }
         public int ID { get; set; }
-        protected WorldObject(List<Property> properties, World world)
-        {
-            ID = -1;
-            Events = new List<WorldEvent>();
-            InternalMerge(properties, world);
-        }
+
         public WorldObject() { 
             ID = -1; 
             Events = new List<WorldEvent>(); 
         }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public virtual void Merge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
@@ -34,11 +30,6 @@ namespace LegendsViewer.Legends
         internal static IComparer<T> GetDefaultComparer<T>() where T : WorldObject
         {
             return new LambaComparer<T>((x, y) => Comparer<int>.Default.Compare(x.ID, y.ID));
-        }
-
-        public virtual void Merge(List<Property> properties, World world)
-        {
-            InternalMerge(properties, world);
         }
 
         public override string ToLink(bool link = true, DwarfObject pov = null)

@@ -17,7 +17,7 @@ namespace LegendsViewer.Legends.Events
 
         public WorldEvent() { ID = -1; Year = -1; Seconds72 = -1; Type = "INVALID"; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public virtual void Merge(List<Property> properties, World world)
         {
             World = world;
             foreach (Property property in properties)
@@ -29,11 +29,6 @@ namespace LegendsViewer.Legends.Events
                     case "type": this.Type = String.Intern(property.Value.Replace('_', ' ')); break;
                     default: break;
                 }
-        }
-
-        public virtual void Merge(List<Property> properties, World world)
-        {
-            InternalMerge(properties, world);
         }
 
         public virtual string Print(bool link = true, DwarfObject pov = null)

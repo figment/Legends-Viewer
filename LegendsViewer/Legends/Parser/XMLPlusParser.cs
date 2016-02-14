@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using LegendsViewer.Controls;
@@ -10,6 +11,11 @@ namespace LegendsViewer.Legends
     {
         public XMLPlusParser(World world, string xmlFile) : base(world, xmlFile)
         {
+            if (File.Exists(xmlFile))
+            {
+                World.Log.AppendLine("Found LEGENDS_PLUS.XML!");
+                World.Log.AppendLine("Parsed additional data...\n");
+            }
         }
 
         protected override Section GetSectionType(string sectionName)

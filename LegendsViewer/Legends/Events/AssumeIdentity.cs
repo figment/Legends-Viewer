@@ -10,8 +10,10 @@ namespace LegendsViewer.Legends.Events
         public HistoricalFigure Identity { get; set; }
         public Entity Target { get; set; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
             {
                 switch (property.Name)
@@ -24,11 +26,7 @@ namespace LegendsViewer.Legends.Events
                 }
             }
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime() + Trickster.ToSafeLink(link, pov) + " fooled " + Target.ToSafeLink(link, pov) + " into believing " + Trickster.CasteNoun() + " was " + Identity.ToSafeLink(link, pov) + ". ";

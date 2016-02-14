@@ -11,8 +11,10 @@ namespace LegendsViewer.Legends.Events
         public Site Site;
         public Boolean Abandoned;
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {

@@ -23,7 +23,6 @@ namespace LegendsViewer.Controls.Tabs
         public CollectionsTab()
         {
             InitializeComponent();
-
         }
 
 
@@ -39,8 +38,25 @@ namespace LegendsViewer.Controls.Tabs
             });
             listArtifactSearch.AllColumns.Add(new OLVColumn { AspectName = "SubType", IsVisible = false, Text = "SubType", TextAlign = HorizontalAlignment.Left });
             listArtifactSearch.AllColumns.Add(new OLVColumn { AspectName = "Material", IsVisible = false, Text = "Material", TextAlign = HorizontalAlignment.Left });
-            listArtifactSearch.AllColumns.Add(new OLVColumn { AspectName = "Page Count", IsVisible = false, Text = "PageCount", TextAlign = HorizontalAlignment.Right });
+            listArtifactSearch.AllColumns.Add(new OLVColumn { AspectName = "PageCount", IsVisible = false, Text = "Page Count", TextAlign = HorizontalAlignment.Right });
             listArtifactSearch.ShowGroups = false;
+
+
+            listWrittenContentSearch.AllColumns.Add(new OLVColumn
+            {
+                IsVisible = false,
+                Text = "Author",
+                TextAlign = HorizontalAlignment.Left,
+                AspectGetter = obj => ((WrittenContent)obj).Author.Name
+            });
+            listWrittenContentSearch.AllColumns.Add(new OLVColumn { AspectName = "PageCount", IsVisible = false, Text = "Page Count", TextAlign = HorizontalAlignment.Right });
+            listWrittenContentSearch.ShowGroups = false;
+
+            listStructureSearch.ShowGroups = false;
+
+            listWorldConstructionsSearch.ShowGroups = false;
+
+            listEraSearch.ShowGroups = false;
         }
 
         internal override void AfterLoad(World world)
@@ -58,7 +74,7 @@ namespace LegendsViewer.Controls.Tabs
                              orderby structure.Type.GetDescription()
                              group structure by structure.Type.GetDescription() into structuretype
                              select structuretype;
-            var worldconstructions = from construction in World.WorldContructions
+            var worldconstructions = from construction in World.WorldConstructions
                                      orderby construction.Type.GetDescription()
                                      group construction by construction.Type.GetDescription() into constructiontype
                                      select constructiontype;
@@ -69,11 +85,9 @@ namespace LegendsViewer.Controls.Tabs
 
             var artifactTypes = World.Artifacts.Select(x => x.Type).SkipWhile(string.IsNullOrEmpty).Distinct().OrderBy(x => x);
 
-            var artifactMaterials = World.Artifacts.Select(x => x.Material).SkipWhile(string.IsNullOrEmpty).Distinct().OrderBy(x => x);
+            var artifactMaterials = World.Artifacts.Select(x => string.IsNullOrEmpty(x.Material) ? "" : x.Material).SkipWhile(string.IsNullOrEmpty).Distinct().OrderBy(x => x);
 
-            foreach (Era era in World.Eras)
-                listEras.Items.Add(era);
-
+            listEraSearch.SetObjects(World.Eras.ToArray());
 
             cmbStructureType.Items.Add("All"); cmbStructureType.SelectedIndex = 0;
             foreach (var structure in structures)
@@ -109,7 +123,7 @@ namespace LegendsViewer.Controls.Tabs
                                        group eventType by eventType.Type into type
                                        select type.Key;
 
-            var worldConstructionEvents = from eventType in World.WorldContructions.SelectMany(element => element.Events)
+            var worldConstructionEvents = from eventType in World.WorldConstructions.SelectMany(element => element.Events)
                                           group eventType by eventType.Type into type
                                           select type.Key;
 
@@ -157,10 +171,10 @@ namespace LegendsViewer.Controls.Tabs
 
             txtStructuresSearch.Clear();
             cmbStructureType.Items.Clear();
-            listStructuresSearch.Items.Clear();
+            listStructureSearch.Items.Clear();
             radStructuresSortNone.Checked = true;
 
-            listEras.Items.Clear();
+            listEraSearch.Items.Clear();
             numStart.Value = -1;
             numEraEnd.Value = 0;
         }
@@ -175,11 +189,16 @@ namespace LegendsViewer.Controls.Tabs
                 artifactSearch.Type = cbmArtTypeFilter.SelectedIndex == 0 ? null : cbmArtTypeFilter.SelectedItem.ToString();
                 artifactSearch.Material = cbmArtMatFilter.SelectedIndex == 0 ? null : cbmArtMatFilter.SelectedItem.ToString();
                 IEnumerable<Artifact> list = artifactSearch.GetList();
-                listArtifactSearch.SetObjects(list.ToArray());
-                listArtifactSearch.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+                var results = list.ToArray();
+                listArtifactSearch.SetObjects(results);
+                UpdateCounts(lblArtifactResults, results.Length, artifactSearch.BaseList.Count);
             }
         }
 
+        private void UpdateCounts(Label label, int shown, int total)
+        {
+            label.Text = $"{shown} / {total}";
+        }
 
         private void btnEraShow_Click(object sender, EventArgs e)
         {
@@ -212,14 +231,25 @@ namespace LegendsViewer.Controls.Tabs
                 writtenContentSearch.SortEvents = radWrittenContentSortEvents.Checked;
                 writtenContentSearch.SortFiltered = radWrittenContentSortFiltered.Checked;
                 IEnumerable<WrittenContent> list = writtenContentSearch.GetList();
-                listWrittenContentSearch.Items.Clear();
-                listWrittenContentSearch.Items.AddRange(list.ToArray());
+                var results = list.ToArray();
+                listWrittenContentSearch.SetObjects(results);
+                UpdateCounts(lblWrittenContentResults, results.Length, writtenContentSearch.BaseList.Count);
             }
         }
 
         private void searchWorldConstructionList(object sender, EventArgs e)
         {
-
+            if (!FileLoader.Working && World != null)
+            {
+                worldConstructionSearch.Name = txtWorldConstructionsSearch.Text;
+                worldConstructionSearch.Type = cmbConstructionType.SelectedItem.ToString();
+                worldConstructionSearch.SortEvents = radWorldConstructionsSortEvents.Checked;
+                worldConstructionSearch.SortFiltered = radWorldConstructionsSortFiltered.Checked;
+                IEnumerable<WorldConstruction> list = worldConstructionSearch.GetList();
+                var results = list.ToArray();
+                listWorldConstructionsSearch.SetObjects(results);
+                UpdateCounts(lblWorldConstructionResult, results.Length, worldConstructionSearch.BaseList.Count);
+            }
         }
 
         private void searchStructureList(object sender, EventArgs e)
@@ -231,8 +261,9 @@ namespace LegendsViewer.Controls.Tabs
                 structureSearch.SortEvents = radStructuresSortEvents.Checked;
                 structureSearch.SortFiltered = radStructuresSortFiltered.Checked;
                 IEnumerable<Structure> list = structureSearch.GetList();
-                listStructuresSearch.Items.Clear();
-                listStructuresSearch.Items.AddRange(list.ToArray());
+                var results = list.ToArray();
+                listStructureSearch.SetObjects(list.ToArray());
+                UpdateCounts(lblStructureResults, results.Length, structureSearch.BaseList.Count);
             }
         }
 

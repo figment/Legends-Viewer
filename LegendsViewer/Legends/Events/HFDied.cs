@@ -36,8 +36,10 @@ namespace LegendsViewer.Legends.Events
             ItemID = -1;
             ShooterItemID = -1;
         }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             SlayerItemID = -1;
             SlayerShooterItemID = -1;
             SlayerRace = "UNKNOWN";
@@ -125,11 +127,7 @@ namespace LegendsViewer.Legends.Events
             if (HistoricalFigure.DeathCause == DeathCause.None)
                 HistoricalFigure.DeathCause = Cause;
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " ";
@@ -195,15 +193,6 @@ namespace LegendsViewer.Legends.Events
 
             eventString += deathString;
 
-            string slayeritem = null;
-            if (!string.IsNullOrEmpty(ItemSubType))
-                slayeritem = !string.IsNullOrEmpty(ItemMaterial) ? ItemMaterial + " " + ItemSubType : ItemSubType;
-            else if (!string.IsNullOrEmpty(ItemType))
-                slayeritem = !string.IsNullOrEmpty(ItemMaterial) ? ItemMaterial + " " + ItemType : ItemType;
-            else if (SlayerItemID >= 0)
-                slayeritem = "(" + SlayerItemID + ")";
-            if (slayeritem != null) eventString += " with a " + slayeritem;
-            else if (SlayerShooterItemID >= 0) eventString += " with a (shot) (" + SlayerShooterItemID + ")";
             if (ItemID >= 0)
             {
                 if (Artifact != null)

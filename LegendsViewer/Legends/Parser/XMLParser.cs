@@ -30,13 +30,6 @@ namespace LegendsViewer.Legends.Parser
         public XMLParser(World world, string xmlFile) : this(xmlFile)
         {
             World = world;
-            //string xmlPlusFile = xmlFile.Replace(".xml", "_plus.xml");
-            //if (File.Exists(xmlPlusFile))
-            //{
-            //    xmlPlusParser = new XMLPlusParser(world, xmlPlusFile);
-            //    World.Log.AppendLine("Found LEGENDS_PLUS.XML!");
-            //    World.Log.AppendLine("Parsed additional data...\n");
-            //}
         }
 
         public static string SafeXMLFile(string xmlFile)
@@ -133,10 +126,6 @@ namespace LegendsViewer.Legends.Parser
             while (XML.NodeType != XmlNodeType.EndElement)
             {
                 List<Property> item = ParseItem();
-                //if (xmlPlusParser != null)
-                //{
-                //    xmlPlusParser.AddNewProperties(item, CurrentSection);
-                //}
                 AddItemToWorld(item);
             }
             ProcessXMLSection(CurrentSection); //Done with section, do post processing
@@ -261,7 +250,7 @@ namespace LegendsViewer.Legends.Parser
                 case Section.Entities: World.UpsertWorldObject(World.Entities, properties, World); break;
                 case Section.Eras: World.Eras.Add(new Era(properties, World)); break;
                 case Section.Artifacts: World.UpsertWorldObject(World.Artifacts, properties, World); break;
-                case Section.WorldConstructions: World.UpsertWorldObject(World.WorldContructions, properties, World); break;
+                case Section.WorldConstructions: World.UpsertWorldObject(World.WorldConstructions, properties, World); break;
                 case Section.PoeticForms: World.UpsertWorldObject(World.PoeticForms,properties, World); break;
                 case Section.MusicalForms: World.UpsertWorldObject(World.MusicalForms,properties, World); break;
                 case Section.DanceForms: World.UpsertWorldObject(World.DanceForms, properties, World); break;

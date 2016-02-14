@@ -88,8 +88,10 @@ namespace LegendsViewer.Legends.EventCollections
         }
 
         public Battle() { Initialize(); }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             List<string> attackerSquadRace, defenderSquadRace;
             List<int> attackerSquadEntityPopulation, attackerSquadNumbers, attackerSquadDeaths, attackerSquadSite,
                          defenderSquadEntityPopulation, defenderSquadNumbers, defenderSquadDeaths, defenderSquadSite;
@@ -226,13 +228,6 @@ namespace LegendsViewer.Legends.EventCollections
                 && AttackerDeathCount < ((NotableAttackers.Count + attackerSquadNumbers.Sum()) * 0.1)) //NotableAttackers lossses < 10%
                 Notable = false;
         }
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-
         private void Initialize()
         {
             Name = "";

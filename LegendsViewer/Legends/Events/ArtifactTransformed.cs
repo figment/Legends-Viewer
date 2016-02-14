@@ -12,13 +12,11 @@ namespace LegendsViewer.Legends.Events
         public HistoricalFigure HistoricalFigure { get; set; }
         public Site Site { get; set; }
 
+        
         public override void Merge(List<Property> properties, World world)
         {
             base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-        private void InternalMerge(List<Property> properties, World world)
-        {
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -50,7 +48,7 @@ namespace LegendsViewer.Legends.Events
             else
             {
                 eventString += " ";
-                eventString += !string.IsNullOrWhiteSpace(NewArtifact.Type) ? NewArtifact.Type : "UNKNOWN TYPE";
+                eventString += !string.IsNullOrWhiteSpace(NewArtifact.Type) ? NewArtifact.Type.ToLower() : "UNKNOWN TYPE";
             }
             eventString += ", was made from ";
             eventString += OldArtifact.ToSafeLink(link, pov);
@@ -67,7 +65,7 @@ namespace LegendsViewer.Legends.Events
             else
             {
                 eventString += " ";
-                eventString += !string.IsNullOrWhiteSpace(OldArtifact.Type) ? OldArtifact.Type : "UNKNOWN TYPE";
+                eventString += !string.IsNullOrWhiteSpace(OldArtifact.Type) ? OldArtifact.Type.ToLower() : "UNKNOWN TYPE";
             }
             if (Site != null)
                 eventString += " in " + Site.ToSafeLink(link, pov);

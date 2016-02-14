@@ -11,8 +11,10 @@ namespace LegendsViewer.Legends.Events
         public HistoricalFigure AttackerGeneral, DefenderGeneral;
         public UndergroundRegion UndergroundRegion;
         public Location Coordinates;
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -31,15 +33,11 @@ namespace LegendsViewer.Legends.Events
             Region.AddEvent(this);
             UndergroundRegion.AddEvent(this);
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " attacked " + Defender.ToSafeLink(link, pov) + " in " + Region.ToSafeLink(link, pov) + ". " +
-                AttackerGeneral.ToSafeLink(link, pov) + " led the attack, and the defenders were led by " + DefenderGeneral.ToSafeLink(link, pov) + ". ";
+            string eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " attacked " + Defender.ToSafeLink(link, pov) + " in " + Region.ToSafeLink(link, pov) + ". ";
+            eventString += AttackerGeneral.ToSafeLink(link, pov) + " led the attack, and the defenders were led by " + DefenderGeneral.ToSafeLink(link, pov) + ". ";
             eventString += PrintParentCollection(link, pov);
             return eventString;
         }

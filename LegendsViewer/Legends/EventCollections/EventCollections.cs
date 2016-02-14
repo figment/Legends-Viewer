@@ -27,10 +27,9 @@ namespace LegendsViewer.Legends.EventCollections
         {
             Initialize();
             World = world;
-            
         }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public virtual void Merge(List<Property> properties, World world)
         {
             foreach (Property property in properties)
                 switch (property.Name)
@@ -56,7 +55,6 @@ namespace LegendsViewer.Legends.EventCollections
                 }
         }
 
-
         public EventCollection()
         {
             Initialize();
@@ -75,11 +73,6 @@ namespace LegendsViewer.Legends.EventCollections
         internal static IComparer<T> GetDefaultComparer<T>() where T : EventCollection
         {
             return new LambaComparer<T>((x, y) => Comparer<int>.Default.Compare(x.ID, y.ID));
-        }
-
-        public virtual void Merge(List<Property> properties, World world)
-        {
-            InternalMerge(properties, world);
         }
 
         public string GetYearTime(bool start = true)

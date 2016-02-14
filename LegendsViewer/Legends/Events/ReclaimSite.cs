@@ -9,8 +9,10 @@ namespace LegendsViewer.Legends.Events
     {
         public Entity Civ, SiteEntity;
         public Site Site;
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -23,24 +25,20 @@ namespace LegendsViewer.Legends.Events
 
             //Make sure period was lost by an event, otherwise unknown loss
             if (Site.OwnerHistory.Count == 0)
-                new OwnerPeriod(Site, null, 1, "UNKNOWN");
+                new OwnerPeriod(Site, null, 1, "founded");
             if (Site.OwnerHistory.Last().EndYear == -1)
             {
-                Site.OwnerHistory.Last().EndCause = "UNKNOWN";
+                Site.OwnerHistory.Last().EndCause = "abandoned";
                 Site.OwnerHistory.Last().EndYear = this.Year - 1;
             }
-            new OwnerPeriod(Site, SiteEntity, this.Year, "reclaimed");
+            new OwnerPeriod(Site, SiteEntity, Year, "reclaimed");
 
             Civ.AddEvent(this);
             if (SiteEntity != Civ)
                 SiteEntity.AddEvent(this);
             Site.AddEvent(this);
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();

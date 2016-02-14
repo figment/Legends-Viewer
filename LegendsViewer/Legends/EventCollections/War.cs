@@ -75,8 +75,10 @@ namespace LegendsViewer.Legends.EventCollections
         {
             Initialize();
         }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -93,12 +95,6 @@ namespace LegendsViewer.Legends.EventCollections
                 Length = EndYear - StartYear;
             else if (world.Events.Count > 0)
                 Length = world.Events.Last().Year - StartYear;
-        }
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
         }
 
         private void Initialize()

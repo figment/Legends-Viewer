@@ -43,9 +43,9 @@ namespace LegendsViewer.Legends
         public List<Site> Sites { get { return SiteHistory.Select(site => site.Site).ToList(); } set { } }
 
         public EntityType Type { get; set; } // legends_plus.xml
+        public string TypeAsString { get { return Type.GetDescription(); } set { } }
         public List<EntitySiteLink> SiteLinks { get; set; } // legends_plus.xml
         public List<EntityEntityLink> EntityLinks { get; set; } // legends_plus.xml
-        //public List<EntityLink> EntityLinks { get; set; }
         public List<EntityPosition> EntityPositions { get; set; } // legends_plus.xml
         public List<EntityPositionAssignment> EntityPositionAssignments { get; set; } // legends_plus.xml
         public List<Location> Claims { get; set; } // legends_plus.xml
@@ -156,8 +156,10 @@ namespace LegendsViewer.Legends
             EntityLinks = new List<EntityEntityLink>();
         }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
             {
                 switch (property.Name)
@@ -209,13 +211,6 @@ namespace LegendsViewer.Legends
             //IsCiv = String.Compare(Type,"Civilization", StringComparison.OrdinalIgnoreCase) == 0;
         }
 }
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-
         public override string ToString() { return this.Name; }
 
 

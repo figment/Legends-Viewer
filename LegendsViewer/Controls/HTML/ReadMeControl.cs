@@ -27,7 +27,6 @@ namespace LegendsViewer.Controls.HTML
                 string githubMarkdownCSS;
                 var assembly = Assembly.GetExecutingAssembly();
                 string readme = "";
-#if false
                 string markdown;
                 var resourceName = "LegendsViewer.README.md";
                 using (Stream stream = assembly.GetManifestResourceStream(resourceName))
@@ -51,20 +50,6 @@ namespace LegendsViewer.Controls.HTML
                 catch
                 {
                 }
-#else
-                var resourceName = "LegendsViewer.README.html";
-                using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    readme = reader.ReadToEnd();
-                }
-                resourceName = "LegendsViewer.Controls.HTML.Styles.github-markdown.css";
-                using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    githubMarkdownCSS = reader.ReadToEnd();
-                }
-#endif
                 var html = "<html>";
                 html += "<head>";
                 html += "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">";

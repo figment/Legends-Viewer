@@ -11,8 +11,10 @@ namespace LegendsViewer.Legends.Events
         HistoricalFigure Winner { get; set; }
         List<HistoricalFigure> Competitors { get; set; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             OccasionType = OccasionType.Competition;
             Competitors = new List<HistoricalFigure>();
             foreach (Property property in properties)
@@ -29,11 +31,6 @@ namespace LegendsViewer.Legends.Events
             Competitors.ForEach(competitor => competitor.AddEvent(this));
         }
 
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = base.Print(link, pov);

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -29,8 +29,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -42,28 +40,21 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>full</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DebugSymbols>true</DebugSymbols>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ObjectListView">
+    <Reference Include="ObjectListView, Version=2.9.0.27259, Culture=neutral, PublicKeyToken=b1c5bf581481bcd4, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>.\ObjectListView.dll</HintPath>
-    </Reference>
-    <Reference Include="MsieJavaScriptEngine, Version=1.6.0.0, Culture=neutral, PublicKeyToken=a3a2846a37ac0d3e, processorArchitecture=MSIL">
-      <HintPath>..\packages\MsieJavaScriptEngine.1.6.0\lib\net40\MsieJavaScriptEngine.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="SevenZipSharp, Version=0.64.3890.29348, Culture=neutral, PublicKeyToken=20de82c62b055c88, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -91,7 +82,8 @@
     </Reference>
     <Reference Include="System.Xml">
     </Reference>
-    <Reference Include="WFC">
+    <Reference Include="WFC, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>.\WFC.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -112,10 +104,10 @@
     <Compile Include="Controls\HTML\ArtifactPrinter.cs" />
     <Compile Include="Controls\HTML\LandmassPrinter.cs" />
     <Compile Include="Controls\HTML\MountainPeakPrinter.cs" />
+    <Compile Include="Controls\HTML\ReadMeControl.cs" />
     <Compile Include="Controls\HTML\StructurePrinter.cs" />
     <Compile Include="Controls\HTML\Utilities\BrowserUtil.cs" />
     <Compile Include="Controls\HTML\Utilities\HTMLStyleUtil.cs" />
-    <Compile Include="Controls\HTML\ReadMeControl.cs" />
     <Compile Include="Controls\HTML\WorldConstructionPrinter.cs" />
     <Compile Include="Controls\HTML\Utilities\SkillDictionary.cs" />
     <Compile Include="Controls\HTML\WrittenContentPrinter.cs" />
@@ -172,53 +164,53 @@
     <Compile Include="Controls\Query\SearchList.cs" />
     <Compile Include="Controls\Query\SearchProperty.cs" />
     <Compile Include="Controls\SimpleLists.cs" />
-    <Compile Include="Controls\Tabs\WarfareTab.cs">
+    <Compile Include="Controls\Tabs\BaseSearchTab.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\Tabs\WarfareTab.Designer.cs">
-      <DependentUpon>WarfareTab.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\Tabs\GeographyTab.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\Tabs\GeographyTab.Designer.cs">
-      <DependentUpon>GeographyTab.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\Tabs\SitesTab.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\Tabs\SitesTab.Designer.cs">
-      <DependentUpon>SitesTab.cs</DependentUpon>
+    <Compile Include="Controls\Tabs\BaseSearchTab.designer.cs">
+      <DependentUpon>BaseSearchTab.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\Tabs\CivsTab.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\Tabs\CivsTab.Designer.cs">
+    <Compile Include="Controls\Tabs\CivsTab.designer.cs">
       <DependentUpon>CivsTab.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\Tabs\CollectionsTab.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\Tabs\CollectionsTab.Designer.cs">
+    <Compile Include="Controls\Tabs\CollectionsTab.designer.cs">
       <DependentUpon>CollectionsTab.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\Tabs\GeographyTab.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\Tabs\GeographyTab.designer.cs">
+      <DependentUpon>GeographyTab.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\Tabs\HistoricalFiguresTab.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\Tabs\HistoricalFiguresTab.Designer.cs">
+    <Compile Include="Controls\Tabs\HistoricalFiguresTab.designer.cs">
       <DependentUpon>HistoricalFiguresTab.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controls\Tabs\BaseSearchTab.cs">
+    <Compile Include="Controls\Tabs\SitesTab.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\Tabs\BaseSearchTab.Designer.cs">
-      <DependentUpon>BaseSearchTab.cs</DependentUpon>
+    <Compile Include="Controls\Tabs\SitesTab.designer.cs">
+      <DependentUpon>SitesTab.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\Tabs\SummaryTab.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\Tabs\SummaryTab.Designer.cs">
+    <Compile Include="Controls\Tabs\SummaryTab.designer.cs">
       <DependentUpon>SummaryTab.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\Tabs\WarfareTab.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\Tabs\WarfareTab.designer.cs">
+      <DependentUpon>WarfareTab.cs</DependentUpon>
     </Compile>
     <Compile Include="dlgFileSelect.cs">
       <SubType>Form</SubType>
@@ -238,7 +230,7 @@
     <Compile Include="LegendsViewer.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="LegendsViewer.Designer.cs">
+    <Compile Include="LegendsViewer.designer.cs">
       <DependentUpon>LegendsViewer.cs</DependentUpon>
     </Compile>
     <Compile Include="Legends\ArtForm.cs" />
@@ -286,7 +278,6 @@
     <Compile Include="Legends\EventCollections\Battle.cs" />
     <Compile Include="Legends\EventCollections\BeastAttack.cs" />
     <Compile Include="Legends\EventCollections\CeremonyCollection.cs" />
-    <Compile Include="Legends\EventCollections\PurgeCollection.cs" />
     <Compile Include="Legends\EventCollections\CompetitionCollection.cs" />
     <Compile Include="Legends\EventCollections\Duel.cs" />
     <Compile Include="Legends\EventCollections\EventCollections.cs" />
@@ -296,6 +287,7 @@
     <Compile Include="Legends\EventCollections\PerformanceCollection.cs" />
     <Compile Include="Legends\EventCollections\ProcessionCollection.cs" />
     <Compile Include="Legends\EventCollections\Purge.cs" />
+    <Compile Include="Legends\EventCollections\PurgeCollection.cs" />
     <Compile Include="Legends\EventCollections\SiteConquered.cs" />
     <Compile Include="Legends\EventCollections\Theft.cs" />
     <Compile Include="Legends\EventCollections\War.cs" />
@@ -431,14 +423,8 @@
     <EmbeddedResource Include="Controls\Query\QueryControl.resx">
       <DependentUpon>QueryControl.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Controls\Tabs\WarfareTab.resx">
-      <DependentUpon>WarfareTab.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Controls\Tabs\GeographyTab.resx">
-      <DependentUpon>GeographyTab.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Controls\Tabs\SitesTab.resx">
-      <DependentUpon>SitesTab.cs</DependentUpon>
+    <EmbeddedResource Include="Controls\Tabs\BaseSearchTab.resx">
+      <DependentUpon>BaseSearchTab.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\Tabs\CivsTab.resx">
       <DependentUpon>CivsTab.cs</DependentUpon>
@@ -446,14 +432,20 @@
     <EmbeddedResource Include="Controls\Tabs\CollectionsTab.resx">
       <DependentUpon>CollectionsTab.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Controls\Tabs\GeographyTab.resx">
+      <DependentUpon>GeographyTab.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\Tabs\HistoricalFiguresTab.resx">
       <DependentUpon>HistoricalFiguresTab.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Controls\Tabs\BaseSearchTab.resx">
-      <DependentUpon>BaseSearchTab.cs</DependentUpon>
+    <EmbeddedResource Include="Controls\Tabs\SitesTab.resx">
+      <DependentUpon>SitesTab.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\Tabs\SummaryTab.resx">
       <DependentUpon>SummaryTab.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\Tabs\WarfareTab.resx">
+      <DependentUpon>WarfareTab.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="dlgFileSelect.resx">
       <DependentUpon>dlgFileSelect.cs</DependentUpon>
@@ -470,7 +462,6 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -510,16 +501,18 @@
     <Content Include="7z64.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <EmbeddedResource Include="README.html" />
-    <EmbeddedResource Include="Controls\HTML\Styles\bootstrap.min.css" />
-    <EmbeddedResource Include="Controls\HTML\Styles\font-awesome.min.css" />
+    <Content Include="ObjectListView.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WFC.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <EmbeddedResource Include="Controls\HTML\Styles\github-markdown.css" />
     <EmbeddedResource Include="Controls\HTML\Scripts\cytoscape.min.js" />
     <EmbeddedResource Include="Controls\HTML\Scripts\familygraph.js" />
     <EmbeddedResource Include="Controls\HTML\Styles\legends.css" />
     <EmbeddedResource Include="Controls\HTML\Scripts\Chart.min.js" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -14,8 +14,10 @@ namespace LegendsViewer.Legends.Events
         public Location Coordinates;
 
         public HFNewPet() { Pet = "UNKNOWN"; }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -29,17 +31,9 @@ namespace LegendsViewer.Legends.Events
                     case "pets": Pet = Formatting.InitCaps(property.Value.Replace("_", " ").Replace("2", "two")); break;
                 }
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            //string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " tamed " + PetType;
-            //if (Site != null) eventString += " at " + Site.ToSafeLink(link, pov);
-            //else if (Region != null) eventString += " in " + Region.ToSafeLink(link, pov);
-            //else if (UndergroundRegion != null) eventString += " in " + UndergroundRegion.ToSafeLink(link, pov);
             string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " tamed the creatures named ";
             eventString += !string.IsNullOrWhiteSpace(Pet) ? Pet : "UNKNOWN";
             if (Site != null)

@@ -24,10 +24,7 @@ namespace LegendsViewer.Legends
         public override void Merge(List<Property> properties, World world)
         {
             base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-        private void InternalMerge(List<Property> properties, World world)
-        {
+
             Name = "Untitled";
             Coordinates = new List<Location>();
             string[] coordinateStrings;

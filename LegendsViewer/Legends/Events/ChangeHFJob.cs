@@ -17,8 +17,10 @@ namespace LegendsViewer.Legends.Events
             NewJob = "UNKNOWN JOB";
             OldJob = "UNKNOWN JOB";
         }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -31,26 +33,9 @@ namespace LegendsViewer.Legends.Events
                     case "new_job": NewJob = string.Intern(Formatting.InitCaps(property.Value.Replace("_", " "))); break;
                 }
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            // TODO: Sort out differences
-            //string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
-            //if (!string.IsNullOrEmpty(NewJob))
-            //{
-            //    if (!string.IsNullOrEmpty(OldJob))
-            //        eventString += $" changed jobs from {OldJob} to {NewJob}";
-            //    else
-            //        eventString += $" became a {NewJob}";
-            //}
-            //else if (!string.IsNullOrEmpty(OldJob))
-            //    eventString += " stopped working as a " + OldJob;
-            //else 
-            //    eventString += " became a UNKNOWN JOB";
             string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
             if (OldJob != "standard" && NewJob != "standard")
             {

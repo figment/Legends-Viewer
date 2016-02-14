@@ -18,8 +18,10 @@ namespace LegendsViewer.Legends.Events
         public int SubState;
         public string UnknownState;
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -39,13 +41,6 @@ namespace LegendsViewer.Legends.Events
                         break;
                     case "substate":
                         SubState = property.ValueAsInt(); // 45,46, 47
-                        //switch (property.ValueAsInt())
-                        //{
-                        //    case -1: SubState = HFSubState.Unknown; break;
-                        //    case 0: SubState = HFSubState.Wandering; break;
-                        //    case 1: SubState = HFSubState.Fled; break;
-                        //    default: SubState = HFSubState.Unknown; world.ParsingErrors.Report("Unknown HF SubState: " + property.Value); break;
-                        //}
                         break;
                     case "coords": Coordinates = Formatting.ConvertToLocation(property.Value); break;
                     case "hfid":
@@ -65,15 +60,26 @@ namespace LegendsViewer.Legends.Events
                 HistoricalFigure.CurrentState = State;
             }
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
-            if (State == HFState.Settled) eventString += " settled in ";
+            string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);
+            if (State == HFState.Settled)
+            {
+                switch (SubState)
+                {
+                    case 45:
+                        eventString += " fled to ";
+                        break;
+                    case 46:
+                    case 47:
+                        eventString += " moved to study in ";
+                        break;
+                    default:
+                        eventString += " settled in ";
+                        break;
+                }
+            }
             else if (State == HFState.Refugee || State == HFState.Snatcher || State == HFState.Thief) eventString += " became a " + State.ToString().ToLower() + " in ";
             else if (State == HFState.Wandering) eventString += " began wandering ";
             else if (State == HFState.Scouting) eventString += " began scouting the area around ";

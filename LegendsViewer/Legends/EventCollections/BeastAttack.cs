@@ -11,6 +11,9 @@ namespace LegendsViewer.Legends.EventCollections
     {
         public string Icon = "<i class=\"glyphicon fa-fw glyphicon-knight\"></i>";
 
+        public string Name { get { return GetOrdinal(Ordinal) + "Rampage of " + (Beast != null ? Beast.Name : "UNKNOWN BEAST"); } set { } }
+        public int DeathCount { get { return Deaths.Count; } set { } }
+
         public int Ordinal { get; set; }
         public Location Coordinates { get; set; }
         public WorldRegion Region { get; set; }
@@ -36,8 +39,10 @@ namespace LegendsViewer.Legends.EventCollections
         {
             Initialize();
         }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -46,25 +51,16 @@ namespace LegendsViewer.Legends.EventCollections
                     case "parent_eventcol": ParentEventCol = world.GetEventCollection(property.ValueAsInt()); break;
                     case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); break;
                     case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); break;
-                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.BeastAttacks.Add(this); break;
                     case "defending_enid": Defender = world.GetEntity(property.ValueAsInt()); break;
                 }
-
 
             //--------Attacking Beast is calculated after parsing event collections in ParseXML()
             //--------So that it can also look at eventsList from duel sub collections to calculate the Beast
 
             //-------Fill in some missing event details with details from collection
             //-------Filled in after parsing event collections in ParseXML()
-            Site?.BeastAttacks.Add(this);
         }
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-
 
         private void Initialize()
         {

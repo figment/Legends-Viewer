@@ -12,13 +12,11 @@ namespace LegendsViewer.Legends.Events
         public Site Site { get; set; }
         public AgreementTopic Topic { get; set; }
 
+        
         public override void Merge(List<Property> properties, World world)
         {
             base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-        private void InternalMerge(List<Property> properties, World world)
-        {
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {

@@ -12,8 +12,10 @@ namespace LegendsViewer.Legends.Events
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -24,11 +26,7 @@ namespace LegendsViewer.Legends.Events
                     case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
                 }
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime() + HistoricalFigure.ToSafeLink(link, pov) + " came back from the dead as a " + Ghost + " in " + Site.ToSafeLink(link, pov) + ". ";

@@ -93,8 +93,6 @@ namespace LegendsViewer.Legends
             {
                 switch(property.Name)
                 {
-                    //case "type": Type = Formatting.InitCaps(property.Value); break;
-                    //case "name": Name = Formatting.InitCaps(property.Value); break;
                     case "type":
                         Type = Formatting.InitCaps(property.Value);
                         switch (property.Value)
@@ -135,14 +133,6 @@ namespace LegendsViewer.Legends
                     case "cur_owner_id": property.Known = true; break;
                 }
             }
-        }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world, true);
-        }
-        string Printidenicon()
-        { 
             switch (SiteType)
             {
                 case SiteType.Cave:
@@ -194,7 +184,11 @@ namespace LegendsViewer.Legends
                     Icon = "<i class=\"glyphicon fa-fw glyphicon-screenshot\"></i>";
                     break;
             }
-            return Icon;
+        }
+        public override void Merge(List<Property> properties, World world)
+        {
+            base.Merge(properties, world);
+            InternalMerge(properties, world, true);
         }
 
         public void AddConnection(Site connection)

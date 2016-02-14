@@ -12,7 +12,7 @@ using LegendsViewer.Legends;
 
 namespace LegendsViewer.Controls.Tabs
 {
-    [Designer("System.Windows.Forms.Design.ParentControlDesigner, System.Design", typeof (IDesigner))]
+    [Designer("System.Windows.Forms.Design.ParentControlDesigner, System.Design", typeof(IDesigner))]
     public partial class GeographyTab : BaseSearchTab
     {
         private LandmassesList landmassSearch;
@@ -29,8 +29,30 @@ namespace LegendsViewer.Controls.Tabs
 
         internal override void InitializeTab()
         {
-            EventTabs = new TabPage[] { tpRegionEvents, tpURegionEvents, tpLandmassEvents, tpMountainPeakEvents};
+            EventTabs = new TabPage[] { tpRegionEvents, tpURegionEvents, tpLandmassEvents, tpMountainPeakEvents };
             EventTabTypes = new Type[] { typeof(Region), typeof(UndergroundRegion), typeof(Landmass), typeof(MountainPeak) };
+
+            listRegionSearch.AllColumns.Add(new OLVColumn
+            {
+                Text = "Deaths",
+                TextAlign = HorizontalAlignment.Right,
+                IsVisible = false,
+                AspectGetter = item => ((WorldRegion)item).Deaths.Count
+            });
+            listRegionSearch.AllColumns.Add(new OLVColumn
+            {
+                Text = "Events",
+                TextAlign = HorizontalAlignment.Right,
+                IsVisible = false,
+                AspectGetter = rowObject => ((WorldRegion)rowObject).Events.Count
+            });
+            listRegionSearch.ShowGroups = false;
+
+            listURegionSearch.ShowGroups = false;
+
+            listLandmassesSearch.ShowGroups = false;
+
+            listMountainPeakSearch.ShowGroups = false;
         }
 
         internal override void AfterLoad(World world)
@@ -106,9 +128,16 @@ namespace LegendsViewer.Controls.Tabs
                 regionSearch.sortBattles = radRegionSortBattles.Checked;
                 regionSearch.SortDeaths = radRegionSortDeaths.Checked;
                 IEnumerable<WorldRegion> list = regionSearch.getList();
-                listRegionSearch.Items.Clear();
-                listRegionSearch.Items.AddRange(list.ToArray());
+                var results = list.ToArray();
+                listRegionSearch.SetObjects(results);
+                //listRegionSearch.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+                UpdateCounts(lblShownResults, results.Length, regionSearch.BaseList.Count);
             }
+        }
+
+        private void UpdateCounts(Label label, int shown, int total)
+        {
+            label.Text = $"{shown} / {total}";
         }
 
         private void searchURegionList(object sender, EventArgs e)
@@ -119,8 +148,9 @@ namespace LegendsViewer.Controls.Tabs
                 uRegionSearch.sortEvents = radURegionSortEvents.Checked;
                 uRegionSearch.sortFiltered = radURegionSortFiltered.Checked;
                 IEnumerable<UndergroundRegion> list = uRegionSearch.getList();
-                listURegionSearch.Items.Clear();
-                listURegionSearch.Items.AddRange(list.ToArray());
+                var results = list.ToArray();
+                listURegionSearch.SetObjects(results);
+                UpdateCounts(lblURegionResults, results.Length, uRegionSearch.BaseList.Count);
             }
         }
 
@@ -133,8 +163,9 @@ namespace LegendsViewer.Controls.Tabs
                 landmassSearch.sortEvents = radLandmassEvents.Checked;
                 landmassSearch.sortFiltered = radLandmassFiltered.Checked;
                 IEnumerable<Landmass> list = landmassSearch.getList();
-                listLandmassSearch.Items.Clear();
-                listLandmassSearch.Items.AddRange(list.ToArray());
+                var results = list.ToArray();
+                listLandmassesSearch.SetObjects(results);
+                UpdateCounts(lblLandmassResults, results.Length, landmassSearch.BaseList.Count);
             }
         }
 
@@ -146,8 +177,9 @@ namespace LegendsViewer.Controls.Tabs
                 mountainPeaksSearch.sortEvents = radMountainPeakEvents.Checked;
                 mountainPeaksSearch.sortFiltered = radMountainPeakFiltered.Checked;
                 IEnumerable<MountainPeak> list = mountainPeaksSearch.getList();
-                listMountainPeakSearch.Items.Clear();
-                listMountainPeakSearch.Items.AddRange(list.ToArray());
+                var results = list.ToArray();
+                listMountainPeakSearch.SetObjects(results);
+                UpdateCounts(lblMountainPeakResults, results.Length, mountainPeaksSearch.BaseList.Count);
             }
         }
 

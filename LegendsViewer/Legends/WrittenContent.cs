@@ -17,6 +17,7 @@ namespace LegendsViewer.Legends
         public HistoricalFigure Author { get; set; } // legends_plus.xml
         public List<string> Styles { get; set; } // legends_plus.xml
         public List<Reference> References { get; set; } // legends_plus.xml
+        public int PageCount { get { return PageEnd - PageStart + 1; } set { } }
 
         public static string Icon = "<i class=\"fa fa-fw fa-book\"></i>";
 
@@ -36,10 +37,7 @@ namespace LegendsViewer.Legends
         public override void Merge(List<Property> properties, World world)
         {
             base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-        private void InternalMerge(List<Property> properties, World world)
-        {
+
             foreach (Property property in properties)
             {
                 switch (property.Name)

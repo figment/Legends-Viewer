@@ -13,8 +13,10 @@ namespace LegendsViewer.Legends.Events
         public string SecretText { get; set; }
         public string InteractionDescription { get; set; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
             {
                 switch (property.Name)
@@ -32,11 +34,7 @@ namespace LegendsViewer.Legends.Events
             InteractionDescription = !string.IsNullOrEmpty(SecretText) ? Formatting.ExtractInteractionString(SecretText) : Interaction;
         }
 
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();

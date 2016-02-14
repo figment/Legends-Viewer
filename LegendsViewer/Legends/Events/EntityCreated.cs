@@ -12,14 +12,16 @@ namespace LegendsViewer.Legends.Events
         public int StructureID { get; set; }
         public Structure Structure { get; set; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
             {
                 switch (property.Name)
                 {
-                    case "entity_id": Entity = world.GetEntity(property.ValueAsInt()); break;
-                    case "site_id": Site = world.GetSite(property.ValueAsInt()); break;
+                    case "entity_id": Entity = world.GetEntity(property.ValueAsInt()); Entity.AddEvent(this); break;
+                    case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
 
                     //Unhandled Events
                     case "structure_id":
@@ -29,19 +31,8 @@ namespace LegendsViewer.Legends.Events
                         break;
                 }
             }
-            if (Site != null)
-            {
-                Structure = Site.Structures.FirstOrDefault(structure => structure.ID == StructureID);
-            }
-            Entity.AddEvent(this);
-            Site.AddEvent(this);
-            Structure.AddEvent(this);
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();

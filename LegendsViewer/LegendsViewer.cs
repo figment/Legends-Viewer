@@ -40,7 +40,7 @@ namespace LegendsViewer
             version = fvi.FileVersion;
 
             Text = "Legends Viewer";
-            lblVersion.Text = "v" + version + " (figment)";
+            lblVersion.Text = "v" + version;
             lblVersion.Left = scWorld.Panel2.ClientSize.Width - lblVersion.Width - 3;
             tcWorld.Height = scWorld.Panel2.ClientSize.Height;
             btnBack.Location = new Point(3, 3);
@@ -60,7 +60,7 @@ namespace LegendsViewer
                 v.Coordinator = Coordinator;
 
             BrowserUtil.SetBrowserEmulationMode();
-            if (!Debugger.IsAttached) Browser.Navigate(ControlOption.ReadMe);
+            Browser.Navigate(ControlOption.ReadMe);
         }
 
         private void frmLegendsViewer_Shown(object sender, EventArgs e)
@@ -167,6 +167,11 @@ namespace LegendsViewer
             tab?.ChangeBattleBaseList(battles, mapBattles);
 
             tcWorld.SelectedTab = tpWarfare;
+        }
+
+        private void open_ReadMe(object sender, EventArgs e)
+        {
+            Browser.Navigate(ControlOption.ReadMe);
         }
     }
 }

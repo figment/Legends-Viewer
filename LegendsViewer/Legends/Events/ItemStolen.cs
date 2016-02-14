@@ -25,8 +25,10 @@ namespace LegendsViewer.Legends.Events
             ItemType = "UNKNOWN ITEM";
             Material = "UNKNOWN MATERIAL";
         }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -43,11 +45,7 @@ namespace LegendsViewer.Legends.Events
                     case "matindex": MaterialIndex = property.ValueAsInt(); break;
                 }
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+
         public override string Print(bool path = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();

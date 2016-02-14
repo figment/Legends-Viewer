@@ -14,13 +14,11 @@ namespace LegendsViewer.Legends
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
+        
         public override void Merge(List<Property> properties, World world)
         {
             base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-        private void InternalMerge(List<Property> properties, World world)
-        {
+
             Name = "Untitled";
             foreach (Property property in properties)
             {

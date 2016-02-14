@@ -14,6 +14,7 @@ namespace LegendsViewer.Legends
         public string Name { get; set; } // legends_plus.xml
         public string AltName { get; set; } // legends_plus.xml
         public StructureType Type { get; set; } // legends_plus.xml
+        public string TypeAsString { get { return Type.GetDescription(); } set { } }
         public string Icon { get; set; }
         public Site Site { get; set; }
         
@@ -29,8 +30,10 @@ namespace LegendsViewer.Legends
         {
             ID = -1; Name = "UNKNOWN STRUCTURE"; Type = StructureType.Unknown;
         }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -92,12 +95,6 @@ namespace LegendsViewer.Legends
             Icon = icon;
             GlobalID = world.Structures.Count;
             world.Structures.Add(this);
-        }
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
         }
 
         public override string ToString() { return Name; }

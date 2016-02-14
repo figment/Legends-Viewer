@@ -9,8 +9,10 @@ namespace LegendsViewer.Legends.Events
         public HistoricalFigure Changee, Changer;
         public string OldRace, OldCaste, NewRace, NewCaste;
         public ChangedCreatureType() { }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -27,11 +29,7 @@ namespace LegendsViewer.Legends.Events
             Changee.AddEvent(this);
             Changer.AddEvent(this);
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime() + Changer.ToSafeLink(link, pov) + " changed " + Changee.ToSafeLink(link, pov) + " from a " + OldRace + " into a " + NewRace + ". ";

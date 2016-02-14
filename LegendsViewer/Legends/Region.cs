@@ -43,8 +43,10 @@ namespace LegendsViewer.Legends
             Type = "INVALID";
             Battles = new List<Battle>();
         }
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -53,11 +55,6 @@ namespace LegendsViewer.Legends
                     case "coords": Coordinates = property.Value.Split(new[] {"|"}, StringSplitOptions.RemoveEmptyEntries)
                                 .Select(Formatting.ConvertToLocation).ToList(); property.Known = true; break;
                 }
-        }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
         }
 
         public override string ToString() { return this.Name; }

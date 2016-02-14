@@ -13,8 +13,10 @@ namespace LegendsViewer.Legends.Events
         public Boolean ActualStart { get; set; }
         private string unknownOutcome;
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             ActualStart = false;
 
             foreach (Property property in properties)
@@ -50,11 +52,6 @@ namespace LegendsViewer.Legends.Events
             Site.AddEvent(this);
         }
 
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();

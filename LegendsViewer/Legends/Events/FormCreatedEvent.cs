@@ -20,8 +20,10 @@ namespace LegendsViewer.Legends.Events
         public FormType FormType { get; set; }
         public ArtForm ArtForm { get; set; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -51,9 +53,7 @@ namespace LegendsViewer.Legends.Events
                         Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this);
                         break;
                 }
-            
-            
-            
+
             if (Reason == "glorify hf")
             {
                 GlorifiedHF = world.GetHistoricalFigure(ReasonId);
@@ -65,11 +65,7 @@ namespace LegendsViewer.Legends.Events
                 PrayToHF.AddEvent(this);
             }
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+        
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime();

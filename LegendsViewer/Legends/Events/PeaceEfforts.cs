@@ -12,8 +12,10 @@ namespace LegendsViewer.Legends.Events
         public Entity Destination { get; set; }
         public Site Site;
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -25,16 +27,8 @@ namespace LegendsViewer.Legends.Events
                 }
         }
 
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            //if (Source != null && Destination != null && Site != null)
-            //    return $"{GetYearTime()}Peace accepted by {Destination.ToSafeLink(link, pov)} in offer from {Source.ToSafeLink(link, pov)} at {Site.ToSafeLink(link, pov)}.";
-            //return $"{GetYearTime()}Peace {Decision} in {ParentCollection.ToSafeLink(link, pov)}.";
             string eventString = GetYearTime();
             if (Source != null && Destination != null)
             {

@@ -31,6 +31,7 @@ namespace LegendsViewer.Controls.Tabs
             lnkMaxResults.Text = HistoricalFigureList.MaxResults.ToString();
             listHFSearch.ShowGroups = false;
 
+            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Race", IsVisible = false, Text = "Race", TextAlign = HorizontalAlignment.Left });
             listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Caste", IsVisible = false, Text = "Caste", TextAlign = HorizontalAlignment.Left });
             listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "PreviousRace", IsVisible = false, Text = "Previous Race", TextAlign = HorizontalAlignment.Left });
             listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Alive", IsVisible = false, Text = "Alive", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
@@ -38,7 +39,6 @@ namespace LegendsViewer.Controls.Tabs
             listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Force", IsVisible = false, Text = "Force", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
             listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Zombie", IsVisible = false, Text = "Zombie", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
             listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Ghost", IsVisible = false, Text = "Ghost", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
-            listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Beast", IsVisible = false, Text = "Beast", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
             listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Animated", IsVisible = false, Text = "Animated", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
             listHFSearch.AllColumns.Add(new OLVColumn { AspectName = "Adventurer", IsVisible = false, Text = "Adventurer", TextAlign = HorizontalAlignment.Center, CheckBoxes = true });
             listHFSearch.AllColumns.Add(new OLVColumn
@@ -133,7 +133,7 @@ namespace LegendsViewer.Controls.Tabs
                 IEnumerable<HistoricalFigure> list = hfSearch.GetList();
                 var results = list.ToArray();
                 listHFSearch.SetObjects(results);
-                listHFSearch.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+                //listHFSearch.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
                 UpdateCounts(results.Length, hfSearch.BaseList.Count);
             }
         }
@@ -209,11 +209,6 @@ namespace LegendsViewer.Controls.Tabs
         private void UpdateCounts(int shown, int total)
         {
             lblShownResults.Text = $"{shown} / {total}";
-        }
-
-        private void listHFSearch_SizeChanged(object sender, EventArgs e)
-        {
-            //listHFSearch.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
         }
     }
 }

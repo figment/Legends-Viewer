@@ -11,10 +11,7 @@ namespace LegendsViewer.Legends
         public override void Merge(List<Property> properties, World world)
         {
             base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-        private void InternalMerge(List<Property> properties, World world)
-        {
+
         }
 
         public override string ToLink(bool link = true, DwarfObject pov = null)

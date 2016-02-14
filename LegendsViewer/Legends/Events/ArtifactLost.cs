@@ -9,8 +9,10 @@ namespace LegendsViewer.Legends.Events
         public Artifact Artifact { get; set; }
         public Site Site { get; set; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -20,13 +22,6 @@ namespace LegendsViewer.Legends.Events
                     case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                 }
         }
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();

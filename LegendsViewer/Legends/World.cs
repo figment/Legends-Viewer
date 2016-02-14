@@ -39,7 +39,7 @@ namespace LegendsViewer.Legends
         public List<BeastAttack> BeastAttacks;
         public List<Era> Eras = new List<Era>();
         public List<Artifact> Artifacts = new List<Artifact>();
-        public List<WorldConstruction> WorldContructions = new List<WorldConstruction>();
+        public List<WorldConstruction> WorldConstructions = new List<WorldConstruction>();
         public List<PoeticForm> PoeticForms = new List<PoeticForm>();
         public List<MusicalForm> MusicalForms = new List<MusicalForm>();
         public List<DanceForm> DanceForms = new List<DanceForm>();
@@ -419,7 +419,7 @@ namespace LegendsViewer.Legends
         }
         public WorldConstruction GetWorldConstruction(int id)
         {
-            return WorldContructions.GetWorldObject(id);
+            return WorldConstructions.GetWorldObject(id);
         }
         public PoeticForm GetPoeticForm(int id)
         {
@@ -496,7 +496,7 @@ namespace LegendsViewer.Legends
 
         public WorldConstruction GetConstruction(int id)
         {
-            return WorldContructions.GetWorldObject(id);
+            return WorldConstructions.GetWorldObject(id);
         }
         #endregion
 

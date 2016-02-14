@@ -219,19 +219,6 @@ namespace LegendsViewer
                 {
                     Controls.HTMLPrinter.FamilyGraphJS = reader.ReadToEnd();
                 }
-                var fontResourceName = "LegendsViewer.Controls.HTML.Styles.font-awesome.min.css";
-                using (Stream stream = assembly.GetManifestResourceStream(fontResourceName))
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    Controls.HTMLPrinter.FontCSS = reader.ReadToEnd();
-                }
-                var bootstrapResourceName = "LegendsViewer.Controls.HTML.Styles.bootstrap.min.css";
-                using (Stream stream = assembly.GetManifestResourceStream(bootstrapResourceName))
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    Controls.HTMLPrinter.BootstrapCSS = reader.ReadToEnd();
-                }
-                
             }
             catch (Exception ex)
             {
@@ -388,12 +375,12 @@ namespace LegendsViewer
             }
             else
             {
-            BackgroundWorker load = new BackgroundWorker();
-            load.DoWork += load_DoWork;
-            load.RunWorkerCompleted += load_RunWorkerCompleted;
+                BackgroundWorker load = new BackgroundWorker();
+                load.DoWork += load_DoWork;
+                load.RunWorkerCompleted += load_RunWorkerCompleted;
 
-            load.RunWorkerAsync(files);
-            while (load.IsBusy) Application.DoEvents();
+                load.RunWorkerAsync(files);
+                while (load.IsBusy) Application.DoEvents();
             }
 
             Working = false;
@@ -511,7 +498,7 @@ namespace LegendsViewer
                         map = imgfiles.Single(file => Path.GetFileNameWithoutExtension(file).ToLower().EndsWith("world_map"));
                     else
                     {
-                        var fileSelect = new dlgFileSelect(imgfiles) {Text = "Select Base Map"};
+                        var fileSelect = new dlgFileSelect(imgfiles) { Text = "Select Base Map" };
                     fileSelect.ShowDialog();
                     if (fileSelect.SelectedFile == "") throw new Exception("No map file selected.");
                     if (File.Exists(fileSelect.SelectedFile)) { MessageBox.Show(fileSelect.SelectedFile + " already exists."); return; }

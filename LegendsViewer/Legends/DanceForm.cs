@@ -8,15 +8,6 @@ namespace LegendsViewer.Legends
     {
         public static string Icon = "<i class=\"fa fa-fw fa-street-view\"></i>";
 
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-        private void InternalMerge(List<Property> properties, World world)
-        {
-        }
-
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
             if (link)

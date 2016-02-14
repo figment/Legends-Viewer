@@ -13,20 +13,21 @@ namespace LegendsViewer.Legends.Events
         public bool LinkTypeSet;
         public AddHFHFLink() { LinkType = HistoricalFigureLinkType.Unknown; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
                     case "hf":
                     case "hfid":
                     case "histfig1":
-                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt());
-                        break;
+                        HistoricalFigure = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigure.AddEvent(this); break;
                     case "histfig2":
                     case "hf_target":
                     case "hfid_target":
-                        HistoricalFigureTarget = world.GetHistoricalFigure(property.ValueAsInt()); break;
+                        HistoricalFigureTarget = world.GetHistoricalFigure(property.ValueAsInt()); HistoricalFigureTarget.AddEvent(this); break;
                     case "link_type":
                         if (!Enum.TryParse(Formatting.InitCaps(property.Value.Replace("_", " ")).Replace(" ", ""), true, out LinkType))
                         {
@@ -50,24 +51,7 @@ namespace LegendsViewer.Legends.Events
                 else if (abduction != null)
                     LinkType = HistoricalFigureLinkType.Prisoner;
             }
-
-            if (HistoricalFigure.Race == "Night Creature" || HistoricalFigureTarget.Race == "Night Creature")
-            {
-                if (LinkType == HistoricalFigureLinkType.Unknown)
-                {
-                    LinkType = HistoricalFigureLinkType.Spouse;
-                }
-                HistoricalFigure.RelatedHistoricalFigures.Add(new HistoricalFigureLink(HistoricalFigureTarget, HistoricalFigureLinkType.ExSpouse));
-                HistoricalFigureTarget.RelatedHistoricalFigures.Add(new HistoricalFigureLink(HistoricalFigure, HistoricalFigureLinkType.ExSpouse));
-            }
         }
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
@@ -88,13 +72,13 @@ namespace LegendsViewer.Legends.Events
                         eventString += " began an apprenticeship under ";
                     break;
                 case HistoricalFigureLinkType.FormerApprentice:
-                    if (pov == HistoricalFigureTarget)
+                    if (pov == HistoricalFigure)
                         eventString += " ceased being the apprentice of ";
                     else
                         eventString += " ceased being the master of ";
                     break;
                 case HistoricalFigureLinkType.FormerMaster:
-                    if (pov == HistoricalFigureTarget)
+                    if (pov == HistoricalFigure)
                         eventString += " ceased being the master of ";
                     else
                         eventString += " ceased being the apprentice of ";

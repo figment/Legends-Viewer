@@ -12,6 +12,9 @@ namespace LegendsViewer.Legends.EventCollections
     {
         public string Icon = "<i class=\"glyphicon fa-fw glyphicon-pawn\"></i>";
 
+        public string Name { get { return GetOrdinal(Ordinal) + ConquerType + " of " + Site.Name; } set { } }
+        public int DeathCount { get { return Deaths.Count; } set { } }
+
         public int Ordinal { get; set; }
         public SiteConqueredType ConquerType { get; set; }
         public Site Site { get; set; }
@@ -29,8 +32,10 @@ namespace LegendsViewer.Legends.EventCollections
             Initialize();
         }
         
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -57,12 +62,6 @@ namespace LegendsViewer.Legends.EventCollections
             else ConquerType = SiteConqueredType.Unknown;
             if (ConquerType == SiteConqueredType.Pillaging) Notable = false;
         }
-
-        public override void Merge(List<Property> properties, World world)
-            {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-            }
 
         private void Initialize()
         {

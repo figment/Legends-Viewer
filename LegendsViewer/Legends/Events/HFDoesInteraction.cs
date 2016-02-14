@@ -16,8 +16,10 @@ namespace LegendsViewer.Legends.Events
         public string InteractionDescription { get; set; }
         public string Source { get; set; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
             {
                 switch (property.Name)
@@ -44,19 +46,12 @@ namespace LegendsViewer.Legends.Events
             {
                 InteractionDescription = $"({Interaction})";
             }
-        }
-
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
             if (Target != null && !string.IsNullOrWhiteSpace(Interaction) && !Target.ActiveInteractions.Contains(Interaction))
                 Target.ActiveInteractions.Add(Interaction);
         }
+
         public override string Print(bool link = true, DwarfObject pov = null)
         {
-            //string eventString = GetYearTime() + Doer.ToSafeLink(link, pov) + InteractionDescription + " on " + Target.ToSafeLink(link, pov) + ". ";
             string eventString = GetYearTime();
             eventString += Doer.ToSafeLink(link, pov);
             if (InteractionString == "")

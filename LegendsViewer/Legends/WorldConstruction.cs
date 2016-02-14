@@ -13,6 +13,7 @@ namespace LegendsViewer.Legends
     {
         public string Name { get; set; } // legends_plus.xml
         public WorldConstructionType Type { get; set; } // legends_plus.xml
+        public string TypeAsString { get { return Type.GetDescription(); } set { } }
         public List<Location> Coordinates { get; set; } // legends_plus.xml
         public Site Site1 { get; set; } // legends_plus.xml
         public Site Site2 { get; set; } // legends_plus.xml
@@ -28,8 +29,10 @@ namespace LegendsViewer.Legends
             get { return Events.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             Name = "Untitled";
             Coordinates = new List<Location>();
             Sections = new List<WorldConstruction>();
@@ -72,11 +75,6 @@ namespace LegendsViewer.Legends
                         break;
                 }
             }
-        }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
         }
 
         public override string ToString() { return Name; }

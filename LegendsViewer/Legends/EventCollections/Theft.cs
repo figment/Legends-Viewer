@@ -20,8 +20,10 @@ namespace LegendsViewer.Legends.EventCollections
             get { return AllEvents.Where(dwarfEvent => !Filters.Contains(dwarfEvent.Type)).ToList(); }
         }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -47,13 +49,6 @@ namespace LegendsViewer.Legends.EventCollections
                 }
             }
         }
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
             return "a theft";

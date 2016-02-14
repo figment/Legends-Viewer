@@ -20,8 +20,10 @@ namespace LegendsViewer.Legends.EventCollections
 
         public Insurrection() { Ordinal = -1; }
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             Filters = new List<string>();
             foreach (Property property in properties)
             {
@@ -46,13 +48,6 @@ namespace LegendsViewer.Legends.EventCollections
                 insurrectionStart.ActualStart = true;
             }
         }
-
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-
         public override string ToLink(bool link = true, DwarfObject pov = null)
         {
             return Name;

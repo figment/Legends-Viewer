@@ -18,8 +18,10 @@ namespace LegendsViewer.Legends.Events
         private string UnknownSituation;
         private List<string> UnknownReasons;
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             Reasons = new List<ConfrontReason>();
             UnknownReasons = new List<string>();
             foreach (Property property in properties)
@@ -63,11 +65,6 @@ namespace LegendsViewer.Legends.Events
             UndergroundRegion.AddEvent(this);
         }
 
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime() + HistoricalFigure.ToSafeLink(link, pov);

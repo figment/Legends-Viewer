@@ -83,7 +83,6 @@ namespace LegendsViewer.Legends
         public bool Force { get; set; }
         public bool Zombie { get; set; }
         public bool Ghost { get; set; }
-        public bool Beast { get; set; }
         public bool Animated { get; set; }
         public string AnimatedType { get; set; }
         public bool Adventurer { get; set; }
@@ -105,8 +104,10 @@ namespace LegendsViewer.Legends
         }
         public override string ToString() { return this.Name; }
         
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             List<string> knownEntitySubProperties = new List<string>() { "entity_id", "link_strength", "link_type", "position_profile_id", "start_year", "end_year", "type", "target", "strength", "child" };
             List<string> knownReputationSubProperties = new List<string>() { "entity_id", "unsolved_murders", "first_ageless_year", "first_ageless_season_count", "rep_enemy_fighter", "rep_trade_partner", "rep_killer", "rep_poet", "rep_bard", "rep_storyteller", "rep_dancer" };
             List<string> knownSiteLinkSubProperties = new List<string>() { "link_type", "site_id", "sub_id", "entity_id", "occupation_id" };
@@ -235,12 +236,7 @@ namespace LegendsViewer.Legends
                 }
             if (Name == "") Name = "(Unnamed)";
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
-
+        
         private void Initialize()
         {
             Appeared = BirthYear = BirthSeconds72 = DeathYear = DeathSeconds72 = -1;

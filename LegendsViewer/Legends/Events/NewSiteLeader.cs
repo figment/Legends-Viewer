@@ -11,8 +11,10 @@ namespace LegendsViewer.Legends.Events
         public Site Site;
         public HistoricalFigure NewLeader;
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -28,10 +30,10 @@ namespace LegendsViewer.Legends.Events
                 if (SiteEntity != null && SiteEntity != Defender)
                 {
                     SiteEntity.Parent = Defender;
-                    new OwnerPeriod(Site, SiteEntity, 1, "UNKNOWN");
+                    new OwnerPeriod(Site, SiteEntity, 1, "founded");
                 }
                 else
-                    new OwnerPeriod(Site, Defender, 1, "UNKNOWN");
+                    new OwnerPeriod(Site, Defender, 1, "founded");
 
             Site.OwnerHistory.Last().EndCause = "taken over";
             Site.OwnerHistory.Last().EndYear = this.Year;
@@ -47,11 +49,7 @@ namespace LegendsViewer.Legends.Events
             NewSiteEntity.AddEvent(this);
             NewLeader.AddEvent(this);
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = this.GetYearTime() + Attacker.ToSafeLink(link, pov) + " defeated ";

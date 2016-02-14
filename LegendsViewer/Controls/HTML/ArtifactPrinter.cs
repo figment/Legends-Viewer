@@ -22,7 +22,7 @@ namespace LegendsViewer.Controls
             if (!string.IsNullOrWhiteSpace(Artifact.Type))
             {
                 HTML.AppendLine("<b>" + Artifact.Name + " was a legendary " + Artifact.Material + " ");
-                HTML.AppendLine((!string.IsNullOrWhiteSpace(Artifact.SubType) ? Artifact.SubType : Artifact.Type) + ".</b><br />");
+                HTML.AppendLine((!string.IsNullOrWhiteSpace(Artifact.SubType) ? Artifact.SubType : Artifact.Type.ToLower()) + ".</b><br />");
             }
 
             if (!string.IsNullOrEmpty(Artifact.Type) && !string.IsNullOrEmpty(Artifact.Material))
@@ -36,7 +36,7 @@ namespace LegendsViewer.Controls
             if (!string.IsNullOrEmpty(Artifact.Description))
             {
                 HTML.AppendLine("<b>Description</b><br/>");
-                HTML.AppendLine("<p>" + Formatting.InitCaps(Artifact.Description) + "</p><br />");
+                HTML.AppendLine("<i>" + Formatting.InitCaps(Artifact.Description) + "</i><br />");
             }
 
             PrintEventLog(Artifact.Events, Artifact.Filters, Artifact);

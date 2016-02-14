@@ -19,8 +19,10 @@ namespace LegendsViewer.Legends.Events
         public WorldRegion Region;
         public UndergroundRegion UndergroundRegion;
 
-        private void InternalMerge(List<Property> properties, World world)
+        public override void Merge(List<Property> properties, World world)
         {
+            base.Merge(properties, world);
+
             foreach (Property property in properties)
                 switch (property.Name)
                 {
@@ -32,22 +34,14 @@ namespace LegendsViewer.Legends.Events
                     case "site_id": Site = world.GetSite(property.ValueAsInt()); Site.AddEvent(this); break;
                     case "subregion_id": Region = world.GetRegion(property.ValueAsInt()); Region.AddEvent(this); break;
                     case "feature_layer_id": UndergroundRegion = world.GetUndergroundRegion(property.ValueAsInt()); UndergroundRegion.AddEvent(this); break;
-                    //case "woundee_race": WoundeeRace = Formatting.InitCaps(property.Value); break;
-                    //case "woundee_caste": WoundeeCaste = Formatting.InitCaps(property.Value); break;
-                    //case "body_part": BodyPart = string.Intern(property.Value); break;
-                    //case "injury_type": InjuryType = string.Intern(property.Value); break;
-                    case "part_lost": PartLost = property.ValueAsInt(); break;
                     case "woundee_race": WoundeeRace = property.ValueAsInt(); break;
                     case "woundee_caste": WoundeeCaste = property.ValueAsInt(); break;
                     case "body_part": BodyPart = property.ValueAsInt(); break;
                     case "injury_type": InjuryType = property.ValueAsInt(); break;
+                    case "part_lost": PartLost = property.ValueAsInt(); break;
                 }
         }
-        public override void Merge(List<Property> properties, World world)
-        {
-            base.Merge(properties, world);
-            InternalMerge(properties, world);
-        }
+
         public override string Print(bool link = true, DwarfObject pov = null)
         {
             string eventString = GetYearTime();
